@@ -1,0 +1,48 @@
+{
+  "character": "frost",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 23,
+      "y": 1,
+      "w": 218,
+      "h": 282
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 28,
+      "y": 62,
+      "w": 199,
+      "h": 220
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 3,
+      "rows": 13,
+      "loop": false,
+      "x": 15,
+      "y": 21,
+      "w": 221,
+      "h": 299
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 32,
+      "y": 55,
+      "w": 214,
+      "h": 231
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "character": "dusk",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": -23,
+      "y": 34,
+      "w": 311,
+      "h": 243
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": -3,
+      "y": 65,
+      "w": 258,
+      "h": 209
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 3,
+      "rows": 13,
+      "loop": false,
+      "x": 2,
+      "y": 26,
+      "w": 259,
+      "h": 294
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 10,
+      "y": 51,
+      "w": 238,
+      "h": 221
+    }
+  }
+}

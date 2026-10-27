@@ -1,0 +1,48 @@
+{
+  "character": "ember",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 23,
+      "y": 2,
+      "w": 208,
+      "h": 281
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 42,
+      "y": 56,
+      "w": 176,
+      "h": 225
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 21,
+      "y": 20,
+      "w": 207,
+      "h": 300
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 34,
+      "y": 57,
+      "w": 205,
+      "h": 224
+    }
+  }
+}

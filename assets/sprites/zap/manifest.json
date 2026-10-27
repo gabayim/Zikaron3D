@@ -1,0 +1,48 @@
+{
+  "character": "zap",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 12,
+      "y": 0,
+      "w": 274,
+      "h": 277
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 19,
+      "y": 60,
+      "w": 225,
+      "h": 226
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 13,
+      "rows": 3,
+      "loop": false,
+      "x": 17,
+      "y": 2,
+      "w": 254,
+      "h": 318
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 18,
+      "y": 67,
+      "w": 233,
+      "h": 210
+    }
+  }
+}

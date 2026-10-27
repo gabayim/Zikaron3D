@@ -1,0 +1,14 @@
+{
+  "video_id": 431772649411666,
+  "trace_id": "476487ed-7d50-44e4-85a8-ab0f13c9d0f1",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F0d88480c-bc2d-45a8-9f7c-5de4259b8a91_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2Ff5f607f6-dbdc-4ca0-9992-5ed5b63c2a42.jpg",
+  "prompt": "The cute round creature looks at the viewer and waves one stubby arm hello with a big friendly smile, then returns to its pose. Locked static camera, no camera movement, no zoom. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-25T17:20:43Z",
+  "cost_credits": 32
+}

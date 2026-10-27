@@ -2,12 +2,23 @@
   "expo": {
     "name": "Zikaron3D",
     "slug": "Zikaron3D",
-    "version": "1.0.0",
+    "version": "2.15.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.AdvBig.Zikaron3D",
+      "buildNumber": "1",
+      "appleTeamId": "DAVRE4G59N",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Zikaron3D connects to the Metro development server on your Wi‑Fi network while you build and test the app.",
+        "NSBonjourServices": [
+          "_expo._tcp",
+          "_http._tcp"
+        ]
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -20,6 +31,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      ["expo-audio", { "microphonePermission": false, "recordAudioAndroid": false }],
+      "expo-asset",
+      "expo-apple-authentication"
+    ]
   }
 }

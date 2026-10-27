@@ -1,0 +1,14 @@
+{
+  "video_id": 431773350531291,
+  "trace_id": "470af36f-a0ec-4091-90e8-26d832fd39b6",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F6f437464-ecb8-4ba5-a912-4032e90b0d6b_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F1a448fa5-0095-4af6-a5a8-3016e9fad1fc.jpg",
+  "prompt": "The cute round creature alone gets startled: eyes go wide, it wobbles like jelly, then giggles happily. Only the creature is visible, no hands, no people. Locked static camera, no camera movement, no zoom. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-25T17:26:25Z",
+  "cost_credits": 24
+}

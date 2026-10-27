@@ -1,0 +1,48 @@
+{
+  "character": "bloop",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 23,
+      "y": 0,
+      "w": 209,
+      "h": 281
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 20,
+      "y": 59,
+      "w": 212,
+      "h": 224
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 19,
+      "y": 25,
+      "w": 210,
+      "h": 295
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 12,
+      "y": 23,
+      "w": 227,
+      "h": 258
+    }
+  }
+}

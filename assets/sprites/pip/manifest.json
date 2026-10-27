@@ -1,0 +1,68 @@
+{
+  "character": "pip",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 28,
+      "y": 0,
+      "w": 225,
+      "h": 290
+    },
+    "hop": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 34,
+      "y": 0,
+      "w": 187,
+      "h": 274
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 41,
+      "y": 66,
+      "w": 173,
+      "h": 204
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 31,
+      "y": 61,
+      "w": 205,
+      "h": 230
+    },
+    "surprised": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 41,
+      "y": 46,
+      "w": 174,
+      "h": 224
+    },
+    "wave": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 32,
+      "y": 47,
+      "w": 199,
+      "h": 223
+    }
+  }
+}

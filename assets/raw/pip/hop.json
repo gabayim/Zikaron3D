@@ -1,0 +1,14 @@
+{
+  "video_id": 431772429746867,
+  "trace_id": "20bb63e6-cfb2-4139-ac05-2424c20f3949",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fa35d1e6d-10c9-4cc4-ac24-0798cc4478f2_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F5b73a6e8-b250-4e57-9cb5-0238165f90eb.jpg",
+  "prompt": "The cute round creature does a joyful little hop straight up and lands with a bouncy squash and stretch, then settles back to its starting pose. Locked static camera, no camera movement, no zoom. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-25T17:18:56Z",
+  "cost_credits": 24
+}

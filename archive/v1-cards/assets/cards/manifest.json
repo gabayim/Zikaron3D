@@ -1,0 +1,66 @@
+{
+  "ruby_gem": {
+    "id": "ruby_gem",
+    "name": "Ruby Gem",
+    "file": "assets/cards/ruby_gem.mp4",
+    "url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F2b1adba6-ef45-4209-a530-1ac91d554cd2_seed0.mp4",
+    "frame0": "assets/cards/ruby_gem_frame0.webp",
+    "optimized": "assets/cards/ruby_gem_optimized.mp4"
+  },
+  "water_drop": {
+    "id": "water_drop",
+    "name": "Water Drop",
+    "file": "assets/cards/water_drop.mp4",
+    "url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F9d1cc64d-e36d-41ed-92cb-849b575bd667_seed0.mp4",
+    "frame0": "assets/cards/water_drop_frame0.webp",
+    "optimized": "assets/cards/water_drop_optimized.mp4"
+  },
+  "cosmic_star": {
+    "id": "cosmic_star",
+    "name": "Cosmic Star",
+    "file": "assets/cards/cosmic_star.mp4",
+    "url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fb1282232-c5c6-45e7-9644-2f5c31ae453b_seed0.mp4",
+    "frame0": "assets/cards/cosmic_star_frame0.webp",
+    "optimized": "assets/cards/cosmic_star_optimized.mp4"
+  },
+  "golden_ring": {
+    "id": "golden_ring",
+    "name": "Golden Ring",
+    "file": "assets/cards/golden_ring.mp4",
+    "url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fc715305b-a6e0-49b1-b04d-b9c15f0f85ad_seed0.mp4",
+    "frame0": "assets/cards/golden_ring_frame0.webp",
+    "optimized": "assets/cards/golden_ring_optimized.mp4"
+  },
+  "crystal_prism": {
+    "id": "crystal_prism",
+    "name": "Crystal Prism",
+    "file": "assets/cards/crystal_prism.mp4",
+    "url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fd19116b6-b73a-44ac-b1b0-45196fe4120f_seed0.mp4",
+    "frame0": "assets/cards/crystal_prism_frame0.webp",
+    "optimized": "assets/cards/crystal_prism_optimized.mp4"
+  },
+  "sacred_flame": {
+    "id": "sacred_flame",
+    "name": "Sacred Flame",
+    "file": "assets/cards/sacred_flame.mp4",
+    "url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fc9a8a91e-a3a6-4f73-bac7-db3c05b2ed99_seed0.mp4",
+    "frame0": "assets/cards/sacred_flame_frame0.webp",
+    "optimized": "assets/cards/sacred_flame_optimized.mp4"
+  },
+  "lightning_orb": {
+    "id": "lightning_orb",
+    "name": "Lightning Orb",
+    "file": "assets/cards/lightning_orb.mp4",
+    "url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fa0eab776-71ed-476b-a600-21dbee221652_seed0.mp4",
+    "frame0": "assets/cards/lightning_orb_frame0.webp",
+    "optimized": "assets/cards/lightning_orb_optimized.mp4"
+  },
+  "emerald_leaf": {
+    "id": "emerald_leaf",
+    "name": "Emerald Leaf",
+    "file": "assets/cards/emerald_leaf.mp4",
+    "url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F7ff7dce0-d44e-4f21-8eb9-5cf8bdcdaabe_seed0.mp4",
+    "frame0": "assets/cards/emerald_leaf_frame0.webp",
+    "optimized": "assets/cards/emerald_leaf_optimized.mp4"
+  }
+}

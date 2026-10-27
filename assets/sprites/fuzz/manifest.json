@@ -1,0 +1,48 @@
+{
+  "character": "fuzz",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 0,
+      "y": 11,
+      "w": 262,
+      "h": 306
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 24,
+      "y": 61,
+      "w": 202,
+      "h": 220
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 13,
+      "rows": 3,
+      "loop": false,
+      "x": 3,
+      "y": 4,
+      "w": 253,
+      "h": 316
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 20,
+      "y": 32,
+      "w": 230,
+      "h": 259
+    }
+  }
+}

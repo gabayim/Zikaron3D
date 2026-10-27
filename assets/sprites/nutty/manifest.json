@@ -1,0 +1,48 @@
+{
+  "character": "nutty",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 24,
+      "y": 0,
+      "w": 218,
+      "h": 285
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 37,
+      "y": 61,
+      "w": 181,
+      "h": 220
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 23,
+      "y": 12,
+      "w": 214,
+      "h": 308
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": -32,
+      "y": 51,
+      "w": 273,
+      "h": 237
+    }
+  }
+}

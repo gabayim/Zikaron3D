@@ -1,0 +1,14 @@
+{
+  "video_id": 431772428519659,
+  "trace_id": "ae4ea836-c8fd-402b-af7c-6274c7d8bb09",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F2e53ca7c-8a4f-4359-8999-bcc66b3fb5a2_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F37f55d65-c87e-4473-9b4e-b4cb1f0d80fd.jpg",
+  "prompt": "The cute round creature gets sad: droops down, eyes look down, shakes its head slowly, then perks back up with a small hopeful smile. Locked static camera, no camera movement, no zoom. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-25T17:18:55Z",
+  "cost_credits": 32
+}

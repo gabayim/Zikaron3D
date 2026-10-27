@@ -1,0 +1,48 @@
+{
+  "character": "grumble",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 6,
+      "y": 0,
+      "w": 258,
+      "h": 290
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 20,
+      "y": 52,
+      "w": 217,
+      "h": 229
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 13,
+      "rows": 3,
+      "loop": false,
+      "x": 15,
+      "y": 0,
+      "w": 221,
+      "h": 320
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 21,
+      "y": 23,
+      "w": 265,
+      "h": 264
+    }
+  }
+}

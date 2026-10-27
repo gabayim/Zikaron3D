@@ -1,0 +1,14 @@
+{
+  "video_id": 431772897178274,
+  "trace_id": "f5898e76-08d5-4a07-987e-64f25aadd3b6",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F5ec775cf-aeba-4707-a840-1020f8d1a9d1_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F75b3badf-5e61-4ab5-bd3e-0cb835817750.jpg",
+  "prompt": "Living ambient scene, locked static camera, no camera movement. Waterfalls flow continuously, mist drifts, floating islands bob gently, glowing fireflies float and twinkle, mushrooms pulse with soft light, clouds drift slowly, grass sways gently in a breeze. Seamless calm loop.",
+  "model": "v6",
+  "duration": 8,
+  "width": 720,
+  "height": 1280,
+  "created_at": "2026-10-25T17:22:44Z",
+  "cost_credits": 64
+}
