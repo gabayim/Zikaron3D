@@ -1,0 +1,14 @@
+{
+  "video_id": 432807216733966,
+  "trace_id": "d2b9e05e-33ed-455d-8e84-b7a631d81f9b",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F7b8b0be0-5c63-4ac1-9523-1f76a0973a1e_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2Fc69e40cf-4394-48fc-8487-331766bf482a.jpg",
+  "prompt": "The cute cosmic creature celebrates: floats up and unleashes a miniature supernova particle burst, rainbow halo glows bright. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:40:03Z",
+  "cost_credits": 32
+}

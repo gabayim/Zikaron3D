@@ -1,0 +1,14 @@
+{
+  "video_id": 432806661749030,
+  "trace_id": "f81717ba-8a70-41c2-a663-a8da6587dc1a",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F25461cb8-9e53-456d-b132-3aa6aace31e3_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F4433b803-b54d-4ea1-a161-69a286beb378.jpg",
+  "prompt": "The cute fairy creature folds its wings forward gently, looks down, then opens wings wide with a bright hopeful smile. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:35:32Z",
+  "cost_credits": 32
+}

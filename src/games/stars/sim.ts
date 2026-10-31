@@ -1,5 +1,6 @@
 import type { Mode } from '../../engine/dda';
 import type { SeededRNG } from '../../engine/SeededRNG';
+import type { StarLevelConfig } from '../../engine/levelTables';
 
 export const STAR = 0;
 export const GOLD = 1;
@@ -33,6 +34,9 @@ export interface SimConfig {
   playerY: number;
   playerR: number;
   mode: Mode;
+  wind?: number;
+  fallSpeedMultiplier?: number;
+  levelConfig?: StarLevelConfig;
 }
 
 export const FEVER_STREAK = 8;
@@ -61,6 +65,8 @@ export class StarSim {
   over = false;
   /** Arcade streak shield: absorbs the next hazard hit or streak-breaking miss, then is spent. */
   shield = false;
+  wind = 0;
+  fallSpeedMultiplier = 1;
   private spawnIn = 0.5;
   private invuln = 0;
   private nextId = 1;
@@ -69,9 +75,12 @@ export class StarSim {
     private cfg: SimConfig,
     private rng: SeededRNG,
   ) {
+    const lvlCfg = cfg.levelConfig;
     this.playerX = cfg.W / 2;
     this.targetX = cfg.W / 2;
-    this.lives = cfg.mode === 'ARCADE' ? 3 : 99;
+    this.lives = cfg.mode === 'ARCADE' ? (lvlCfg?.lives ?? 3) : 99;
+    this.wind = cfg.wind ?? (lvlCfg?.mechanics.includes('wind') ? (lvlCfg.level % 2 === 0 ? 1 : -1) * (cfg.W * 0.12) : 0);
+    this.fallSpeedMultiplier = cfg.fallSpeedMultiplier ?? 1;
   }
 
   /** 0 (gentle) .. 1 (hard). */
@@ -90,13 +99,16 @@ export class StarSim {
   private spawn(kind: ObjKind, x: number, y: number) {
     const { W, H } = this.cfg;
     const d = this.difficulty;
-    const r = (kind === GOLD ? 0.058 : kind === HAZARD ? 0.05 : 0.043) * W * (this.cfg.mode === 'TOYBOX' ? 1.15 : 1);
+    const lvlCfg = this.cfg.levelConfig;
+    const speed = lvlCfg ? lvlCfg.fallSpeed : 0.3 + 0.3 * d;
+    const shrink = lvlCfg?.mechanics.includes('shrink') ? 0.85 : 1;
+    const r = (kind === GOLD ? 0.058 : kind === HAZARD ? 0.05 : 0.043) * W * (this.cfg.mode === 'TOYBOX' ? 1.15 : 1) * shrink;
     this.objs.push({
       id: this.nextId++,
       kind,
       x: clamp(x, r, W - r),
       y,
-      vy: H * (0.3 + 0.3 * d) * this.speedScale * (kind === HAZARD ? 0.92 : 1),
+      vy: H * speed * this.speedScale * (kind === HAZARD ? 0.92 : 1),
       r,
       rot: this.rng.next() * 6.28,
       spin: (this.rng.next() - 0.5) * (kind === HAZARD ? 3 : 2.4),
@@ -110,7 +122,17 @@ export class StarSim {
     const rng = this.rng;
     const margin = W * 0.1;
     const rand = (a: number, b: number) => a + rng.next() * (b - a);
-    const hazardChance = mode === 'SANCTUARY' ? 0 : mode === 'TOYBOX' ? 0.12 : 0.15 + 0.35 * d;
+    const lvlCfg = this.cfg.levelConfig;
+    const hazardChance =
+      mode === 'SANCTUARY'
+        ? 0
+        : lvlCfg
+        ? mode === 'TOYBOX'
+          ? Math.min(0.12, (lvlCfg.hazardPercent / 100) * 0.5)
+          : lvlCfg.hazardPercent / 100
+        : mode === 'TOYBOX'
+        ? 0.12
+        : 0.15 + 0.35 * d;
     const gold = () => (rng.next() < 0.1 ? GOLD : STAR);
     const gap = W * 0.07;
 
@@ -173,7 +195,10 @@ export class StarSim {
     this.spawnIn -= dt;
     if (this.spawnIn <= 0) {
       this.spawnPattern();
-      const base = (1.35 - 0.75 * this.difficulty) * (mode === 'SANCTUARY' ? 1.4 : 1) * (this.fever > 0 ? 0.65 : 1);
+      const lvlCfg = this.cfg.levelConfig;
+      const base = lvlCfg
+        ? lvlCfg.spawnInterval * (mode === 'SANCTUARY' ? 1.3 : 1) * (this.fever > 0 ? 0.65 : 1)
+        : (1.35 - 0.75 * this.difficulty) * (mode === 'SANCTUARY' ? 1.4 : 1) * (this.fever > 0 ? 0.65 : 1);
       this.spawnIn = base;
     }
 
@@ -181,7 +206,10 @@ export class StarSim {
     for (const o of this.objs) {
       o.age += dt;
       o.rot += o.spin * dt;
-      o.y += o.vy * dt;
+      o.y += o.vy * this.fallSpeedMultiplier * dt;
+      if (this.wind) {
+        o.x += this.wind * dt;
+      }
 
       if (this.fever > 0 && o.kind !== HAZARD) {
         const dx = this.playerX - o.x;

@@ -1,0 +1,14 @@
+{
+  "video_id": 432806266399882,
+  "trace_id": "9ee09a7a-671f-41fe-80bf-18507e0ef49f",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F44c97eea-e5d1-41c6-aebc-ed91d723d562_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F820f4288-97f8-4422-9b49-b38ed6797338.jpg",
+  "prompt": "The cute fairy moth creature idles dreamily: soft flutter hover, translucent wings shimmer, gentle breathing bounce. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:32:19Z",
+  "cost_credits": 32
+}

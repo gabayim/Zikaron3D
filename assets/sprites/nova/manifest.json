@@ -1,0 +1,48 @@
+{
+  "character": "nova",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": -4,
+      "y": 8,
+      "w": 272,
+      "h": 312
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 28,
+      "y": 52,
+      "w": 200,
+      "h": 238
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 20,
+      "y": 0,
+      "w": 211,
+      "h": 320
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 38,
+      "y": 56,
+      "w": 188,
+      "h": 225
+    }
+  }
+}

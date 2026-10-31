@@ -1,0 +1,14 @@
+{
+  "video_id": 432807729634482,
+  "trace_id": "14706cfa-cf3b-4612-a1fa-b06d5d87daa9",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F0acd51ba-dfd0-4553-90e5-d383cf95df90_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2Ff195afae-d7f6-4da8-87dd-29642b3a33c1.jpg",
+  "prompt": "The cute Titan creature pops up from below with a springy bounce, lands with squash and stretch, looks around with a big happy smile. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:44:13Z",
+  "cost_credits": 24
+}

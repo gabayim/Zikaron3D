@@ -1,0 +1,14 @@
+{
+  "video_id": 432807622704480,
+  "trace_id": "365d1c79-3141-4b0c-897f-7e9d1b6db384",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F828875d4-1c70-44d1-8690-db5cf21e111c_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F0a8c8dda-8951-466f-b205-f7d1b04ac734.jpg",
+  "prompt": "The cute miniature golem idles firmly: slow heavy breathing bounce, golden runes pulse warmly, blinks with a warm smile. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:43:21Z",
+  "cost_credits": 32
+}

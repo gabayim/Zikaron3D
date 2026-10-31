@@ -1,0 +1,14 @@
+{
+  "video_id": 432802860696454,
+  "trace_id": "cd628879-5be1-4cea-922a-2838da7f1668",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fbb181b3e-de69-4601-a060-69ebb463cd8f_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F4787d8be-d921-4f58-a84f-570edcd4169b.jpg",
+  "prompt": "The cute Coral creature pops up from below with a springy bounce, lands with squash and stretch, looks around with a big happy smile. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:04:36Z",
+  "cost_credits": 24
+}

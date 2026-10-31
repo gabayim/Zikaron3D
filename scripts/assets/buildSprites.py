@@ -165,7 +165,7 @@ def main() -> None:
             "h": ch,
         }
         mb = atlas.size[0] * atlas.size[1] * 4 / 1e6
-        print(f"{name}: {len(paths)} frames, cell {cw}x{ch} at ({lx0},{ly0}), {cols}x{rows}, {atlas.size} ≈{mb:.1f}MB decoded")
+        print(f"{name}: {len(paths)} frames, cell {cw}x{ch} at ({lx0},{ly0}), {cols}x{rows}, {atlas.size} ~{mb:.1f}MB decoded")
 
     (dst / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     shutil.rmtree(tmp)

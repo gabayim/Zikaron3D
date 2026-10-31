@@ -1,0 +1,48 @@
+{
+  "character": "moss",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 30,
+      "y": 4,
+      "w": 191,
+      "h": 270
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 36,
+      "y": 62,
+      "w": 179,
+      "h": 209
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 29,
+      "y": 0,
+      "w": 193,
+      "h": 320
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 33,
+      "y": 41,
+      "w": 184,
+      "h": 236
+    }
+  }
+}

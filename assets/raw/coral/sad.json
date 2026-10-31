@@ -1,0 +1,14 @@
+{
+  "video_id": 432803224193613,
+  "trace_id": "6a1ce16d-1ad0-4aa3-9015-43d3334e7da3",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F06ccf268-d9dc-408c-8612-13aed14665ad_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2Fdf0ee290-922c-4542-aaa0-a00be29b6939.jpg",
+  "prompt": "The cute bubbly creature droops softly, looks down, gentle sigh, then perks back up with a sweet hopeful smile. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:07:33Z",
+  "cost_credits": 32
+}

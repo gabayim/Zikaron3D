@@ -1,0 +1,14 @@
+{
+  "video_id": 432804714412222,
+  "trace_id": "d1147ec5-0827-4b02-bc64-43b0415fd3bb",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F9891c539-5933-4717-a07c-2ede3ea5d8f2_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2Fb2d89161-4e64-48a4-ae2a-803858b7d096.jpg",
+  "prompt": "The cute moss creature idles peacefully: gentle breathing bounce, blinks softly, tiny flower on head sways in a breeze. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:19:41Z",
+  "cost_credits": 32
+}

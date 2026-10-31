@@ -1,12 +1,7 @@
 import { create } from 'zustand';
-import { createMMKV } from 'react-native-mmkv';
+import { createSafeKV, type SafeKV } from '../storage/kv';
 
-let kv: ReturnType<typeof createMMKV> | null = null;
-try {
-  kv = createMMKV({ id: 'zikaron3d-audio' });
-} catch {
-  kv = null;
-}
+const kv: SafeKV = createSafeKV('zikaron3d-audio');
 
 interface AudioSettingsState {
   musicOn: boolean;

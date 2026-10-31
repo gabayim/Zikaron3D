@@ -1,0 +1,48 @@
+{
+  "character": "luna",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": -15,
+      "y": 25,
+      "w": 303,
+      "h": 284
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": -3,
+      "y": 35,
+      "w": 282,
+      "h": 250
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 3,
+      "rows": 13,
+      "loop": false,
+      "x": 6,
+      "y": 19,
+      "w": 267,
+      "h": 301
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": -19,
+      "y": 41,
+      "w": 307,
+      "h": 242
+    }
+  }
+}

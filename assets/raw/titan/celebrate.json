@@ -1,0 +1,14 @@
+{
+  "video_id": 432807902138612,
+  "trace_id": "00d762c8-d3ef-4711-be55-5fe62227608e",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fd6643b92-9109-40d0-a8a8-81d20d1e6040_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F7eb07565-9419-4ac5-a64e-61f0a7524966.jpg",
+  "prompt": "The cute golem celebrates with both arms raised in victory, golden crown horn gleams, runes shine brilliant gold. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:45:37Z",
+  "cost_credits": 32
+}

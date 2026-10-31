@@ -39,3 +39,10 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Asset Generation & Production (PixVerse CLI)
+
+When new visual assets (characters, animations, clips, skins, accessories) need to be produced, changed, edited, or created:
+- Use the **PixVerse CLI**: `npm install -g pixverse`
+- Characters and animation clips are generated against pure chroma-green (`#00FF00`) with locked static camera framing (`pixverse create video ...` or `pixverse create transition ...`).
+- Raw outputs go into `assets/raw/<character>/` and are processed into sprite sheets via `python scripts/assets/buildSprites.py` and registered via `python scripts/assets/buildRegistry.py`.

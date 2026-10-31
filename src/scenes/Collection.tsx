@@ -29,11 +29,16 @@ import { ParticleKind } from '../render/particles';
 import { drawIcon } from '../render/hubDraw';
 import { useAudioSettings } from '../store/audioSettings';
 import { CREATURE_IDS, useProfile, type CreatureId } from '../store/profile';
+import { useInventory } from '../store/inventory';
+import { getSkinById } from '../data/shopCatalog';
+import { WardrobeModal } from '../ui/WardrobeModal';
 
 const PAGES: CreatureId[][] = [
   ['pip', 'bloop', 'fuzz'],
   ['nutty', 'zap', 'grumble'],
   ['frost', 'ember', 'dusk'],
+  ['coral', 'moss', 'bolt'],
+  ['luna', 'nova', 'titan'],
 ];
 
 interface ShelfCreatureProps {
@@ -42,10 +47,24 @@ interface ShelfCreatureProps {
   x: number;
   ground: number;
   size: number;
+  staticPose: boolean;
+  skinId?: string;
+  equippedAura?: string | null;
+  equippedHat?: string | null;
 }
 
-/** One shelf position. Locked creatures are silhouettes and do not decode their atlas. */
-function ShelfCreature({ id, owned, x, ground, size, staticPose }: ShelfCreatureProps & { staticPose: boolean }) {
+/** One shelf position. Reflects equipped cosmetics (skin glow, auras, hats). */
+function ShelfCreature({
+  id,
+  owned,
+  x,
+  ground,
+  size,
+  staticPose,
+  skinId,
+  equippedAura,
+  equippedHat,
+}: ShelfCreatureProps) {
   const sheet = CAST[id];
   const image = useImage(owned ? sheet.sources.idle : null);
   const player = useSpritePlayer(sheet, (x * 17) % 2000, staticPose);
@@ -54,16 +73,41 @@ function ShelfCreature({ id, owned, x, ground, size, staticPose }: ShelfCreature
   const images: (SkImage | null)[] = sheet.order.map((name) => (name === 'idle' ? image : null));
   const halo = useDerivedValue(() => 0.35 + Math.sin(x * 0.02 + player.frame.get() * 0.16) * 0.1);
 
+  const skinDef = skinId ? getSkinById(skinId) : undefined;
+  const glowColor = skinDef ? skinDef.palette.glow : CAST_COLOR[id];
+
   return (
     <Group>
-      <Circle cx={x} cy={ground - h * 0.44} r={w * 0.5} color={CAST_COLOR[id]} opacity={owned ? halo : 0.1} blendMode="plus">
+      {/* Dynamic halo reflecting equipped skin glow */}
+      <Circle cx={x} cy={ground - h * 0.44} r={w * 0.5} color={glowColor} opacity={owned ? halo : 0.1} blendMode="plus">
         <BlurMask blur={18} style="normal" />
       </Circle>
+
+      {/* Equipped Aura Ring */}
+      {owned && equippedAura && (
+        <Circle cx={x} cy={ground - h * 0.44} r={w * 0.65} color="#F59E0B" opacity={0.35} blendMode="plus" style="stroke" strokeWidth={4}>
+          <BlurMask blur={10} style="normal" />
+        </Circle>
+      )}
+
+      {/* Shadow */}
       <Oval x={x - w * 0.32} y={ground - h * 0.025} width={w * 0.64} height={h * 0.07} color="rgba(8,1,25,0.55)">
         <BlurMask blur={8} style="normal" />
       </Oval>
+
       {owned ? (
-        <SpriteCharacter sheet={sheet} images={images} clip={player.clip} frame={player.frame} x={x - w / 2} y={ground - h} height={h} />
+        <Group>
+          <SpriteCharacter sheet={sheet} images={images} clip={player.clip} frame={player.frame} x={x - w / 2} y={ground - h} height={h} />
+          {/* Equipped Hat / Crown Indicator */}
+          {equippedHat && (
+            <Group transform={[{ translateY: ground - h - 10 }]}>
+              <Circle cx={x} cy={0} r={6} color="#F59E0B" opacity={0.9} />
+              <Circle cx={x} cy={0} r={10} color="#FBBF24" opacity={0.4} blendMode="plus">
+                <BlurMask blur={6} style="normal" />
+              </Circle>
+            </Group>
+          )}
+        </Group>
       ) : (
         <Group>
           <Circle cx={x} cy={ground - h * 0.54} r={w * 0.28} color="#160A31" />
@@ -75,12 +119,25 @@ function ShelfCreature({ id, owned, x, ground, size, staticPose }: ShelfCreature
   );
 }
 
-export default function Collection({ onBack }: { onBack: () => void }) {
+export default function Collection({
+  onBack,
+  onAchievements,
+  onShop,
+}: {
+  onBack: () => void;
+  onAchievements?: () => void;
+  onShop?: () => void;
+}) {
   const { width: W, height: H } = useWindowDimensions();
   const collection = useProfile((s) => s.collection);
   const xp = useProfile((s) => s.xp);
   const reduceMotion = useAudioSettings((s) => s.reduceMotion);
   const [page, setPage] = useState(0);
+  const [wardrobeCreature, setWardrobeCreature] = useState<CreatureId | null>(null);
+
+  const equippedSkins = useInventory((s) => s.equippedSkins);
+  const equippedAccessories = useInventory((s) => s.equippedAccessories);
+
   const juice = useJuice(W, H, reduceMotion ? 6 : 14);
   const slots = PAGES[page];
   const floor = H * 0.76;
@@ -119,19 +176,30 @@ export default function Collection({ onBack }: { onBack: () => void }) {
       c.drawCircle(W / 2 + (i - 1) * 16, H * 0.9, i === page ? 5 : 3.5, paint);
     }
 
+    // Achievements icon at top right
+    if (onAchievements) {
+      paint.setColor(Skia.Color('rgba(26,15,61,0.7)'));
+      c.drawCircle(W - 35, 72, 22, paint);
+      drawIcon(c, 'star', W - 35, 72, 13, '#FFD36E', 0.95);
+    }
+
     // XP spark at the top is deliberately just a visual trace of earned progression.
     if (xp > 0) {
       paint.setColor(Skia.Color('#FFD36E'));
       paint.setAlphaf(0.8);
-      c.drawCircle(W - 35, 72, 7, paint);
+      c.drawCircle(W - 75, 72, 7, paint);
     }
     return rec.finishRecordingAsPicture();
-  }, [W, H, page, ownedCount, xp]);
+  }, [W, H, page, ownedCount, xp, onAchievements]);
 
   const onTap = useCallback(
     (x: number, y: number) => {
       if (Math.hypot(x - 42, y - 72) < 34) {
         onBack();
+        return;
+      }
+      if (onAchievements && Math.hypot(x - (W - 35), y - 72) < 34) {
+        onAchievements();
         return;
       }
       if (x < W * 0.18 && page > 0) {
@@ -141,15 +209,18 @@ export default function Collection({ onBack }: { onBack: () => void }) {
       } else {
         const index = xs.findIndex((cx) => Math.abs(x - cx) < W * 0.13 && y > H * 0.25 && y < H * 0.85);
         if (index >= 0 && ownedSet.has(slots[index])) {
+          const selected = slots[index];
           const cx = xs[index];
           juice.emit({ x: cx, y: floor - size * 0.45, kind: ParticleKind.Sparkle, count: 18 });
           juice.emit({ x: cx, y: floor - size * 0.45, kind: ParticleKind.Ring, count: 2 });
           sfx.play('sparkle', 0.6);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          // Open Wardrobe Modal for this creature
+          setWardrobeCreature(selected);
         }
       }
     },
-    [W, H, page, slots, ownedSet, floor, size, xs, juice, onBack],
+    [W, H, page, slots, ownedSet, floor, size, xs, juice, onBack, onAchievements],
   );
   const tap = useTapGesture({ runOnJS: true, onActivate: (event) => onTap(event.x, event.y) });
 
@@ -183,6 +254,9 @@ export default function Collection({ onBack }: { onBack: () => void }) {
               x={xs[index]}
               ground={floor}
               size={size}
+              skinId={equippedSkins[id]}
+              equippedAura={equippedAccessories.aura}
+              equippedHat={equippedAccessories.hat}
             />
           ))}
           <Picture picture={juice.front} />
@@ -193,6 +267,14 @@ export default function Collection({ onBack }: { onBack: () => void }) {
           <Rect x={0} y={0} width={W} height={H} color="white" opacity={juice.flash} blendMode="plus" />
         </Canvas>
       </GestureDetector>
+
+      {/* Wardrobe customization modal */}
+      <WardrobeModal
+        visible={wardrobeCreature !== null}
+        creatureId={wardrobeCreature}
+        onClose={() => setWardrobeCreature(null)}
+        onOpenShop={onShop}
+      />
     </View>
   );
 }

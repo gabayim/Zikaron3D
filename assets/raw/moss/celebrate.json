@@ -1,0 +1,14 @@
+{
+  "video_id": 432804983074149,
+  "trace_id": "3d84fbf1-b8b4-48b1-8796-2e31ee90c9b5",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F30f013c3-3d31-4923-af8d-9aeb66b9993f_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F1de58409-9fa7-4592-81fc-018c458c3330.jpg",
+  "prompt": "The cute moss creature celebrates excitedly: leaps up with a full 360 spin, tiny petals burst with light, cheers happily. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:21:52Z",
+  "cost_credits": 32
+}

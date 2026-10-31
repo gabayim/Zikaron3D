@@ -1,3 +1,6 @@
+import { useAchievements } from '../../store/achievements';
+import { useEconomy } from '../../store/economy';
+import { useSeasonPass } from '../../store/seasonPass';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
@@ -14,6 +17,7 @@ import {
   Picture,
   RadialGradient,
   Rect,
+  RoundedRect,
   Skia,
   useImage,
   vec,
@@ -31,15 +35,16 @@ import { useJuice } from '../../fx/useJuice';
 import { SeededRNG } from '../../engine/SeededRNG';
 import { dailyKey } from '../../engine/daily';
 import { SkillTracker } from '../../engine/dda';
+import { getOrbLevel } from '../../engine/levelTables';
 import { PhysicsWorld, type MergeEvent } from '../../engine/physics';
 import { useProfile, type CreatureId } from '../../store/profile';
-import { getWorld } from '../../worlds';
+import { getWorld, type WorldId } from '../../worlds';
 import { ModeIcon } from '../../ui/ModeIcon';
 import { ParentalGate } from '../../ui/ParentalGate';
 import { useParentalModeCycle } from '../../ui/useParentalModeCycle';
+import { LevelSplash } from '../../ui/LevelSplash';
 import { pickNext, radiiFor, SPRITE_PER_RADIUS, TIERS, TOP_TIER } from './logic';
 
-const WORLD = getWorld('crystal');
 const STEP = 1 / 120;
 const STRIDE = 6;
 const HUD_Y = 78;
@@ -106,18 +111,38 @@ function useTierImages(loadUpTo: number) {
   return images;
 }
 
-export default function OrbMerge({ daily = false }: { daily?: boolean }) {
+export default function OrbMerge({
+  daily = false,
+  startLevel = 1,
+  worldId = 'crystal',
+}: {
+  daily?: boolean;
+  startLevel?: number;
+  worldId?: WorldId;
+}) {
+  const worldDef = useMemo(() => getWorld(worldId), [worldId]);
   const { width: W, height: H } = useWindowDimensions();
   const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
   const mode = useProfile((s) => s.mode);
   const calm = mode === 'SANCTUARY';
-  useMusic(WORLD.music, calm ? 0.3 : 0.4);
+  useMusic(worldDef.music, calm ? 0.3 : 0.4);
   const juice = useJuice(W, H, 16);
+
+  // ---- level progression --------------------------------------------------
+  const level = useRef(startLevel);
+  const [currentLevel, setCurrentLevel] = useState(startLevel);
+  const [splashTrigger, setSplashTrigger] = useState(0);
+  const levelConfig = useMemo(() => getOrbLevel(currentLevel), [currentLevel]);
+  const dropsCount = useRef(0);
+  const [dropsLeft, setDropsLeft] = useState<number | null>(levelConfig.maxDrops);
+  const targetAchieved = useRef(0);
 
   // ---- layout -------------------------------------------------------------
   const radii = useMemo(() => radiiFor(W), [W]);
-  const left = W * 0.07;
-  const right = W * 0.93;
+  const bowlFactor = (mode === 'ARCADE' ? levelConfig.bowlWidthPercent : Math.max(90, levelConfig.bowlWidthPercent)) / 100;
+  const bowlWidth = W * 0.86 * bowlFactor;
+  const left = (W - bowlWidth) / 2;
+  const right = (W + bowlWidth) / 2;
   const floor = H * 0.9;
   const lineY = H * 0.27;
   const dropY = H * 0.2;
@@ -133,7 +158,7 @@ export default function OrbMerge({ daily = false }: { daily?: boolean }) {
   const world = useRef<PhysicsWorld | null>(null);
   const [rng] = useState(() => new SeededRNG(daily ? `orbs-${dailyKey()}` : `${Date.now()}`));
   const skill = useRef(new SkillTracker());
-  const phase = useRef<'play' | 'over'>('play');
+  const phase = useRef<'play' | 'over' | 'between'>('play');
   const held = useRef(0);
   const next = useRef(0);
   const aimX = useRef(W / 2);
@@ -158,12 +183,27 @@ export default function OrbMerge({ daily = false }: { daily?: boolean }) {
     );
   }, []);
 
-  const newGame = useCallback(() => {
+  const newGame = useCallback((targetLvl?: number) => {
+    const lvl = targetLvl ?? level.current;
+    level.current = lvl;
+    setCurrentLevel(lvl);
+    setSplashTrigger((k) => k + 1);
+    const cfg = getOrbLevel(lvl);
+    dropsCount.current = 0;
+    setDropsLeft(cfg.maxDrops);
+    targetAchieved.current = 0;
+
     epoch.current += 1;
     timeouts.current.forEach(clearTimeout);
     timeouts.current = [];
-    world.current = new PhysicsWorld({ left, right, floor }, radii);
+
     const m = useProfile.getState().mode;
+    const bFactor = (m === 'ARCADE' ? cfg.bowlWidthPercent : Math.max(90, cfg.bowlWidthPercent)) / 100;
+    const bW = W * 0.86 * bFactor;
+    const l = (W - bW) / 2;
+    const r = (W + bW) / 2;
+
+    world.current = new PhysicsWorld({ left: l, right: r, floor }, radii);
     if (m === 'SANCTUARY') world.current.gravity = 1700;
     phase.current = 'play';
     overflow.current = 0;
@@ -177,10 +217,10 @@ export default function OrbMerge({ daily = false }: { daily?: boolean }) {
     setMaxTier(0);
     setCombo(0);
     setNextTier(next.current);
-  }, [left, right, floor, radii, danger, rng]);
+  }, [W, floor, radii, danger, rng]);
 
   useEffect(() => {
-    const start = setTimeout(newGame, 0);
+    const start = setTimeout(() => newGame(level.current), 0);
     return () => {
       clearTimeout(start);
       epoch.current += 1;
@@ -221,6 +261,9 @@ export default function OrbMerge({ daily = false }: { daily?: boolean }) {
       const profile = useProfile.getState();
       const discovered = !e.ultimate && t <= TOP_TIER && profile.unlockCreature(TIERS[t] as CreatureId);
       profile.awardXp(6 + t * 4 + (discovered ? 26 : 0));
+      useEconomy.getState().earnStardust(1 + Math.floor(t / 2));
+      useSeasonPass.getState().addSeasonXp(10 + t * 2);
+      useAchievements.getState().setMetricMax('orb_tier', t);
       if (!e.ultimate && t > maxRef.current) {
         maxRef.current = t;
         setMaxTier(t);
@@ -230,12 +273,40 @@ export default function OrbMerge({ daily = false }: { daily?: boolean }) {
         profile.awardXp(80);
       }
       if (t === TOP_TIER || e.ultimate) {
+        useEconomy.getState().earnCrystals(3, true);
         juice.emit({ x: W / 2, y: H * 0.45, kind: ParticleKind.Confetti, count: 220 });
         juice.doFlash(0.45 * k, 800);
         sfx.play('chime', 1, 1.2);
       }
+
+      // Check level target tier
+      if (t >= levelConfig.targetTier && phase.current === 'play') {
+        targetAchieved.current += 1;
+        if (targetAchieved.current >= levelConfig.targetCount) {
+          phase.current = 'between';
+          const isFirstClear = currentLevel > profile.orbLevel;
+          profile.setOrbLevel(currentLevel);
+          profile.awardXp(35 + currentLevel * 8);
+          useEconomy.getState().earnStardust(levelConfig.stardustReward + (isFirstClear ? levelConfig.firstClearBonus : 0));
+          useSeasonPass.getState().addSeasonXp(20 + currentLevel * 2);
+          useAchievements.getState().setMetricMax('orb_level', currentLevel + 1);
+
+          juice.emit({ x: W / 2, y: H * 0.4, kind: ParticleKind.Confetti, count: calm ? 90 : 220 });
+          juice.emit({ x: W / 2, y: H * 0.45, kind: ParticleKind.Ring, count: 4 });
+          juice.doFlash(0.4 * k, 700);
+          juice.doShake(10 * k, 400);
+          sfx.play('chime', 1, 1.2);
+          sfx.play('sparkle', 0.8);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+          later(() => {
+            const nextLvl = Math.min(30, level.current + 1);
+            newGame(nextLvl);
+          }, 2400);
+        }
+      }
     },
-    [juice, W, H, daily],
+    [juice, W, H, daily, levelConfig, currentLevel, calm, later, newGame],
   );
 
   const gameOver = useCallback(() => {
@@ -361,7 +432,21 @@ export default function OrbMerge({ daily = false }: { daily?: boolean }) {
     setNextTier(next.current);
     sfx.play('boing', 0.35, 1.3);
     Haptics.selectionAsync();
-  }, [radii, left, right, dropY, present, rng]);
+
+    // Drop tracking & limits
+    dropsCount.current += 1;
+    if (levelConfig.maxDrops !== null) {
+      const remaining = Math.max(0, levelConfig.maxDrops - dropsCount.current);
+      setDropsLeft(remaining);
+      if (remaining === 0 && mode === 'ARCADE' && targetAchieved.current < levelConfig.targetCount) {
+        later(() => {
+          if (phase.current === 'play' && targetAchieved.current < levelConfig.targetCount) {
+            gameOver();
+          }
+        }, 2200);
+      }
+    }
+  }, [radii, left, right, dropY, present, rng, levelConfig, mode, later, gameOver]);
 
   const onModeButton = useRef(false);
   const pan = usePanGesture({
@@ -414,10 +499,11 @@ export default function OrbMerge({ daily = false }: { daily?: boolean }) {
   return (
     <View style={styles.root}>
       <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
+      <LevelSplash level={currentLevel} gameTitle="ORB MERGE" worldName={worldDef.id.replace('_', ' ')} triggerKey={splashTrigger} />
       <GestureDetector gesture={pan}>
         <Canvas style={StyleSheet.absoluteFill}>
           <Group transform={juice.worldTransform}>
-            <WorldBackdrop W={W} H={H} still={WORLD.still} time={juice.time} boost={juice.boost} light={{ x: 0.5, y: 0.08 }} />
+            <WorldBackdrop W={W} H={H} still={worldDef.still} time={juice.time} boost={juice.boost} light={{ x: 0.5, y: 0.08 }} />
             <Picture picture={juice.back} />
 
             {/* Glass jar (back) */}
@@ -444,12 +530,36 @@ export default function OrbMerge({ daily = false }: { daily?: boolean }) {
           </Group>
 
           {/* HUD: evolution ladder, next creature, mode. Icons only. */}
-          {TIERS.map((id, t) => (
-            <Group key={id}>
-              <Circle cx={orbX(t)} cy={HUD_Y} r={t === maxTier ? 10 : 8} color="rgba(255,255,255,0.35)" style="stroke" strokeWidth={2.5} />
-              {t <= maxTier && <Circle cx={orbX(t)} cy={HUD_Y} r={t === maxTier ? 8 : 6.5} color={CAST_COLOR[id]} />}
+          {TIERS.map((id, t) => {
+            const isTarget = t === levelConfig.targetTier;
+            return (
+              <Group key={id}>
+                <Circle
+                  cx={orbX(t)}
+                  cy={HUD_Y}
+                  r={isTarget ? 11 : t === maxTier ? 10 : 8}
+                  color={isTarget ? '#FFD84D' : 'rgba(255,255,255,0.35)'}
+                  style="stroke"
+                  strokeWidth={isTarget ? 3 : 2.5}
+                />
+                {t <= maxTier && <Circle cx={orbX(t)} cy={HUD_Y} r={t === maxTier ? 8 : 6.5} color={CAST_COLOR[id]} />}
+                {isTarget && <Circle cx={orbX(t)} cy={HUD_Y - 17} r={3} color="#FFD84D" />}
+              </Group>
+            );
+          })}
+          {mode === 'ARCADE' && dropsLeft !== null && levelConfig.maxDrops !== null && (
+            <Group transform={[{ translateX: W * 0.5 }, { translateY: HUD_Y + 16 }]}>
+              <RoundedRect x={-32} y={-3} width={64} height={6} r={3} color="rgba(255,255,255,0.2)" />
+              <RoundedRect
+                x={-32}
+                y={-3}
+                width={Math.max(0, 64 * (dropsLeft / levelConfig.maxDrops))}
+                height={6}
+                r={3}
+                color={dropsLeft <= 5 ? '#FF453A' : '#30D158'}
+              />
             </Group>
-          ))}
+          )}
           <Circle cx={W - 42} cy={HUD_Y} r={24} color="rgba(26,15,61,0.6)" />
           <ModeIcon mode={mode} x={W - 42} y={HUD_Y} />
           <Circle cx={W - 42} cy={HUD_Y + 56} r={20} color="rgba(26,15,61,0.6)" />

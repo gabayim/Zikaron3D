@@ -1,15 +1,10 @@
 import 'react-native-url-polyfill/auto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { createMMKV } from 'react-native-mmkv';
+import { createSafeKV, type SafeKV } from '../storage/kv';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { create } from 'zustand';
 
-let kv: ReturnType<typeof createMMKV> | null = null;
-try {
-  kv = createMMKV({ id: 'zikaron3d-auth' });
-} catch {
-  kv = null;
-}
+const kv: SafeKV = createSafeKV('zikaron3d-auth');
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;

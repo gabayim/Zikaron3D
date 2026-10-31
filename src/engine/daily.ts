@@ -1,7 +1,7 @@
 import { SeededRNG } from './SeededRNG';
 import type { WorldId } from '../worlds';
 
-const DAILY_WORLDS: WorldId[] = ['meadow', 'crystal', 'candy'];
+const DAILY_WORLDS: WorldId[] = ['meadow', 'crystal', 'candy', 'deep_sea', 'grove', 'circuit', 'summit'];
 
 export function dailyKey(date = new Date()): string {
   return date.toISOString().slice(0, 10);

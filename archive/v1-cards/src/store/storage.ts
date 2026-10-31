@@ -1,79 +1,38 @@
-import { createMMKV } from 'react-native-mmkv';
+import { createSafeKV, type SafeKV } from '../../../src/storage/kv';
 
 /**
  * MMKV persistence wrapper with seamless in-memory fallback.
  * Ensures zero crashes during unit tests, Node scripts, or initial native boots.
  */
 class SafeStorage {
-  private mmkv: ReturnType<typeof createMMKV> | null = null;
-  private memoryMap = new Map<string, string>();
+  private kv: SafeKV;
 
   constructor() {
-    try {
-      this.mmkv = createMMKV({ id: 'zikaron3d-player-storage' });
-    } catch {
-      // Running in an environment without C++ Nitro bindings (e.g. Node / web / mock)
-      this.mmkv = null;
-    }
+    this.kv = createSafeKV('zikaron3d-player-storage');
   }
 
   public getString(key: string, defaultValue = ''): string {
-    try {
-      if (this.mmkv) {
-        return this.mmkv.getString(key) ?? defaultValue;
-      }
-    } catch {}
-    return this.memoryMap.get(key) ?? defaultValue;
+    return this.kv.getString(key) ?? defaultValue;
   }
 
   public setString(key: string, value: string): void {
-    try {
-      if (this.mmkv) {
-        this.mmkv.set(key, value);
-        return;
-      }
-    } catch {}
-    this.memoryMap.set(key, value);
+    this.kv.set(key, value);
   }
 
   public getNumber(key: string, defaultValue = 0): number {
-    try {
-      if (this.mmkv) {
-        return this.mmkv.getNumber(key) ?? defaultValue;
-      }
-    } catch {}
-    const val = this.memoryMap.get(key);
-    return val !== undefined ? Number(val) : defaultValue;
+    return this.kv.getNumber(key) ?? defaultValue;
   }
 
   public setNumber(key: string, value: number): void {
-    try {
-      if (this.mmkv) {
-        this.mmkv.set(key, value);
-        return;
-      }
-    } catch {}
-    this.memoryMap.set(key, String(value));
+    this.kv.set(key, value);
   }
 
   public getBoolean(key: string, defaultValue = false): boolean {
-    try {
-      if (this.mmkv) {
-        return this.mmkv.getBoolean(key) ?? defaultValue;
-      }
-    } catch {}
-    const val = this.memoryMap.get(key);
-    return val !== undefined ? val === 'true' : defaultValue;
+    return this.kv.getBoolean(key) ?? defaultValue;
   }
 
   public setBoolean(key: string, value: boolean): void {
-    try {
-      if (this.mmkv) {
-        this.mmkv.set(key, value);
-        return;
-      }
-    } catch {}
-    this.memoryMap.set(key, String(value));
+    this.kv.set(key, value);
   }
 }
 

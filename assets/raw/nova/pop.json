@@ -1,0 +1,14 @@
+{
+  "video_id": 432807056469971,
+  "trace_id": "e0ec863c-8ae7-435b-ae4d-ff3213ab96eb",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F5cf572e8-19aa-4bb4-8e91-b4f6b71cc316_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F6b95627a-5be2-44c8-8bef-373ddab21ca2.jpg",
+  "prompt": "The cute Nova creature pops up from below with a springy bounce, lands with squash and stretch, looks around with a big happy smile. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:38:45Z",
+  "cost_credits": 24
+}

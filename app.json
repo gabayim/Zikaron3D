@@ -33,9 +33,20 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      ["expo-audio", { "microphonePermission": false, "recordAudioAndroid": false }],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
       "expo-asset",
       "expo-apple-authentication"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "484d0ed3-4dd1-4ec7-812a-3d58773440f1"
+      }
+    }
   }
 }

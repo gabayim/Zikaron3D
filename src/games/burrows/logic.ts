@@ -2,7 +2,22 @@ import type { SeededRNG } from '../../engine/SeededRNG';
 import { CAST_COLOR } from '../../render/castColors';
 
 /** Distinct colour AND silhouette per creature (accessibility). Pip is the mascot, not a burrow resident. */
-export const SPECIES_POOL = ['bloop', 'fuzz', 'nutty', 'zap', 'grumble', 'frost', 'ember', 'dusk'] as const;
+export const SPECIES_POOL = [
+  'bloop',
+  'bolt',
+  'coral',
+  'dusk',
+  'ember',
+  'frost',
+  'fuzz',
+  'grumble',
+  'luna',
+  'moss',
+  'nova',
+  'nutty',
+  'titan',
+  'zap',
+] as const;
 
 export const SPECIES_COLOR = CAST_COLOR;
 
@@ -10,28 +25,64 @@ export interface Round {
   id: number;
   /** Distinct species used this round. */
   species: string[];
-  /** Species per burrow, row-major. Every species appears exactly twice. */
+  /** Species per burrow, row-major. Every species appears exactly twice (or thrice if triple). */
   board: string[];
+  isTriple?: boolean;
+  decoyCount?: number;
 }
 
-export function makeRound(rng: SeededRNG, id: number, pairs: number): Round {
+export interface MakeRoundOptions {
+  isTriple?: boolean;
+  decoyCount?: number;
+}
+
+export function makeRound(
+  rng: SeededRNG,
+  id: number,
+  pairs: number,
+  options?: MakeRoundOptions,
+): Round {
+  const isTriple = options?.isTriple ?? false;
+  const decoyCount = options?.decoyCount ?? 0;
   const species = rng.sample(SPECIES_POOL, pairs);
-  const board = rng.shuffle([...species, ...species]);
-  return { id, species, board };
+
+  const copies: string[] = isTriple
+    ? [...species, ...species, ...species]
+    : [...species, ...species];
+
+  for (let i = 0; i < decoyCount; i++) {
+    copies.push('decoy');
+  }
+
+  const board = rng.shuffle(copies);
+  return { id, species, board, isTriple, decoyCount };
 }
 
 /** Burrow count per row for a board of n burrows. */
 export function layoutRows(n: number): number[] {
-  switch (n) {
-    case 6:
-      return [3, 3];
-    case 8:
-      return [3, 3, 2];
-    case 10:
-      return [3, 4, 3];
-    default:
-      return [3, 3, 3, 3];
+  if (n <= 6) return [3, 3];
+  if (n <= 8) return [4, 4];
+  if (n <= 9) return [3, 3, 3];
+  if (n <= 10) return [3, 4, 3];
+  if (n <= 12) return [4, 4, 4];
+  if (n <= 14) return [4, 3, 4, 3];
+  if (n <= 15) return [5, 5, 5];
+  if (n <= 16) return [4, 4, 4, 4];
+  if (n <= 18) return [5, 4, 5, 4];
+  if (n <= 20) return [5, 5, 5, 5];
+  if (n <= 24) return [6, 6, 6, 6];
+
+  // Dynamic fallback for any board size
+  const cols = Math.min(5, Math.ceil(Math.sqrt(n)));
+  const rowsCount = Math.ceil(n / cols);
+  const rows: number[] = [];
+  let remaining = n;
+  for (let r = 0; r < rowsCount; r++) {
+    const take = Math.min(cols, Math.ceil(remaining / (rowsCount - r)));
+    rows.push(take);
+    remaining -= take;
   }
+  return rows;
 }
 
 export interface BurrowSlot {

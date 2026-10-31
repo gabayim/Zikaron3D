@@ -21,3 +21,8 @@ Plan lives in `ZIKARON3D_BLUEPRINT.md` (single plan file). Do not create other p
 4. RULES
  - React Compiler lint: use `sv.set()/get()` not `sv.value =` outside worklets.
  - Verify Expo APIs against docs for the installed SDK before use.
+
+5. ASSET GENERATION & PRODUCTION
+ - When new visual assets (characters, animations, clips, skins, accessories) need to be created, changed, or edited, use the PixVerse CLI (`npm install -g pixverse`).
+ - Generate raw animation clips on pure chroma green (`#00FF00`) with locked static camera using PixVerse CLI (`pixverse create video ...` / `pixverse create transition ...`).
+ - Process raw media from `assets/raw/<character>` into WebP sprite atlases with `python scripts/assets/buildSprites.py` and register via `python scripts/assets/buildRegistry.py`.

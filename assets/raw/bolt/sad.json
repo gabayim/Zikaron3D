@@ -1,0 +1,14 @@
+{
+  "video_id": 432806017874048,
+  "trace_id": "04097802-30a0-4431-b318-88c76d6b0c4e",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Ff727d948-48d2-4223-a143-69a1a30c2708_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F27bcb405-31f8-4eed-9d28-9a4ca1d78c51.jpg",
+  "prompt": "The cute robot powers down slightly, antenna dims, head tilts, then beeps back to life with a bright smile. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:30:17Z",
+  "cost_credits": 32
+}

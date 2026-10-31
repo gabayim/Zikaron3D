@@ -118,7 +118,15 @@ export function drawHalo(canvas: SkCanvas, cx: number, cy: number, rx: number, r
 }
 
 /** Icon-only HUD glyphs (no text anywhere). All drawn centred on (cx, cy) with half-size s. */
-export function drawIcon(canvas: SkCanvas, kind: 'avatar' | 'star' | 'gear' | 'back' | 'cup' | 'door' | 'trash', cx: number, cy: number, s: number, color: string, alpha: number) {
+export function drawIcon(
+  canvas: SkCanvas,
+  kind: 'avatar' | 'star' | 'gear' | 'back' | 'cup' | 'door' | 'trash' | 'bag' | 'pass' | 'levels' | 'grid',
+  cx: number,
+  cy: number,
+  s: number,
+  color: string,
+  alpha: number,
+) {
   'worklet';
   const p = Skia.Paint();
   p.setAntiAlias(true);
@@ -142,6 +150,21 @@ export function drawIcon(canvas: SkCanvas, kind: 'avatar' | 'star' | 'gear' | 'b
       .close()
       .build();
     canvas.drawPath(body, fill);
+  } else if (kind === 'pass') {
+    const crown = Skia.PathBuilder.Make()
+      .moveTo(cx - s * 0.7, cy + s * 0.45)
+      .lineTo(cx - s * 0.75, cy - s * 0.25)
+      .lineTo(cx - s * 0.28, cy)
+      .lineTo(cx, cy - s * 0.5)
+      .lineTo(cx + s * 0.28, cy)
+      .lineTo(cx + s * 0.75, cy - s * 0.25)
+      .lineTo(cx + s * 0.7, cy + s * 0.45)
+      .close()
+      .build();
+    canvas.drawPath(crown, fill);
+    canvas.drawCircle(cx, cy - s * 0.65, s * 0.13, fill);
+    canvas.drawCircle(cx - s * 0.75, cy - s * 0.4, s * 0.11, fill);
+    canvas.drawCircle(cx + s * 0.75, cy - s * 0.4, s * 0.11, fill);
   } else if (kind === 'star') {
     const b = Skia.PathBuilder.Make();
     for (let i = 0; i < 10; i++) {
@@ -180,6 +203,23 @@ export function drawIcon(canvas: SkCanvas, kind: 'avatar' | 'star' | 'gear' | 'b
     canvas.drawLine(cx - s * 0.2, cy, cx + s * 0.8, cy, p);
     canvas.drawLine(cx + s * 0.8, cy, cx + s * 0.4, cy - s * 0.4, p);
     canvas.drawLine(cx + s * 0.8, cy, cx + s * 0.4, cy + s * 0.4, p);
+  } else if (kind === 'bag') {
+    const bagBody = Skia.PathBuilder.Make()
+      .moveTo(cx - s * 0.55, cy - s * 0.35)
+      .lineTo(cx + s * 0.55, cy - s * 0.35)
+      .lineTo(cx + s * 0.65, cy + s * 0.65)
+      .lineTo(cx - s * 0.65, cy + s * 0.65)
+      .close()
+      .build();
+    canvas.drawPath(bagBody, p);
+    canvas.drawArc(Skia.XYWHRect(cx - s * 0.3, cy - s * 0.75, s * 0.6, s * 0.6), 180, 180, false, p);
+  } else if (kind === 'grid' || kind === 'levels') {
+    const d = s * 0.38;
+    const r = s * 0.16;
+    canvas.drawCircle(cx - d, cy - d, r, fill);
+    canvas.drawCircle(cx + d, cy - d, r, fill);
+    canvas.drawCircle(cx - d, cy + d, r, fill);
+    canvas.drawCircle(cx + d, cy + d, r, fill);
   } else if (kind === 'trash') {
     canvas.drawLine(cx - s * 0.8, cy - s * 0.55, cx + s * 0.8, cy - s * 0.55, p);
     canvas.drawLine(cx - s * 0.3, cy - s * 0.55, cx - s * 0.3, cy - s * 0.85, p);

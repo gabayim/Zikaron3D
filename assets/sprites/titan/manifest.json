@@ -1,0 +1,48 @@
+{
+  "character": "titan",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 20,
+      "y": 40,
+      "w": 220,
+      "h": 253
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 43,
+      "y": 65,
+      "w": 171,
+      "h": 216
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 29,
+      "y": 51,
+      "w": 191,
+      "h": 269
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 32,
+      "y": 56,
+      "w": 194,
+      "h": 230
+    }
+  }
+}

@@ -1,11 +1,6 @@
-import { createMMKV } from 'react-native-mmkv';
+import { createSafeKV, type SafeKV } from '../storage/kv';
 
-let kv: ReturnType<typeof createMMKV> | null = null;
-try {
-  kv = createMMKV({ id: 'zikaron3d-compliance' });
-} catch {
-  kv = null;
-}
+const kv: SafeKV = createSafeKV('zikaron3d-compliance');
 
 const SESSION_MS = 10 * 60 * 1000;
 

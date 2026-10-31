@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Group, LinearGradient, Oval, Path, RadialGradient, Skia, vec, type SkImage } from '@shopify/react-native-skia';
+import { Circle, Group, LinearGradient, Oval, Path, RadialGradient, Skia, vec, type SkImage } from '@shopify/react-native-skia';
 import { Easing, useDerivedValue, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { SpriteCharacter, useSpritePlayer } from '../../render/SpriteCharacter';
 import type { CharacterSheet } from '../../render/sprites';
@@ -30,10 +30,25 @@ interface Props {
   /** Softer motion (Sanctuary). */
   calm: boolean;
   register: (api: BurrowApi) => void;
+  isDecoy?: boolean;
+  isShadow?: boolean;
 }
 
 /** One dirt burrow with a creature that pops out of it. All animation runs on the UI thread. */
-export function Burrow({ cx, cy, w, sheet, idle, celebrate, accent, phaseMs, calm, register }: Props) {
+export function Burrow({
+  cx,
+  cy,
+  w,
+  sheet,
+  idle,
+  celebrate,
+  accent,
+  phaseMs,
+  calm,
+  register,
+  isDecoy = false,
+  isShadow = false,
+}: Props) {
   const spriteH = w * SPRITE_H;
   const spriteW = (spriteH * sheet.frameWidth) / sheet.frameHeight;
   const holeH = w * HOLE_H;
@@ -48,7 +63,10 @@ export function Burrow({ cx, cy, w, sheet, idle, celebrate, accent, phaseMs, cal
   const sy = useSharedValue(1);
   const shakeX = useSharedValue(0);
   const glow = useSharedValue(0);
-  const spring = calm ? { damping: 16, stiffness: 120, mass: 1 } : { damping: 9, stiffness: 170, mass: 0.8 };
+  const spring = useMemo(
+    () => (calm ? { damping: 16, stiffness: 120, mass: 1 } : { damping: 9, stiffness: 170, mass: 0.8 }),
+    [calm],
+  );
 
   useEffect(() => {
     register({
@@ -76,9 +94,7 @@ export function Burrow({ cx, cy, w, sheet, idle, celebrate, accent, phaseMs, cal
         rise.set(withSequence(withTiming(0.4, { duration: 260, easing: Easing.out(Easing.quad) }), withDelay(750, withTiming(0, { duration: 300 }))));
       },
     });
-    // The api closes over shared values (stable) and `celebrate` (changes once when it finishes loading).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [celebrate, calm, register]);
+  }, [celebrate, calm, register, glow, player, rise, shakeX, spring, sx, sy]);
 
   // Creature is visible only above the front lip: clip = everything above the hole centre line + the hole itself.
   const holeRect = useMemo(() => Skia.XYWHRect(cx - w / 2, cy - holeH / 2, w, holeH), [cx, cy, w, holeH]);
@@ -107,17 +123,29 @@ export function Burrow({ cx, cy, w, sheet, idle, celebrate, accent, phaseMs, cal
       <Oval x={cx - w / 2} y={cy - holeH / 2} width={w} height={holeH}>
         <RadialGradient c={vec(cx, cy - holeH * 0.1)} r={w * 0.55} colors={['#2A1209', '#120509']} />
       </Oval>
-      {/* Creature, hidden below the lip */}
+      {/* Creature or Decoy, hidden below the lip */}
       <Group clip={clip}>
         <Group transform={spriteTransform} origin={vec(cx, cy)}>
-          <SpriteCharacter sheet={sheet} images={images} clip={player.clip} frame={player.frame} x={cx - spriteW / 2} y={spriteY} height={spriteH} />
+          {isDecoy ? (
+            <Group>
+              <Oval x={cx - w * 0.3} y={cy - holeH * 0.8} width={w * 0.6} height={holeH * 1.2}>
+                <LinearGradient start={vec(cx, cy - holeH)} end={vec(cx, cy + holeH)} colors={['#78716C', '#44403C']} />
+              </Oval>
+              <Circle cx={cx - 6} cy={cy - holeH * 0.3} r={4} color="#A8A29E" opacity={0.6} />
+            </Group>
+          ) : (
+            <SpriteCharacter sheet={sheet} images={images} clip={player.clip} frame={player.frame} x={cx - spriteW / 2} y={spriteY} height={spriteH} />
+          )}
+          {isShadow && !isDecoy && (
+            <Circle cx={cx} cy={cy - spriteH * 0.4} r={spriteW * 0.48} color="rgba(15, 6, 32, 0.88)" />
+          )}
         </Group>
       </Group>
       {/* Front lip */}
       <Path path={frontLip} style="stroke" strokeWidth={w * 0.045} color="#D3A878" strokeCap="round" />
       {/* Match / hint glow */}
       <Group opacity={glowOpacity}>
-        <Oval x={cx - w * 0.62} y={cy - holeH * 0.8} width={w * 1.24} height={holeH * 1.6} style="stroke" strokeWidth={w * 0.05} color={accent} blendMode="plus" />
+        <Oval x={cx - w * 0.62} y={cy - holeH * 0.8} width={w * 1.24} height={holeH * 1.6} style="stroke" strokeWidth={w * 0.05} color={isDecoy ? '#EF4444' : accent} blendMode="plus" />
       </Group>
     </Group>
   );

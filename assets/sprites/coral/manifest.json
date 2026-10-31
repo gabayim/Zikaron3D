@@ -1,0 +1,48 @@
+{
+  "character": "coral",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "celebrate": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": -32,
+      "y": 0,
+      "w": 320,
+      "h": 320
+    },
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 24,
+      "y": 0,
+      "w": 219,
+      "h": 281
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 33,
+      "y": 32,
+      "w": 184,
+      "h": 287
+    },
+    "sad": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 44,
+      "y": 49,
+      "w": 199,
+      "h": 232
+    }
+  }
+}

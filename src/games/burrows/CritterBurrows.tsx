@@ -1,3 +1,7 @@
+import { useAchievements } from '../../store/achievements';
+import { useEconomy } from '../../store/economy';
+import { useSeasonPass } from '../../store/seasonPass';
+import { getBurrowsLevel } from '../../engine/levelTables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
@@ -26,17 +30,17 @@ import { sfx, useMusic } from '../../fx/sound';
 import { useJuice } from '../../fx/useJuice';
 import { SeededRNG } from '../../engine/SeededRNG';
 import { dailyKey } from '../../engine/daily';
-import { burrowsDifficulty, SkillTracker, type BurrowsDifficulty } from '../../engine/dda';
+import { SkillTracker, type BurrowsDifficulty } from '../../engine/dda';
 import { useProfile, type CreatureId } from '../../store/profile';
-import { getWorld } from '../../worlds';
+import { getWorld, type WorldId } from '../../worlds';
 import { ModeIcon } from '../../ui/ModeIcon';
 import { ParentalGate } from '../../ui/ParentalGate';
 import { ShieldIcon } from '../../ui/ShieldIcon';
+import { LevelSplash } from '../../ui/LevelSplash';
 import { useParentalModeCycle } from '../../ui/useParentalModeCycle';
 import { Burrow, type BurrowApi } from './Burrow';
 import { computeLayout, hitTest, makeRound, SPECIES_COLOR, SPECIES_POOL, type Round } from './logic';
 
-const WORLD = getWorld('meadow');
 const MOON = { x: 0.77, y: 0.12 };
 const HUD_Y = 78;
 
@@ -56,12 +60,21 @@ function useSpeciesImages(active: readonly string[], celebrateFor: readonly stri
   return { idle, celebrate };
 }
 
-export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
+export default function CritterBurrows({
+  daily = false,
+  startLevel = 1,
+  worldId = 'meadow',
+}: {
+  daily?: boolean;
+  startLevel?: number;
+  worldId?: WorldId;
+}) {
+  const worldDef = useMemo(() => getWorld(worldId), [worldId]);
   const { width: W, height: H } = useWindowDimensions();
   const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
   const mode = useProfile((s) => s.mode);
   const calm = mode === 'SANCTUARY';
-  useMusic(WORLD.music, calm ? 0.3 : 0.4);
+  useMusic(worldDef.music, calm ? 0.3 : 0.4);
 
   const juice = useJuice(W, H, 22);
   const timer = useSharedValue(1);
@@ -76,7 +89,9 @@ export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
   const armedMode = useRef<string | null>(null);
 
   const skill = useRef(new SkillTracker());
-  const level = useRef(useProfile.getState().burrowsLevel);
+  const level = useRef(Math.max(1, startLevel));
+  const [displayLevel, setDisplayLevel] = useState(Math.max(1, startLevel));
+  const [splashTrigger, setSplashTrigger] = useState(0);
   const roundId = useRef(0);
   const epoch = useRef(0);
   const timeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -107,13 +122,13 @@ export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
   const bgH = bgW * (16 / 9);
   const bgX = (W - bgW) / 2;
   const bgY = (H - bgH) / 2;
-  const still = useImage(WORLD.still);
+  const still = useImage(worldDef.still);
   const moon = vec(bgX + MOON.x * bgW, bgY + MOON.y * bgH);
 
   const register = useCallback((index: number, api: BurrowApi) => {
     apis.current[index] = api;
   }, []);
-  const registers = useMemo(() => Array.from({ length: 12 }, (_, i) => (api: BurrowApi) => register(i, api)), [register]);
+  const registers = useMemo(() => Array.from({ length: 32 }, (_, i) => (api: BurrowApi) => register(i, api)), [register]);
 
   const later = useCallback((fn: () => void, ms: number) => {
     const ep = epoch.current;
@@ -129,6 +144,9 @@ export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
   // ---- round lifecycle ----------------------------------------------------
   const beginRound = useCallback(
     (lvl: number) => {
+      level.current = lvl;
+      setDisplayLevel(lvl);
+      setSplashTrigger((k) => k + 1);
       epoch.current += 1;
       timeouts.current.forEach(clearTimeout);
       timeouts.current = [];
@@ -144,7 +162,29 @@ export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
         shieldRef.current = armed;
         setShieldArmed(armed);
       }
-      const d = burrowsDifficulty(lvl, skill.current.psr, m);
+
+      // Read from discrete 30-level progression table
+      const cfg = getBurrowsLevel(lvl);
+
+      // Adaptive scaling tuned with mode:
+      // Toybox: max 8 pairs (16 burrows) for comfortable touch targets
+      // Sanctuary: max 6 pairs (12 burrows) for zen/seniors
+      // Arcade: full 12 pairs (up to 24 burrows!)
+      const maxPairs = m === 'SANCTUARY' ? 6 : m === 'TOYBOX' ? 8 : 12;
+      const pairs = Math.min(maxPairs, cfg.pairs);
+
+      const previewMs = m === 'SANCTUARY' ? cfg.previewMs * 1.4 : m === 'TOYBOX' ? cfg.previewMs * 1.25 : cfg.previewMs;
+      const hideDelayMs = m === 'SANCTUARY' ? 1800 : m === 'TOYBOX' ? 1400 : cfg.hideDelayMs;
+      const timeLimitMs = m === 'ARCADE' ? cfg.timeLimitMs : null;
+      const hintAfterMs = m === 'TOYBOX' ? 5000 : m === 'SANCTUARY' ? 8000 : null;
+
+      const d: BurrowsDifficulty = {
+        pairs,
+        previewMs,
+        hideDelayMs,
+        timeLimitMs,
+        hintAfterMs,
+      };
       diff.current = d;
       roundId.current += 1;
       matched.current = new Set();
@@ -157,7 +197,9 @@ export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
       setFoundList([]);
       setCombo(0);
       const seed = daily ? `burrows-${dailyKey()}-${lvl}` : `${Date.now()}-${lvl}`;
-      setRound(makeRound(new SeededRNG(seed), roundId.current, d.pairs));
+      const isTriple = cfg.mechanics.includes('triple') && m === 'ARCADE';
+      const decoyCount = m === 'ARCADE' ? cfg.decoyCount : 0;
+      setRound(makeRound(new SeededRNG(seed), roundId.current, d.pairs, { isTriple, decoyCount }));
     },
     [timer, daily],
   );
@@ -221,6 +263,10 @@ export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
     const profile = useProfile.getState();
     profile.setBurrowsLevel(level.current);
     profile.awardXp(35 + r.species.length * 10);
+    useAchievements.getState().setMetricMax('burrows_level', level.current + 1);
+    useEconomy.getState().earnStardust(10 + Math.min(30, level.current * 2));
+    useSeasonPass.getState().addSeasonXp(25 + level.current);
+    if (level.current >= 10 && Math.random() < 0.5) useEconomy.getState().earnCrystals(1, true);
     if (daily && profile.completeDaily('burrows')) profile.awardXp(80);
     r.board.forEach((_, i) => later(() => apis.current[i]?.down(), 2300 + i * 70));
     later(() => beginRound(level.current), 3200 + r.board.length * 70);
@@ -322,7 +368,8 @@ export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
           const discovered = profile.unlockCreature(species as CreatureId);
           profile.awardXp(8 + (discovered ? 22 : 0));
           setFoundList((prev) => [...prev, species]);
-          if (matched.current.size === r.board.length) later(winRound, 700);
+          const targetCount = r.board.filter((b) => b !== "decoy").length;
+          if (matched.current.size === targetCount) later(winRound, 700);
         }, 380);
         later(() => {
           if (phase.current === 'play') lock.current = false;
@@ -414,6 +461,7 @@ export default function CritterBurrows({ daily = false }: { daily?: boolean }) {
   return (
     <View style={styles.root}>
       <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
+      <LevelSplash level={displayLevel} gameTitle="CRITTER BURROWS" worldName={worldDef.id.replace('_', ' ')} triggerKey={splashTrigger} />
       <GestureDetector gesture={tap}>
         <Canvas style={StyleSheet.absoluteFill}>
           <Fill color="#0B0620" />

@@ -1,0 +1,14 @@
+{
+  "video_id": 432808067891918,
+  "trace_id": "2f9c275a-6ad6-4dc1-a7ee-d04e15bfc64a",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fd48f4aa7-a08d-4e9b-99ad-10c468c68af8_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F52356059-a66d-4b5a-be14-62158d1474dd.jpg",
+  "prompt": "The cute golem slumps its stone shoulders, looks down, then clenches fists and perks back up determined. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-10-31T13:46:58Z",
+  "cost_credits": 32
+}

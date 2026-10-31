@@ -1,3 +1,6 @@
+import { useAchievements } from '../../store/achievements';
+import { useEconomy } from '../../store/economy';
+import { useSeasonPass } from '../../store/seasonPass';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
@@ -34,31 +37,47 @@ import { useJuice } from '../../fx/useJuice';
 import { SeededRNG } from '../../engine/SeededRNG';
 import { dailyKey } from '../../engine/daily';
 import { SkillTracker } from '../../engine/dda';
+import { getStarLevel } from '../../engine/levelTables';
 import { useProfile, type CreatureId } from '../../store/profile';
-import { getWorld } from '../../worlds';
+import { getWorld, type WorldId } from '../../worlds';
 import { ModeIcon } from '../../ui/ModeIcon';
 import { ParentalGate } from '../../ui/ParentalGate';
 import { ShieldIcon } from '../../ui/ShieldIcon';
 import { useParentalModeCycle } from '../../ui/useParentalModeCycle';
+import { LevelSplash } from '../../ui/LevelSplash';
 import { drawObjects } from './draw';
-import { FEVER_SECONDS, FEVER_STREAK, GOLD, StarSim, type SimEvent } from './sim';
+import { FEVER_SECONDS, GOLD, StarSim, type SimEvent } from './sim';
 
-const WORLD = getWorld('candy');
 const HUD_Y = 78;
 const STEP = 1 / 120;
 
-export default function StarCatcher({ daily = false }: { daily?: boolean }) {
+export default function StarCatcher({
+  daily = false,
+  startLevel = 1,
+  worldId = 'candy',
+}: {
+  daily?: boolean;
+  startLevel?: number;
+  worldId?: WorldId;
+}) {
+  const worldDef = useMemo(() => getWorld(worldId), [worldId]);
   const { width: W, height: H } = useWindowDimensions();
   const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
   const mode = useProfile((s) => s.mode);
   const calm = mode === 'SANCTUARY';
-  useMusic(WORLD.music, calm ? 0.3 : 0.42);
+  useMusic(worldDef.music, calm ? 0.3 : 0.42);
   const juice = useJuice(W, H, 18);
+
+  // ---- level progression --------------------------------------------------
+  const level = useRef(startLevel);
+  const [currentLevel, setCurrentLevel] = useState(startLevel);
+  const [splashTrigger, setSplashTrigger] = useState(0);
+  const levelConfig = useMemo(() => getStarLevel(currentLevel), [currentLevel]);
 
   // ---- character ----------------------------------------------------------
   const [heroId] = useState(() => {
     const rng = new SeededRNG(daily ? `stars-hero-${dailyKey()}` : `${Date.now()}`);
-    return WORLD.residents[rng.nextInt(0, WORLD.residents.length - 1)];
+    return worldDef.residents[rng.nextInt(0, worldDef.residents.length - 1)];
   });
   const sheet = CAST[heroId];
   const idle = useImage(sheet.sources.idle);
@@ -104,12 +123,18 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
     );
   }, []);
 
-  const newGame = useCallback(() => {
+  const newGame = useCallback((targetLvl?: number) => {
+    const lvl = targetLvl ?? level.current;
+    level.current = lvl;
+    setCurrentLevel(lvl);
+    setSplashTrigger((k) => k + 1);
+    const cfg = getStarLevel(lvl);
+
     epoch.current += 1;
     timeouts.current.forEach(clearTimeout);
     timeouts.current = [];
     const m = useProfile.getState().mode;
-    sim.current = new StarSim({ W, H, playerY, playerR, mode: m }, rng);
+    sim.current = new StarSim({ W, H, playerY, playerR, mode: m, levelConfig: cfg }, rng);
     sim.current.psr = skill.current.psr;
     const armed = m === 'ARCADE' && useProfile.getState().shields > 0;
     sim.current.shield = armed;
@@ -123,7 +148,7 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
   }, [W, H, playerY, playerR, rng, px, meter, feverFx]);
 
   useEffect(() => {
-    const start = setTimeout(newGame, 0);
+    const start = setTimeout(() => newGame(level.current), 0);
     return () => {
       clearTimeout(start);
       epoch.current += 1;
@@ -154,6 +179,9 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
           const profile = useProfile.getState();
           const discovered = profile.unlockCreature(heroId as CreatureId);
           profile.awardXp((gold ? 5 : 2) + (discovered ? 22 : 0));
+          useEconomy.getState().earnStardust(gold ? 3 : 1);
+          useSeasonPass.getState().addSeasonXp(gold ? 15 : 5);
+          useAchievements.getState().incrementMetric('stars_caught', 1);
           juice.emit({ x: e.x, y: e.y, kind: ParticleKind.Sparkle, count: gold ? 22 : 9 });
           if (gold) juice.emit({ x: e.x, y: e.y, kind: ParticleKind.Ring, count: 2 });
           sfx.play(gold ? 'chime' : 'sparkle', gold ? 0.8 : 0.5, Math.min(1.7, 1 + e.streak * 0.045));
@@ -161,6 +189,35 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
           squash(gold ? 0.16 : 0.09);
           if (gold || (e.streak > 0 && e.streak % 5 === 0)) {
             if (!s.invulnerable) player.play('celebrate');
+          }
+
+          // Check level completion
+          const target = levelConfig.starsToCollect;
+          if (s.caught >= target && phase.current === 'play') {
+            phase.current = 'over';
+            const profileState = useProfile.getState();
+            const isFirstClear = currentLevel > profileState.starLevel;
+            profileState.setStarLevel(currentLevel);
+            profileState.setStarBest(Math.max(s.caught, profileState.starBest));
+            profileState.awardXp(35 + currentLevel * 8);
+            useEconomy.getState().earnStardust(levelConfig.stardustReward + (isFirstClear ? levelConfig.firstClearBonus : 0));
+            useSeasonPass.getState().addSeasonXp(20 + currentLevel * 2);
+            useAchievements.getState().setMetricMax('star_level', currentLevel + 1);
+
+            player.play('celebrate');
+            juice.emit({ x: W / 2, y: H * 0.4, kind: ParticleKind.Confetti, count: calm ? 90 : 220 });
+            juice.emit({ x: s.playerX, y: playerY, kind: ParticleKind.Ring, count: 4 });
+            juice.doShake(10 * k, 400);
+            juice.doFlash(0.35 * k, 600);
+            juice.doBoost(1.5, 1200);
+            sfx.play('chime', 1, 1.2);
+            sfx.play('sparkle', 0.8);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+            later(() => {
+              const nextLvl = Math.min(30, level.current + 1);
+              newGame(nextLvl);
+            }, 2400);
           }
           break;
         }
@@ -226,12 +283,12 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
           player.play('sad');
           juice.doShake(14, 700);
           later(() => (slow.current = 1), 1200);
-          later(newGame, 2400);
+          later(() => newGame(level.current), 2400);
           break;
         }
       }
     },
-    [juice, squash, player, hurt, blink, later, newGame, W, H, playerY, heroId, daily],
+    [juice, squash, player, hurt, blink, later, newGame, W, H, playerY, heroId, daily, levelConfig, currentLevel, calm],
   );
 
   // ---- loop ---------------------------------------------------------------
@@ -265,7 +322,8 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
       prevX = s.playerX;
       px.set(s.playerX);
       lean.set(lean.get() + (Math.max(-0.28, Math.min(0.28, vx / 3200)) - lean.get()) * 0.25);
-      meter.set(s.fever > 0 ? s.fever / FEVER_SECONDS : Math.min(1, s.streak / FEVER_STREAK));
+      const starRatio = Math.min(1, s.caught / Math.max(1, levelConfig.starsToCollect));
+      meter.set(s.fever > 0 ? s.fever / FEVER_SECONDS : starRatio);
       feverFx.set(feverFx.get() + ((s.fever > 0 ? 1 : 0) - feverFx.get()) * 0.1);
 
       const out: number[] = [];
@@ -274,7 +332,7 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [W, px, lean, meter, feverFx, snap]);
+  }, [W, px, lean, meter, feverFx, snap, levelConfig]);
 
   // ---- input --------------------------------------------------------------
   const onModeButton = useRef(false);
@@ -335,10 +393,11 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
   return (
     <View style={styles.root}>
       <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
+      <LevelSplash level={currentLevel} gameTitle="STAR CATCHER" worldName={worldDef.id.replace('_', ' ')} triggerKey={splashTrigger} />
       <GestureDetector gesture={pan}>
         <Canvas style={StyleSheet.absoluteFill}>
           <Group transform={juice.worldTransform}>
-            <WorldBackdrop W={W} H={H} still={WORLD.still} time={juice.time} boost={juice.boost} light={{ x: 0.5, y: 0.1 }} />
+            <WorldBackdrop W={W} H={H} still={worldDef.still} time={juice.time} boost={juice.boost} light={{ x: 0.5, y: 0.1 }} />
             <Rect x={0} y={0} width={W} height={H} opacity={feverTint}>
               <RadialGradient c={vec(W / 2, H * 0.8)} r={H * 0.7} colors={['rgba(255,143,208,0.9)', 'rgba(255,216,77,0.35)', 'rgba(255,143,208,0)']} />
             </Rect>
@@ -369,8 +428,14 @@ export default function StarCatcher({ daily = false }: { daily?: boolean }) {
           <RoundedRect x={W * 0.29} y={HUD_Y - 7} width={W * 0.42} height={14} r={7} color="rgba(255,255,255,0.18)" />
           <RoundedRect x={W * 0.29} y={HUD_Y - 7} width={barWidth} height={14} r={7} color={barColor} />
           {mode === 'ARCADE' &&
-            Array.from({ length: 3 }).map((_, i) => (
-              <Group key={i} transform={[{ translateX: W / 2 + (i - 1) * 34 }, { translateY: HUD_Y + 34 }]}>
+            Array.from({ length: Math.min(5, levelConfig.lives) }).map((_, i) => (
+              <Group
+                key={i}
+                transform={[
+                  { translateX: W / 2 + (i - (Math.min(5, levelConfig.lives) - 1) / 2) * 28 },
+                  { translateY: HUD_Y + 34 },
+                ]}
+              >
                 <Path path={heart} color={i < lives ? '#FF5C8A' : 'rgba(255,255,255,0.25)'} />
               </Group>
             ))}

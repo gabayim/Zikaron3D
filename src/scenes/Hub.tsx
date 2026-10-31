@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ParentalGate } from '../ui/ParentalGate';
 import { useParentalModeCycle } from '../ui/useParentalModeCycle';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Gem, Sparkles } from 'lucide-react-native';
+import { useEconomy } from '../store/economy';
+import { useInventory } from '../store/inventory';
+import { ACCESSORY_ASSETS } from '../data/shopAssets';
 import {
   BlurMask,
   Canvas,
@@ -45,12 +49,22 @@ import { createPool, drawFireflies, drawPool, ParticleKind, spawnBurst, stepPool
 import { lightRays, skyAtmosphere } from '../render/shaders';
 import { drawBootLogo, drawHalo, drawIcon, easeOutBack } from '../render/hubDraw';
 import { sfx, useCrossfadeMusic } from '../fx/sound';
-import { useProfile } from '../store/profile';
+import { useProfile, type GameId } from '../store/profile';
 import { levelForXp, levelProgress } from '../store/progression';
 import { WORLDS, type WorldDef, type WorldId } from '../worlds';
 
+const WORLD_GAME_MAP: Record<WorldId, GameId> = {
+  meadow: 'burrows',
+  crystal: 'orbs',
+  candy: 'stars',
+  deep_sea: 'burrows',
+  grove: 'stars',
+  circuit: 'orbs',
+  summit: 'stars',
+};
+
 /** Character shown standing in each world's portal (same order as WORLDS). */
-const FEATURED = ['fuzz', 'frost', 'zap'];
+const FEATURED = ['fuzz', 'frost', 'zap', 'coral', 'moss', 'bolt', 'luna'];
 const ACCENTS = WORLDS.map((w) => w.accent);
 const MUSIC_SOURCES = WORLDS.map((w) => w.music);
 const MASCOT_CLIPS = ['idle', 'hop', 'wave', 'celebrate'] as const;
@@ -249,9 +263,23 @@ interface HubProps {
   onCollection: () => void;
   onSettings: () => void;
   onLeaderboard: () => void;
+  onShop: () => void;
+  onSeasonPass: () => void;
+  onLevelSelect?: (game: GameId) => void;
+  onProfile?: () => void;
 }
 
-export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLeaderboard }: HubProps) {
+export default function Hub({
+  onEnter,
+  onDaily,
+  onCollection,
+  onSettings,
+  onLeaderboard,
+  onShop,
+  onSeasonPass,
+  onLevelSelect,
+  onProfile,
+}: HubProps) {
   const { width: W, height: H } = useWindowDimensions();
   const [skipBoot] = useState(() => hasBooted);
   const xp = useProfile((state) => state.xp);
@@ -259,7 +287,14 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
   const dailyComplete = useProfile((state) => state.dailyCompleted.length > 0);
   const xpRing = levelProgress(xp);
   const level = levelForXp(xp);
-  const lockedFlags = WORLDS.map((w) => level < w.unlockLevel);
+  const unlockedWorlds = useProfile((state) => state.unlockedWorlds);
+  const unlockWorld = useProfile((state) => state.unlockWorld);
+  const markWorldCelebrated = useProfile((state) => state.markWorldCelebrated);
+  const spendStardust = useEconomy((state) => state.spendStardust);
+  const spendCrystals = useEconomy((state) => state.spendCrystals);
+  const [unlockTarget, setUnlockTarget] = useState<WorldDef | null>(null);
+
+  const lockedFlags = WORLDS.map((w) => !unlockedWorlds.includes(w.id));
   const lockedRef = useRef(lockedFlags);
   useEffect(() => {
     lockedRef.current = lockedFlags;
@@ -275,10 +310,13 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
   }, [W, H]);
   const hud = useMemo(
     () => ({
-      avatar: { x: 52, y: 100 },
-      cup: { x: W - 160, y: 100 },
-      star: { x: W - 104, y: 100 },
-      gear: { x: W - 48, y: 100 },
+      avatar: { x: 52, y: 112 },
+      pass: { x: W - 232, y: 112 },
+      cup: { x: W - 184, y: 112 },
+      shop: { x: W - 136, y: 112 },
+      star: { x: W - 88, y: 112 },
+      gear: { x: W - 40, y: 112 },
+      levels: { x: W * 0.73 - 62, y: H * 0.865, r: 24 },
       play: { x: W * 0.73, y: H * 0.865, r: 40 },
       dotsY: H * 0.7,
       pipX: W * 0.22,
@@ -291,10 +329,23 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
   const pipY = hud.pipGround - hud.pipH * 0.9;
 
   // ---- assets -------------------------------------------------------------
-  const stills = [useImage(WORLDS[0].still), useImage(WORLDS[1].still), useImage(WORLDS[2].still)];
+  const stills = [
+    useImage(WORLDS[0].still),
+    useImage(WORLDS[1].still),
+    useImage(WORLDS[2].still),
+    useImage(WORLDS[3].still),
+    useImage(WORLDS[4].still),
+    useImage(WORLDS[5].still),
+    useImage(WORLDS[6].still),
+  ];
   const pipImages = useClipImages(PIP, MASCOT_CLIPS);
   const ready = stills.every(Boolean) && !!pipImages[0];
   const pip = useSpritePlayer(PIP);
+  const equippedAccessories = useInventory((state) => state.equippedAccessories);
+  const hatImg = useImage(equippedAccessories.hat ? ACCESSORY_ASSETS[equippedAccessories.hat] : null);
+  const auraImg = useImage(equippedAccessories.aura ? ACCESSORY_ASSETS[equippedAccessories.aura] : null);
+  const trailImg = useImage(equippedAccessories.trail ? ACCESSORY_ASSETS[equippedAccessories.trail] : null);
+  const exprImg = useImage(equippedAccessories.expression ? ACCESSORY_ASSETS[equippedAccessories.expression] : null);
 
   // ---- state --------------------------------------------------------------
   const [focus, setFocus] = useState(0);
@@ -436,11 +487,11 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
   const enter = useCallback(() => {
     if (busy.current) return;
     if (lockedRef.current[focusRef.current]) {
-      // Locked portal: a gentle "not yet" — no text, just a wobble and a soft sound.
+      const world = WORLDS[focusRef.current];
+      setUnlockTarget(world);
       sfx.play('sad', 0.35);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       squash(0.1);
-      emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Ring, count: 2 });
       return;
     }
     busy.current = true;
@@ -457,6 +508,44 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
     })));
     flashPulse.set(withDelay(800, withTiming(1, { duration: 280 })));
   }, [pip, emit, warp, flashPulse, onEnter, W, geo.cy, squash]);
+
+  const handleConfirmUnlock = useCallback(
+    (currency: 'stardust' | 'crystals') => {
+      if (!unlockTarget) return;
+      if (currency === 'stardust' && unlockTarget.priceStardust != null) {
+        const ok = spendStardust(unlockTarget.priceStardust);
+        if (ok) {
+          unlockWorld(unlockTarget.id);
+          markWorldCelebrated(unlockTarget.id);
+          sfx.play('chime', 0.9);
+          sfx.play('sparkle', 0.8);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Confetti, count: 120 });
+          emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Ring, count: 4 });
+          setUnlockTarget(null);
+        } else {
+          sfx.play('sad', 0.5);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      } else if (currency === 'crystals' && unlockTarget.priceCrystals != null) {
+        const ok = spendCrystals(unlockTarget.priceCrystals);
+        if (ok) {
+          unlockWorld(unlockTarget.id);
+          markWorldCelebrated(unlockTarget.id);
+          sfx.play('chime', 0.9);
+          sfx.play('sparkle', 0.8);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Confetti, count: 120 });
+          emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Ring, count: 4 });
+          setUnlockTarget(null);
+        } else {
+          sfx.play('sad', 0.5);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      }
+    },
+    [unlockTarget, spendStardust, spendCrystals, unlockWorld, markWorldCelebrated, emit, W, geo.cy],
+  );
 
   // A newly unlocked world: glide to its portal and celebrate once.
   useEffect(() => {
@@ -495,25 +584,61 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
       }
       const near = (p: { x: number; y: number }, r: number) => Math.hypot(x - p.x, y - p.y) < r;
 
-      // HUD: avatar ring is the daily activity beacon; star opens the collection; gear cycles accessibility mode.
-      if (near(hud.avatar, 34) || near(hud.cup, 26) || near(hud.star, 26) || near(hud.gear, 26)) {
+      // HUD: avatar ring is daily beacon; pass is season pass; cup is leaderboard; shop is cosmetics; star is collection; gear is mode.
+      if (
+        near(hud.avatar, 34) ||
+        near(hud.pass, 24) ||
+        near(hud.cup, 24) ||
+        near(hud.shop, 24) ||
+        near(hud.star, 24) ||
+        near(hud.gear, 24)
+      ) {
         const onAvatar = near(hud.avatar, 34);
+        const onPass = near(hud.pass, 26);
         const onCup = near(hud.cup, 26);
+        const onShopHit = near(hud.shop, 26);
         const onStar = near(hud.star, 26);
-        const p = onAvatar ? hud.avatar : onCup ? hud.cup : onStar ? hud.star : hud.gear;
+        const p = onAvatar
+          ? hud.avatar
+          : onPass
+          ? hud.pass
+          : onCup
+          ? hud.cup
+          : onShopHit
+          ? hud.shop
+          : onStar
+          ? hud.star
+          : hud.gear;
         emit({ x: p.x, y: p.y, kind: ParticleKind.Ring, count: 2 });
         emit({ x: p.x, y: p.y, kind: ParticleKind.Sparkle, count: 10 });
         sfx.play('sparkle', 0.5);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        if (onCup) {
+        if (onPass) {
+          onSeasonPass();
+        } else if (onCup) {
           onLeaderboard();
+        } else if (onShopHit) {
+          onShop();
         } else if (onStar) {
           onCollection();
-        } else if (!onAvatar) {
-          requestCycle();
+        } else if (onAvatar) {
+          if (onProfile) onProfile();
+          else onDaily();
         } else {
-          onDaily();
+          requestCycle();
         }
+        return;
+      }
+
+      // Level select button -> open 30-level map for current world's game
+      if (onLevelSelect && near(hud.levels, 28)) {
+        emit({ x: hud.levels.x, y: hud.levels.y, kind: ParticleKind.Ring, count: 1 });
+        emit({ x: hud.levels.x, y: hud.levels.y, kind: ParticleKind.Sparkle, count: 8 });
+        sfx.play('whoosh', 0.6);
+        Haptics.selectionAsync();
+        const curWorld = WORLDS[focusRef.current]?.id ?? 'meadow';
+        const game = WORLD_GAME_MAP[curWorld] ?? 'burrows';
+        onLevelSelect(game);
         return;
       }
 
@@ -533,13 +658,14 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
       }
 
       // Pip.
-      if (Math.abs(x - hud.pipX) < pipW * 0.4 && y > pipY + hud.pipH * 0.2 && y < hud.pipGround) {
+      if (Math.abs(x - hud.pipX) < pipW * 0.45 && y > pipY + hud.pipH * 0.15 && y < hud.pipGround) {
         pip.play(Math.random() < 0.5 ? 'wave' : 'hop');
         squash(0.14);
         sfx.play('pop');
         if (Math.random() < 0.5) setTimeout(() => sfx.play('boing', 0.6), 300);
         emit({ x: hud.pipX, y: pipY + hud.pipH * 0.5, kind: ParticleKind.Sparkle, count: 16 });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (onProfile) onProfile();
         return;
       }
 
@@ -547,7 +673,7 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
       emit({ x, y, kind: ParticleKind.Sparkle, count: 8 });
       sfx.play('sparkle', 0.35);
     },
-    [hud, geo, emit, enter, goTo, onCollection, onDaily, onLeaderboard, pip, squash, skipIntro, playPulse, pipW, pipY, requestCycle],
+    [hud, geo, emit, enter, goTo, onCollection, onDaily, onLeaderboard, onShop, onSeasonPass, onLevelSelect, onProfile, pip, squash, skipIntro, playPulse, pipW, pipY, requestCycle],
   );
 
   const pan = usePanGesture({
@@ -647,10 +773,14 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
       btn.setAntiAlias(true);
       btn.setColor(Skia.Color('#1A0F3D'));
       btn.setAlphaf(0.6 * a);
-      c.drawCircle(hud.cup.x, hud.cup.y, 24, btn);
+      c.drawCircle(hud.pass.x, hud.pass.y, 22, btn);
+      c.drawCircle(hud.cup.x, hud.cup.y, 22, btn);
+      c.drawCircle(hud.shop.x, hud.shop.y, 22, btn);
       c.drawCircle(hud.star.x, hud.star.y, 24, btn);
       c.drawCircle(hud.gear.x, hud.gear.y, 24, btn);
-      drawIcon(c, 'cup', hud.cup.x, hud.cup.y, 12, '#FFD36E', a * 0.95);
+      drawIcon(c, 'pass', hud.pass.x, hud.pass.y, 11, '#E879F9', a * 0.95);
+      drawIcon(c, 'cup', hud.cup.x, hud.cup.y, 11, '#FFD36E', a * 0.95);
+      drawIcon(c, 'bag', hud.shop.x, hud.shop.y, 11, '#38BDF8', a * 0.95);
       drawIcon(c, 'star', hud.star.x, hud.star.y, 13, collectionSize >= 9 ? '#8CFFC1' : '#FFD36E', a);
       drawIcon(c, 'gear', hud.gear.x, hud.gear.y, 12, '#FFFFFF', a * 0.9);
 
@@ -665,6 +795,11 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
         dot.setAlphaf((0.3 + 0.7 * f) * a);
         c.drawRRect(Skia.RRectXY(Skia.XYWHRect(x - w / 2, hud.dotsY - 4, w, 8), 4, 4), dot);
       }
+
+      // Levels button.
+      const lb = hud.levels;
+      c.drawCircle(lb.x, lb.y, lb.r, btn);
+      drawIcon(c, 'levels', lb.x, lb.y, 11, '#FFFFFF', a * 0.92);
 
       // Play button.
       const pb = hud.play;
@@ -750,6 +885,58 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
         }}
         onCancel={cancelGate}
       />
+
+      {/* World Unlock Modal */}
+      <Modal
+        visible={!!unlockTarget}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setUnlockTarget(null)}
+      >
+        <View style={hubStyles.modalBackdrop}>
+          <View style={hubStyles.modalBox}>
+            <Text style={hubStyles.modalEmoji}>🌍</Text>
+            <Text style={hubStyles.modalTitle}>
+              UNLOCK {unlockTarget?.id.replace('_', ' ').toUpperCase()}?
+            </Text>
+            <Text style={hubStyles.modalSubtitle}>
+              Unlock this portal now to play new games and meet exclusive critters!
+            </Text>
+
+            <View style={hubStyles.modalActions}>
+              {unlockTarget?.priceStardust != null && (
+                <Pressable
+                  style={[hubStyles.modalBtn, hubStyles.stardustBtn]}
+                  onPress={() => handleConfirmUnlock('stardust')}
+                >
+                  <Sparkles size={16} color="#FFFFFF" />
+                  <Text style={hubStyles.modalBtnText}>
+                    ★ {unlockTarget.priceStardust.toLocaleString()} STARDUST
+                  </Text>
+                </Pressable>
+              )}
+              {unlockTarget?.priceCrystals != null && (
+                <Pressable
+                  style={[hubStyles.modalBtn, hubStyles.crystalBtn]}
+                  onPress={() => handleConfirmUnlock('crystals')}
+                >
+                  <Gem size={16} color="#FFFFFF" />
+                  <Text style={hubStyles.modalBtnText}>
+                    💎 {unlockTarget.priceCrystals} CRYSTALS
+                  </Text>
+                </Pressable>
+              )}
+              <Pressable
+                style={hubStyles.cancelBtn}
+                onPress={() => setUnlockTarget(null)}
+              >
+                <Text style={hubStyles.cancelBtnText}>CANCEL</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <GestureDetector gesture={gesture}>
         <Canvas style={StyleSheet.absoluteFill}>
           <Fill color="#0B0620" />
@@ -772,15 +959,68 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
               <Portal key={w.id} index={i} world={w} still={stills[i]} featuredId={FEATURED[i]} geo={geo} pos={pos} reveal={reveal} warp={warp} time={time} locked={lockedFlags[i]} />
             ))}
 
-            {/* Mascot */}
+            {/* Mascot with Equipped Gear */}
             <Group opacity={pipOpacity}>
               <Group transform={pipShadowTransform} origin={vec(hud.pipX, hud.pipGround)}>
                 <Oval x={hud.pipX - pipW * 0.32} y={hud.pipGround - hud.pipH * 0.05} width={pipW * 0.64} height={hud.pipH * 0.07} color="rgba(20,0,40,0.55)">
                   <BlurMask blur={10} style="normal" />
                 </Oval>
               </Group>
+
+              {/* Equipped Trail at Pip's feet */}
+              {trailImg && (
+                <Image
+                  image={trailImg}
+                  x={hud.pipX - pipW * 0.5}
+                  y={pipY + hud.pipH * 0.68}
+                  width={pipW}
+                  height={hud.pipH * 0.32}
+                  fit="contain"
+                  blendMode="plus"
+                  opacity={0.88}
+                />
+              )}
+
+              {/* Equipped Aura floating around Pip */}
+              {auraImg && (
+                <Image
+                  image={auraImg}
+                  x={hud.pipX - hud.pipH * 0.55}
+                  y={pipY - hud.pipH * 0.02}
+                  width={hud.pipH * 1.1}
+                  height={hud.pipH * 1.1}
+                  fit="contain"
+                  blendMode="plus"
+                  opacity={0.88}
+                />
+              )}
+
               <Group transform={pipTransform} origin={vec(hud.pipX, hud.pipGround)}>
                 <SpriteCharacter sheet={PIP} images={pipImages} clip={pip.clip} frame={pip.frame} x={hud.pipX - pipW / 2} y={pipY} height={hud.pipH} />
+
+                {/* Equipped Expression on Pip's face */}
+                {exprImg && (
+                  <Image
+                    image={exprImg}
+                    x={hud.pipX - pipW * 0.22}
+                    y={pipY + hud.pipH * 0.31}
+                    width={pipW * 0.44}
+                    height={hud.pipH * 0.18}
+                    fit="contain"
+                  />
+                )}
+
+                {/* Equipped Hat / Crown perched on Pip's head */}
+                {hatImg && (
+                  <Image
+                    image={hatImg}
+                    x={hud.pipX - pipW * 0.29}
+                    y={pipY - hud.pipH * 0.04}
+                    width={pipW * 0.58}
+                    height={hud.pipH * 0.30}
+                    fit="contain"
+                  />
+                )}
               </Group>
             </Group>
 
@@ -804,4 +1044,79 @@ export default function Hub({ onEnter, onDaily, onCollection, onSettings, onLead
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#05010F' },
+});
+
+const hubStyles = StyleSheet.create({
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 1, 15, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalBox: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#1E293B',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#334155',
+  },
+  modalEmoji: {
+    fontSize: 44,
+    marginBottom: 8,
+  },
+  modalTitle: {
+    color: '#F8FAFC',
+    fontSize: 18,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  modalSubtitle: {
+    color: '#94A3B8',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 18,
+  },
+  modalActions: {
+    width: '100%',
+    gap: 10,
+  },
+  modalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 46,
+    borderRadius: 14,
+  },
+  stardustBtn: {
+    backgroundColor: '#D97706',
+  },
+  crystalBtn: {
+    backgroundColor: '#0284C7',
+  },
+  modalBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  cancelBtn: {
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  cancelBtnText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
 });

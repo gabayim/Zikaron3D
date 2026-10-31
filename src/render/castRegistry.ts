@@ -15,6 +15,32 @@ export const CAST: Record<string, CharacterSheet> = {
       sad: require('../../assets/sprites/bloop/sad.webp'),
     },
   },
+  bolt: {
+    frameWidth: 256,
+    frameHeight: 320,
+    fps: 12,
+    order: ["idle", "pop", "celebrate", "sad"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 42, "y": 59, "w": 171, "h": 227}, "pop": {"frames": 37, "cols": 19, "rows": 2, "loop": false, "x": 25, "y": 11, "w": 201, "h": 309}, "celebrate": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 30, "y": 33, "w": 195, "h": 258}, "sad": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 33, "y": 44, "w": 189, "h": 238}},
+    sources: {
+      idle: require('../../assets/sprites/bolt/idle.webp'),
+      pop: require('../../assets/sprites/bolt/pop.webp'),
+      celebrate: require('../../assets/sprites/bolt/celebrate.webp'),
+      sad: require('../../assets/sprites/bolt/sad.webp'),
+    },
+  },
+  coral: {
+    frameWidth: 256,
+    frameHeight: 320,
+    fps: 12,
+    order: ["idle", "pop", "celebrate", "sad"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 24, "y": 0, "w": 219, "h": 281}, "pop": {"frames": 37, "cols": 19, "rows": 2, "loop": false, "x": 33, "y": 32, "w": 184, "h": 287}, "celebrate": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": -32, "y": 0, "w": 320, "h": 320}, "sad": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 44, "y": 49, "w": 199, "h": 232}},
+    sources: {
+      idle: require('../../assets/sprites/coral/idle.webp'),
+      pop: require('../../assets/sprites/coral/pop.webp'),
+      celebrate: require('../../assets/sprites/coral/celebrate.webp'),
+      sad: require('../../assets/sprites/coral/sad.webp'),
+    },
+  },
   dusk: {
     frameWidth: 256,
     frameHeight: 320,
@@ -80,6 +106,45 @@ export const CAST: Record<string, CharacterSheet> = {
       sad: require('../../assets/sprites/grumble/sad.webp'),
     },
   },
+  luna: {
+    frameWidth: 256,
+    frameHeight: 320,
+    fps: 12,
+    order: ["idle", "pop", "celebrate", "sad"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": -3, "y": 35, "w": 282, "h": 250}, "pop": {"frames": 37, "cols": 3, "rows": 13, "loop": false, "x": 6, "y": 19, "w": 267, "h": 301}, "celebrate": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": -15, "y": 25, "w": 303, "h": 284}, "sad": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": -19, "y": 41, "w": 307, "h": 242}},
+    sources: {
+      idle: require('../../assets/sprites/luna/idle.webp'),
+      pop: require('../../assets/sprites/luna/pop.webp'),
+      celebrate: require('../../assets/sprites/luna/celebrate.webp'),
+      sad: require('../../assets/sprites/luna/sad.webp'),
+    },
+  },
+  moss: {
+    frameWidth: 256,
+    frameHeight: 320,
+    fps: 12,
+    order: ["idle", "pop", "celebrate", "sad"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 36, "y": 62, "w": 179, "h": 209}, "pop": {"frames": 37, "cols": 19, "rows": 2, "loop": false, "x": 29, "y": 0, "w": 193, "h": 320}, "celebrate": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 30, "y": 4, "w": 191, "h": 270}, "sad": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 33, "y": 41, "w": 184, "h": 236}},
+    sources: {
+      idle: require('../../assets/sprites/moss/idle.webp'),
+      pop: require('../../assets/sprites/moss/pop.webp'),
+      celebrate: require('../../assets/sprites/moss/celebrate.webp'),
+      sad: require('../../assets/sprites/moss/sad.webp'),
+    },
+  },
+  nova: {
+    frameWidth: 256,
+    frameHeight: 320,
+    fps: 12,
+    order: ["idle", "pop", "celebrate", "sad"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 28, "y": 52, "w": 200, "h": 238}, "pop": {"frames": 37, "cols": 19, "rows": 2, "loop": false, "x": 20, "y": 0, "w": 211, "h": 320}, "celebrate": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": -4, "y": 8, "w": 272, "h": 312}, "sad": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 38, "y": 56, "w": 188, "h": 225}},
+    sources: {
+      idle: require('../../assets/sprites/nova/idle.webp'),
+      pop: require('../../assets/sprites/nova/pop.webp'),
+      celebrate: require('../../assets/sprites/nova/celebrate.webp'),
+      sad: require('../../assets/sprites/nova/sad.webp'),
+    },
+  },
   nutty: {
     frameWidth: 256,
     frameHeight: 320,
@@ -108,6 +173,19 @@ export const CAST: Record<string, CharacterSheet> = {
       sad: require('../../assets/sprites/pip/sad.webp'),
     },
   },
+  titan: {
+    frameWidth: 256,
+    frameHeight: 320,
+    fps: 12,
+    order: ["idle", "pop", "celebrate", "sad"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 43, "y": 65, "w": 171, "h": 216}, "pop": {"frames": 37, "cols": 19, "rows": 2, "loop": false, "x": 29, "y": 51, "w": 191, "h": 269}, "celebrate": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 20, "y": 40, "w": 220, "h": 253}, "sad": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 32, "y": 56, "w": 194, "h": 230}},
+    sources: {
+      idle: require('../../assets/sprites/titan/idle.webp'),
+      pop: require('../../assets/sprites/titan/pop.webp'),
+      celebrate: require('../../assets/sprites/titan/celebrate.webp'),
+      sad: require('../../assets/sprites/titan/sad.webp'),
+    },
+  },
   zap: {
     frameWidth: 256,
     frameHeight: 320,
@@ -123,4 +201,4 @@ export const CAST: Record<string, CharacterSheet> = {
   },
 };
 
-export const CAST_IDS = ["bloop", "dusk", "ember", "frost", "fuzz", "grumble", "nutty", "pip", "zap"] as const;
+export const CAST_IDS = ["bloop", "bolt", "coral", "dusk", "ember", "frost", "fuzz", "grumble", "luna", "moss", "nova", "nutty", "pip", "titan", "zap"] as const;
