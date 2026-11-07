@@ -128,8 +128,8 @@ Apple's API cannot do these, so they are yours — each is a few minutes:
   reports `iapKeyConfigured: false`; StoreKit 2 purchases are **not recorded** until
   the In-App Purchase key (ASC → Users and Access → Integrations → In-App Purchase)
   and the App-Specific Shared Secret are uploaded there.
-- Revoke the throwaway RevenueCat secret key (`sk_JKvf…`) and, if you shared it, the
-  Supabase personal access token (`sbp_fc08…`) — both were used only for this setup.
+- Revoke the throwaway RevenueCat secret key used for the API setup and, if you shared it, the
+  Supabase personal access token - both were used only for this setup.
 - Optional tidy-up: archive the three leftover Test Store products
   (`monthly`, `yearly`, `lifetime`) in the RevenueCat project.
 
