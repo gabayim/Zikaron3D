@@ -77,7 +77,14 @@ const easArgs = [
 console.log(`\n${DRY ? 'would run' : 'running'}: npx eas-cli env:create --environment production --name EXPO_PUBLIC_REVENUECAT_APPLE_KEY --visibility sensitive --force`);
 if (!DRY) {
   try {
-    const out = execFileSync(NPX, easArgs, { cwd: ROOT, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, CI: '1' } });
+    const out = execFileSync(NPX, easArgs, {
+      cwd: ROOT,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env, CI: '1' },
+      // Windows: npx.cmd cannot be spawned without a shell on Node 20.12+/22
+      shell: process.platform === 'win32',
+    });
     console.log(out.trim().split('\n').slice(-3).join('\n'));
   } catch (error) {
     console.error((error.stderr ?? '').toString().trim() || String(error));
