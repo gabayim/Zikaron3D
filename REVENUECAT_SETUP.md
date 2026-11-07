@@ -142,6 +142,21 @@ you want dashboard parity for later paywalls.
 
 ## 6. Add the webhook (Pro-plan feature)
 
+**Already done through the API** (project `proj2c5f0c4c`, webhook `whintgr5e4955c5b0774054a098bde0a4d6939e`,
+scoped to app `app4b4245257c`, events `initial_purchase`, `non_renewing_purchase`, `renewal`,
+environment = production **and** sandbox):
+
+```
+https://ggkrbyjabsihzdskdbrt.supabase.co/functions/v1/revenuecat-webhook?token=<REVENUECAT_WEBHOOK_SECRET>
+```
+
+The secret travels as `?token=…` because RevenueCat's v2 API cannot store a custom
+`Authorization` header and does not expose its HMAC signing secret. The edge
+function accepts **either** the header **or** the query token; without one it
+answers 401 (verified live).
+
+To do it by hand instead:
+
 Docs: <https://www.revenuecat.com/docs/integrations/webhooks>
 
 1. Project → left menu **Integrations** → **Webhooks** → **+ Add new
