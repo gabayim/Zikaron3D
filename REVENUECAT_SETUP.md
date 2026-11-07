@@ -79,6 +79,29 @@ node scripts/deploy/rc-wire.mjs --public-key appl_xxxxxxxxxxxxxxxx
 
 ---
 
+## Key prefixes — which one goes where
+
+| Prefix | What it is | Used by |
+|---|---|---|
+| `test_…` | **Test Store** public key (every new project gets one) | the SDK **during local development only** — fake products, no StoreKit, no receipts, no money |
+| `appl_…` | **App Store** public SDK key (created when you add an Apple app config) | the SDK in TestFlight and App Store builds ← **this is the one the release needs** |
+| `goog_…` | Google Play public SDK key | Android builds |
+| `sk_…` | **Secret** key, project-wide | servers / REST API v2 only — never in the app |
+
+A `test_…` key in a production build is a silent failure: RevenueCat stays in Test
+Store mode, `Purchases.getProducts` returns the fake catalog (so every pack reads
+"unavailable" because our five ids don't exist there), and real StoreKit purchases
+are never recorded. `scripts/deploy/preflight-ios-release.mjs` therefore fails on
+any key that is not `appl_…` for iOS.
+
+The `test_…` key is still useful for one thing: putting it in the local,
+git-ignored `.env` lets you exercise the shop UI in `expo start` before the App
+Store products exist — provided you also create Test Store products with the five
+ids (`crystals_100`, `crystals_500`, `crystals_1200`, `starter_pack`,
+`shield_pack_10`) in the project's **Test Store** tab.
+
+---
+
 ## 4. Create the five products in App Store Connect first
 
 App Store Connect → your app → **In-App Purchases** → **+**, five times, type
