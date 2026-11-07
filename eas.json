@@ -20,7 +20,8 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "APP_VARIANT": "production"
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_SITE_URL": "https://zmz.ca/zikaron3d"
       }
     }
   },

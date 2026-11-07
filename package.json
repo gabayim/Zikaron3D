@@ -1,6 +1,6 @@
 {
   "name": "zikaron3d",
-  "version": "1.0.0",
+  "version": "2.15.0",
   "main": "index.ts",
   "dependencies": {
     "@shopify/react-native-skia": "2.14.0",

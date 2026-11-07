@@ -1,15 +1,15 @@
 {
   "expo": {
     "name": "Zikaron3D",
-    "slug": "Zikaron3D",
-    "version": "1.0.0",
+    "slug": "zikaron3d",
+    "version": "2.15.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.AdvBig.Zikaron3D",
-      "buildNumber": "1",
+      "buildNumber": "215",
       "appleTeamId": "DAVRE4G59N",
       "config": {
         "usesNonExemptEncryption": false

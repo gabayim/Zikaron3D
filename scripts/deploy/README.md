@@ -5,6 +5,7 @@ the repo root and work on Windows (PowerShell), macOS and Linux.
 
 | Goal | Command |
 |---|---|
+| Check the repo is ready for an App Store update upload | `node scripts/deploy/preflight-ios-release.mjs --live-version 2.14` |
 | Show the backend plan without touching anything | `node scripts/deploy/deploy-backend.mjs --dry-run` |
 | Deploy schema + secrets + Edge Functions | `node scripts/deploy/deploy-backend.mjs` |
 | Re-deploy only the functions | `node scripts/deploy/deploy-backend.mjs --skip-schema` |
