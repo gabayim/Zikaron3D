@@ -1,7 +1,7 @@
 ================================================================================
   ZIKARON3D - APP STORE CONNECT ONBOARDING (iOS)
   Every field App Store Connect asks for, in the order it asks for it.
-  UPDATE RELEASE 2.15.0 (build 215)  |  Apple ID 47513336  |  Live version 2.14
+  UPDATE RELEASE 2.15.0 (build 215)  |  Apple ID 475133336  |  Live version 2.14
   Bundle ID com.AdvBig.Zikaron3D  |  Team DAVRE4G59N  |  Updated: 2026-11-07
 ================================================================================
 
@@ -24,7 +24,7 @@ COMPANION FILES (same repo)
 READ FIRST - THIS IS AN UPDATE TO A LIVE APP, NOT A NEW APP
 --------------------------------------------------------------------------------
 Zikaron3D is already on the App Store:
-  Apple ID ......... 47513336
+  Apple ID ......... 475133336
   Bundle ID ........ com.AdvBig.Zikaron3D
   SKU .............. 1.14
   Live version ..... 2.14 (Ready for Distribution)
@@ -166,12 +166,17 @@ PRICING (App Store tab > Pricing and Availability)
   Pre-order ................. No
 
 IN-APP PURCHASES (App Store tab > In-App Purchases)
-  UPDATE CONTEXT: your 2.14 release already had these packs on sale, so most
-  likely all five ALREADY EXIST in App Store Connect - do not duplicate them.
-  Open each one and check that its Product ID is exactly the id below. A product
-  ID can never be renamed; if an existing pack has a different id (for example
-  crystals_pack_small), create a product with the id below instead and leave the
-  old one unused - otherwise the Shop will show "unavailable" in production.
+  FACTS FROM THE LIVE API (checked 2026-11-07): this app currently has ZERO
+  in-app purchases and zero subscriptions. The $0.99-$7.99 prices in 2.14 were
+  only labels inside the app, never real products. All five must be created -
+  without them the Shop opens with every pack reading "unavailable".
+
+  Apple's API cannot create in-app purchases (verified: the resource answers
+  "inAppPurchases does not allow CREATE, allowed operation is GET_INSTANCE"),
+  so create the five shells here in the UI. Then run
+    node scripts/deploy/asc-iaps.mjs ...
+  which sets the English localization + USA price for each one over the API and
+  verifies all five ids (it also prints this table for you).
 
   Ids the code requires (src/services/monetization.ts), all CONSUMABLES:
 
@@ -568,7 +573,7 @@ EITHER PATH - right after the upload
 QUICK PASTE ORDER (print this and tick as you go)
 --------------------------------------------------------------------------------
  [ ] 1 Agreements, tax, banking
- [ ] 2 Add the 2.15.0 version to the existing app (Apple ID 47513336)
+ [ ] 2 Add the 2.15.0 version to the existing app (Apple ID 475133336)
  [ ] 3 Subtitle, categories, content rights, age rating (4+)
  [ ] 4 Free price + 5 consumables with ids and review screenshots
  [ ] 5 Privacy labels (3 data types, no tracking)

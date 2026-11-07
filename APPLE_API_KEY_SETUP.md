@@ -1,19 +1,56 @@
 # Apple API keys for Zikaron3D releases (what to create, and why)
 
-There are three different Apple keys people mix up. Zikaron3D needs two of them,
-and they are not interchangeable.
+There are three different Apple keys people mix up, and they are not
+interchangeable.
 
-| Key | Where it is created | What it unlocks | Do we need it? |
+| Key | Where it is created | What it unlocks | Status |
 |---|---|---|---|
-| **App Store Connect API key** | App Store Connect → Users and Access → **Integrations** | Reading/writing the app record, in-app purchases, TestFlight, **iOS signing credentials**, uploads | **YES — this is the one we are missing** |
-| **In-App Purchase key** (App Store Server API) | App Store Connect → Users and Access → Integrations → In-App Purchase | Server-side receipt/transaction verification only | Optional; you already have `AuthKey_9F3C3BR5Z2.p8` |
+| **App Store Connect API key** | App Store Connect → Users and Access → **Integrations** | Reading/writing the app record, TestFlight, **iOS signing credentials**, uploads | **DONE — `AuthKey_9F3C3BR5Z2.p8`, verified working** |
+| **In-App Purchase key** (App Store Server API) | App Store Connect → Integrations → In-App Purchase | Server-side receipt/transaction verification only | Optional |
 | **Sign in with Apple key** | Developer Portal → Certificates, Identifiers & Profiles → Keys | The `APPLE_CLIENT_SECRET` client-secret JWT for Supabase Apple sign-in and token revocation | Needed for account-deletion revocation |
 
-The key in `C:\Users\EREZ\Documents\AuthKey_9F3C3BR5Z2.p8` is an **In-App Purchase
-key**, so `api.appstoreconnect.apple.com` answers `401 NOT_AUTHORIZED` for it even
-with the correct Issuer ID. That is why we need a real App Store Connect API key.
+## Verified credentials (do not paste these anywhere public)
 
-## 1. Create the App Store Connect API key (5 clicks)
+```
+Key file   C:\Users\EREZ\Documents\AuthKey_9F3C3BR5Z2.p8
+Key ID     9F3C3BR5Z2
+Issuer ID  69a6de73-a0be-47e3-e053-5b8c7c11a4d1
+Role       ACCOUNT_HOLDER + ADMIN  (read from GET /v1/users)
+```
+
+A key alone cannot authenticate: the JWT's `iss` claim must be the account-wide
+**Issuer ID**. With a wrong/missing issuer the API answers `401 NOT_AUTHORIZED`
+even for a perfectly valid key — that is exactly what happened the first time.
+
+## Verified capability matrix (App Store Connect API, this key)
+
+| Operation | Allowed | Evidence |
+|---|---|---|
+| Read app, versions, app info, IAPs | ✅ | used by `asc-app-info.mjs` |
+| Create app version / version localization | ✅ | `409 … ATTRIBUTE.REQUIRED` (i.e. only the body was wrong) |
+| Create screenshots sets, review submissions | ✅ | `409 … REQUIRED`, so CREATE is permitted |
+| Create in-app purchase localization / price schedule | ✅ | `409 … RELATIONSHIP.INVALID/REQUIRED` |
+| **Create an in-app purchase itself** | ❌ | `403 "The resource 'inAppPurchases' does not allow 'CREATE'. Allowed operation is: GET_INSTANCE"` |
+
+Consequence: the five consumables must be created once in the web UI
+(`scripts/deploy/asc-iaps.mjs` prints the exact rows, then finishes the
+localizations and prices over the API). Everything else can be automated.
+
+## Creating a Sign in with Apple key (for account-deletion revocation)
+
+Developer Portal → **Certificates, Identifiers & Profiles** → **Keys** → **+** →
+"Sign in with Apple" → download `AuthKey_<KEYID>.p8`, note the Key ID, then:
+
+```bash
+node scripts/deploy/apple-client-secret.mjs \
+  --team-id DAVRE4G59N --key-id <KEYID> \
+  --client-id com.AdvBig.Zikaron3D --p8 ./AuthKey_<KEYID>.p8
+```
+
+Set the output as the `APPLE_CLIENT_SECRET` function secret and add
+`APPLE_CLIENT_ID=com.AdvBig.Zikaron3D`.
+
+## Only if a *new* ASC API key is ever needed
 
 1. <https://appstoreconnect.apple.com> → **Users and Access** → **Integrations**
    → **App Store Connect API** (Team Keys tab).
@@ -30,7 +67,7 @@ with the correct Issuer ID. That is why we need a real App Store Connect API key
    - **Issuer ID** — one UUID for the whole account, e.g. `69a6de8c-…`
    - **Key ID** — 10 characters, matches the filename `AuthKey_<KEYID>.p8`
 
-Send me the **Key ID** and **Issuer ID**. The `.p8` never leaves your machine —
+Both values are recorded above. The `.p8` never leaves this machine (git-ignored) —
 I read it from disk and it is never committed.
 
 ## 2. What I do with them (all non-interactive, no Apple password/2FA)
@@ -60,7 +97,7 @@ $env:EXPO_ASC_ISSUER_ID    = "<ISSUER-UUID>"
    ```powershell
    npx eas-cli@latest submit --platform ios --profile production --non-interactive
    ```
-   `eas.json` already carries `submit.production.ios.ascAppId = "47513336"`, which
+   `eas.json` already carries `submit.production.ios.ascAppId = "475133336"`, which
    non-interactive submit requires.
 
 Still needed from you for the build itself (they are compiled into the app, not

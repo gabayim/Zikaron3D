@@ -80,16 +80,19 @@ async function main() {
   console.log(`  sku ............. ${app.attributes.sku}`);
   console.log(`  primary locale .. ${app.attributes.primaryLocale}`);
 
-  const infos = await api(`/v1/apps/${app.id}/appInfos?limit=10&include=primaryCategory,ageRatingDeclaration`);
+  const infos = await api(`/v1/apps/${app.id}/appInfos?limit=10&include=primaryCategory`);
   for (const info of infos.data ?? []) {
-    const cat = info.relationships?.primaryCategory?.data?.id;
-    const rating = info.relationships?.ageRatingDeclaration?.data?.id;
-    console.log(`\nApp information (locale ${info.attributes.locale}):`);
-    console.log(`  name ............ ${info.attributes.name}`);
-    console.log(`  subtitle ........ ${info.attributes.subtitle ?? '(empty)'}`);
-    console.log(`  privacy url ..... ${info.attributes.privacyPolicyUrl ?? '(not set)'}`);
-    console.log(`  primary category  ${cat ?? '(not set)'}`);
-    console.log(`  age rating decl . ${rating ?? 'n/a'}`);
+    const cat = info.relationships?.primaryCategory?.data?.id ?? info.attributes.primaryCategory?.id;
+    console.log(`\nApp information (state ${info.attributes.state ?? '?'}, rating ${info.attributes.appStoreAgeRating ?? '?'}, category ${cat ?? 'not set'}):`);
+    const locs = await api(`/v1/appInfos/${info.id}/appInfoLocalizations?limit=10`);
+    for (const loc of locs.data ?? []) {
+      console.log(`  [${loc.attributes.locale}]`);
+      console.log(`    name .......... ${loc.attributes.name ?? '(empty)'}`);
+      console.log(`    subtitle ...... ${loc.attributes.subtitle ?? '(empty)'}`);
+      console.log(`    privacy url ... ${loc.attributes.privacyPolicyUrl ?? '(NOT SET)'}`);
+      console.log(`    privacy choices ${loc.attributes.privacyChoicesUrl ?? '(none)'}`);
+    }
+    if (!locs.data?.length) console.log('  (no localizations)');
   }
 
   const versions = await api(`/v1/apps/${app.id}/appStoreVersions?limit=10&filter[platform]=IOS`);
@@ -105,6 +108,10 @@ async function main() {
     got.set(p.attributes.productId, p.attributes);
     console.log(`  ${String(p.attributes.productId).padEnd(18)} ${String(p.attributes.inAppPurchaseType).padEnd(12)} ${String(p.attributes.state).padEnd(14)} ${p.attributes.name ?? ''}`);
   }
+  if (!iaps.data?.length) console.log('  (none exist on this app)');
+
+  const groups = await api(`/v1/apps/${app.id}/subscriptionGroups?limit=20`);
+  console.log(`\nSubscriptions: ${groups.data?.length ? `${groups.data.length} group(s)` : '(none)'}`);
   console.log('\nRequired ids from src/services/monetization.ts:');
   for (const id of EXPECTED_IAP) {
     console.log(`  ${got.has(id) ? 'FOUND   ' : 'MISSING '} ${id}`);
