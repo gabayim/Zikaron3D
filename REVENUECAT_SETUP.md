@@ -149,12 +149,38 @@ the correct secret returns **200**.
 
 ## Optional: let me do steps 5–6 for you
 
-Create a **project-scoped secret key** in the Zikaron3D project (API keys →
-*+ New secret API key*) and send it once: I can then create/import the five
-products, add the `default` offering and register the webhook through the
-RevenueCat v2 API, then you revoke that key. Do **not** use the Retriva key — it
-is scoped to that project and cannot see Zikaron3D (verified: `POST /v2/projects`
-→ 401).
+**Generate one key:** Zikaron3D project → **API keys** → *Secret API keys* →
+**+ New secret API key** → name it `cli` → copy the `sk_…` value and send it to me.
+Revoke it afterwards (API keys → delete) - it is only needed for this setup.
+
+What that key lets me do through the REST API v2 (verified against
+<https://www.revenuecat.com/docs/api-v2/app> and `/api-v2/integration`):
+
+| Endpoint | Use |
+|---|---|
+| `GET /projects/{id}/apps` | find the app |
+| `GET /projects/{id}/apps/{app_id}/public_api_keys` | **read the `appl_…` public key** and wire it into the build |
+| `POST /projects/{id}/products` | create the 5 consumables |
+| `POST /projects/{id}/offerings` + `/packages` | the optional `default` offering |
+| `POST /projects/{id}/integrations/webhooks` | register the webhook (url, environment, event types, app scope) |
+| `GET /projects/{id}/customers/{id}` | verify a sandbox purchase after the build |
+
+What **no** API can do (these stay in the dashboard, ~3 minutes):
+
+1. **Create the project** — the v2 Project resource exposes only list/get, and
+   `POST /v2/projects` answers `401` for a project-scoped key (verified with the
+   Retriva key).
+2. **Upload the Apple credentials** to the app config — there is no endpoint for
+   the In-App Purchase key `.p8`, the shared secret, or the ASC API key.
+3. **The webhook's `Authorization` header** — the v2 webhook resource supports an
+   HMAC `signing_secret`, not a custom header. Either add the header in the
+   dashboard after I create the integration (one field, keeps our shared-secret
+   check working), or create the webhook fully in the dashboard (step 6).
+
+So the fastest split: **you** create the project + app + credentials (steps 1–2)
+and generate the secret key; **I** do the public key lookup, the five products,
+the offering and the webhook, then hand you the preflight-green repo to build.
+
 
 which validates it, writes the git-ignored `.env`, sets the **sensitive** EAS
 production variable and re-runs the release preflight.
