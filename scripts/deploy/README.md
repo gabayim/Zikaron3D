@@ -6,6 +6,9 @@ the repo root and work on Windows (PowerShell), macOS and Linux.
 | Goal | Command |
 |---|---|
 | Check the repo is ready for an App Store update upload | `node scripts/deploy/preflight-ios-release.mjs --live-version 2.14` |
+| Read the live App Store Connect record (read-only) | `node scripts/deploy/asc-app-info.mjs --key-path <p8> --key-id <id> --issuer-id <uuid>` |
+| Create/refresh the store version + all metadata | `node scripts/deploy/asc-version.mjs --key-path <p8> --key-id <id> --issuer-id <uuid>` |
+| Check/finish the five in-app purchases | `node scripts/deploy/asc-iaps.mjs --key-path <p8> --key-id <id> --issuer-id <uuid>` |
 | Show the backend plan without touching anything | `node scripts/deploy/deploy-backend.mjs --dry-run` |
 | Deploy schema + secrets + Edge Functions | `node scripts/deploy/deploy-backend.mjs` |
 | Re-deploy only the functions | `node scripts/deploy/deploy-backend.mjs --skip-schema` |
