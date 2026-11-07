@@ -528,10 +528,19 @@ PATH A - EAS cloud build (no Mac needed)
     npx eas-cli@latest env:create --environment production ^
       --name EXPO_PUBLIC_REVENUECAT_APPLE_KEY --value "appl_..." --visibility sensitive
 
-  Credentials, once (interactive; creates or reuses the distribution certificate
-  and provisioning profile for com.AdvBig.Zikaron3D):
+  Signing credentials come from an App Store Connect API key with the **Admin**
+  role (create it per APPLE_API_KEY_SETUP.md; the In-App Purchase key cannot do
+  this). Export the three values and EAS manages the distribution certificate and
+  provisioning profile itself, with no Apple password or 2FA:
 
+    $env:EXPO_ASC_API_KEY_PATH = "C:\Users\EREZ\Documents\AuthKey_<KEYID>.p8"
+    $env:EXPO_ASC_KEY_ID       = "<KEYID>"
+    $env:EXPO_ASC_ISSUER_ID    = "<ISSUER-UUID>"
+
+  Fallback: log in with your Apple ID once instead of using a key -
     npx eas-cli@latest credentials --platform ios
+  then choose production -> "App Store Connect: Manage your API Key" ->
+  "Set up your project to use an API Key for Expo Submit".
 
   Then:
 
