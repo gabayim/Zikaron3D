@@ -135,6 +135,37 @@ Live on the zmz.ca host (see `public-site/README.md`):
 
 ## 8. Backend deployment (do this before TestFlight)
 
+**Status: live on the Supabase project `ggkrbyjabsihzdskdbrt` (Zikaron3D, eu-west-1)**
+
+| Item | State |
+|---|---|
+| `supabase/schema.sql` | applied — `profiles`, `purchases`, `weekly_scores`, all with RLS on |
+| Policies | 7 (profiles read/insert/update own; scores read-all/insert-own/update-own; purchases read-own) |
+| Anti-cheat triggers | `trg_score_rate_limit`, `trg_xp_rate_limit` |
+| RPC | `delete_my_account()` |
+| Constraints | `profiles_xp_check`, `profiles_shields_check`, `profiles_levels_check`, `weekly_scores_score_check`, `purchases_transaction_id_key` (unique) |
+| Edge Functions | `revenuecat-webhook` (JWT off), `link-apple`, `delete-account` (JWT on) |
+| Function secrets | `REVENUECAT_WEBHOOK_SECRET`, `APPLE_CLIENT_ID` (value of the secret lives in Supabase → Edge Functions → Secrets, never in this repo) |
+| Auth | Sign in with Apple enabled, client id `com.AdvBig.Zikaron3D`, `site_url` = https://zmz.ca/zikaron3d |
+| Live check | `node scripts/deploy/verify-live.mjs` → all checks pass (anon reads 0 rows, anon writes refused) |
+
+Webhook URL for RevenueCat → Integrations → Webhooks:
+
+```
+https://ggkrbyjabsihzdskdbrt.supabase.co/functions/v1/revenuecat-webhook
+```
+
+The `Authorization` header value must equal `REVENUECAT_WEBHOOK_SECRET`. Verified:
+an unsigned call returns **401**, and a call with the correct secret and an ignored
+event type returns **200** without touching the ledger.
+
+Re-deploy at any time:
+
+```bash
+node scripts/deploy/deploy-backend.mjs --skip-schema   # secrets + functions
+node scripts/deploy/verify-live.mjs
+```
+
 One command (see `scripts/deploy/README.md` for the environment variables):
 
 ```bash
