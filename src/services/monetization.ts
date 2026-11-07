@@ -69,6 +69,20 @@ export function applyProduct(productId: ProductId, transactionId: string): boole
   return true;
 }
 
+/**
+ * RevenueCat public SDK keys start with `appl_` (iOS) or `goog_` (Android).
+ * A secret key (`sk_`) grants server-side REST access to every subscriber and
+ * must never be embedded in the app bundle - it is extractable from a shipped
+ * IPA. The guard below makes that impossible by accident.
+ */
+function isSecretKey(key: string): boolean {
+  return key.trim().startsWith('sk_');
+}
+
+function looksPublic(key: string, platform: string): boolean {
+  return platform === 'ios' ? key.trim().startsWith('appl_') : key.trim().startsWith('goog_');
+}
+
 /** Call once at app start. No-op without RevenueCat keys. */
 export function initMonetization(): void {
   if (configured) return;
@@ -76,6 +90,16 @@ export function initMonetization(): void {
   const googleKey = process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY;
   const apiKey = Platform.OS === 'ios' ? appleKey : googleKey;
   if (!apiKey || apiKey.includes('your_')) return;
+  if (isSecretKey(apiKey)) {
+    console.error(
+      '[monetization] refusing to configure RevenueCat with a secret key (sk_...). ' +
+        'Use the public app-specific key from RevenueCat > Project settings > API keys.',
+    );
+    return;
+  }
+  if (!looksPublic(apiKey, Platform.OS)) {
+    console.warn(`[monetization] key does not look like a ${Platform.OS} public SDK key (appl_/goog_)`);
+  }
   try {
     Purchases.configure({ apiKey });
     configured = true;

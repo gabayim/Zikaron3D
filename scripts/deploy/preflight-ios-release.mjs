@@ -81,6 +81,12 @@ report((app.plugins ?? []).some((p) => (Array.isArray(p) ? p[0] : p) === 'expo-a
 
 const missing = REQUIRED_ENV.filter((name) => !(process.env[name] ?? '').trim() || (process.env[name] ?? '').includes('your_'));
 report(missing.length === 0, 'build env has the app keys', missing.length ? `missing: ${missing.join(', ')}` : 'all present');
+
+const rcKey = (process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY ?? '').trim();
+if (rcKey) {
+  report(!rcKey.startsWith('sk_'), 'RevenueCat key is not a secret key', rcKey.startsWith('sk_') ? 'sk_ keys grant server-side access and must never ship' : 'ok');
+  report(rcKey.startsWith('appl_'), 'RevenueCat key is the Apple public SDK key', rcKey.startsWith('appl_') ? 'appl_…' : `unexpected prefix: ${rcKey.slice(0, 5)}…`);
+}
 report(!(process.env.EXPO_PUBLIC_SITE_URL ?? '').includes('zikaron3d.app'), 'site URL is the live zmz.ca path', SITE);
 
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
