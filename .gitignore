@@ -50,3 +50,6 @@ __pycache__/
 supabase/.temp/
 supabase/.branches/
 .supabase/
+# EAS local iOS signing material (private key + password)
+credentials/
+credentials.json
