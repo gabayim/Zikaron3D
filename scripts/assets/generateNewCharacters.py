@@ -83,6 +83,13 @@ NEW_CHARACTERS = {
         "hop_prompt": "The cute round robot does a joyful rocket hop with a tiny spark burst below, lands with bouncy spring.",
         "celebrate_prompt": "The cute robot celebrates: spins in the air, antenna bulbs flash bright like mini fireworks, cheers with happy electronic expression.",
         "sad_prompt": "The cute robot powers down slightly, antenna dims, head tilts, then beeps back to life with a bright smile.",
+        "clips": [
+            ("idle", "loop", 4, "The cute round robot idles cheerfully: gentle hover bobbing, antenna bulbs pulse with soft amber light, blinks digitally."),
+            ("pop", "video", 3, "The cute Bolt creature pops up from below with a springy bounce, lands with squash and stretch, looks around with a big happy smile."),
+            ("celebrate", "video", 4, "The cute robot celebrates: spins in the air, antenna bulbs flash bright like mini fireworks, cheers with happy electronic expression."),
+            ("sad", "video", 4, "The cute robot powers down slightly, antenna dims, head tilts, then beeps back to life with a bright smile."),
+            ("dance", "loop", 4, "The cute round robot dances in place to a steady beat: it bobs down and up on every beat, steps side to side left then right, antenna bulbs blink in rhythm, happy face. It stays exactly the same size, in the same spot, fully in frame, the camera never moves or zooms."),
+        ],
     },
     "luna": {
         "name": "Luna",
@@ -120,6 +127,38 @@ NEW_CHARACTERS = {
         "celebrate_prompt": "The cute golem celebrates with both arms raised in victory, golden crown horn gleams, runes shine brilliant gold.",
         "sad_prompt": "The cute golem slumps its stone shoulders, looks down, then clenches fists and perks back up determined.",
     },
+    # Props: no face, custom master prompt and clip list.
+    "clam": {
+        "name": "Clam",
+        "rarity": "prop",
+        "desc": "glossy pastel coral-pink and pearl-white scallop clam shell prop for Shell Shuffle (Deep Sea)",
+        "master_prompt": (
+            "Game prop design, centered, front view, slightly from above. A single closed glossy scallop clam shell: "
+            "pastel coral-pink ridged top shell with a soft pearl-white rim and a lavender inner lip peeking out, "
+            "rounded chunky toy proportions, no face, no eyes. "
+        ),
+        "clips": [
+            ("idle", "loop", 4, "The closed glossy clam shell rests in place and breathes gently: it lifts its top shell a tiny crack and closes again with a soft squash, tiny bubbles rise. It never opens wide. No face."),
+            ("pop", "video", 3, "The glossy clam shell stays exactly where it is and keeps exactly the same size: only its top shell hinges open upward in place with a bouncy little spring, like a lid, showing the empty pearly-lavender inside with a soft sparkle, then it stays open and still. The bottom shell never moves. The camera does not move or zoom at all, the clam never gets bigger and never comes closer. No face."),
+            ("sad", "video", 3, "The glossy clam shell opens slowly to show it is empty inside, wobbles side to side once, and slowly closes again with a soft droop. No face."),
+        ],
+    },
+    "bud": {
+        "name": "Bud",
+        "rarity": "prop",
+        "desc": "glossy closed flower bud prop for Vine Flow (Enchanted Grove)",
+        "master_prompt": (
+            "Game prop design, centered, front view. A single closed glossy flower bud on a short thick amber-brown stem "
+            "standing upright: plump teardrop bud of coral-pink petals with golden-yellow petal tips and a warm inner glow, "
+            "two small amber-brown leaves at the base of the stem, rounded chunky toy proportions, no face, no eyes. "
+            "Absolutely no green anywhere on the object. "
+        ),
+        "clips": [
+            ("idle", "loop", 4, "The closed glossy flower bud sways gently in place on its stem like in a soft breeze, breathing with a tiny squash and stretch. It never opens. It stays exactly the same size and in the same place. No face."),
+            ("pop", "video", 3, "Locked static side-view camera, no zoom, no tilt, no push-in. The glossy bud stays on its stem in the exact same spot: its coral-pink petals open outward into a wide cup-shaped tulip bloom with a bouncy spring and a sparkling golden center, then it stays open and still. The stem and the two amber leaves stay fully visible at the bottom the whole time and the flower never grows bigger than the frame center. No face."),
+            ("sad", "video", 3, "The glossy closed flower bud droops and wilts down on its stem with a sad sag, then slowly straightens back up and perks up again. It stays exactly the same size and in the same place, the camera never moves or zooms. No face."),
+        ],
+    },
 }
 
 
@@ -154,9 +193,12 @@ def generate_master(char_id: str) -> Path:
         print(f"Master green image already exists for {char_id}: {green_png}")
         return green_png
 
-    prompt = (
+    subject = data.get("master_prompt") or (
         f"Game character design, full body, front three-quarter view, centered. "
         f"A NEW small adorable creature named {data['name']}: {data['desc']}. "
+    )
+    prompt = (
+        f"{subject}"
         f"{STYLE} The background is a perfectly flat solid pure chroma green (#00FF00), "
         f"completely uniform, with no shadow, no glow, no gradient, no ground, no text."
     )
@@ -249,7 +291,7 @@ def generate_clip(char_id: str, action: str, mode: str, duration: int, prompt_te
 
 def generate_all_clips_for_char(char_id: str):
     data = NEW_CHARACTERS[char_id]
-    clips = [
+    clips = data.get("clips") or [
         ("idle", "loop", 4, data["idle_prompt"]),
         ("pop", "video", 3, f"The cute {data['name']} creature pops up from below with a springy bounce, lands with squash and stretch, looks around with a big happy smile."),
         ("celebrate", "video", 4, data["celebrate_prompt"]),

@@ -1,0 +1,22 @@
+# Supabase CLI configuration for Zikaron3D.
+# Only the per-function JWT settings are pinned here; everything else uses the
+# CLI defaults. Deploy with:
+#   supabase functions deploy revenuecat-webhook --no-verify-jwt
+#   supabase functions deploy link-apple
+#   supabase functions deploy delete-account
+# The `--no-verify-jwt` flag and the sections below must agree.
+
+# RevenueCat signs its calls with its own Authorization header, not a Supabase
+# JWT, so gateway JWT verification has to be off for this function. The handler
+# compares the header against REVENUECAT_WEBHOOK_SECRET instead.
+[functions.revenuecat-webhook]
+verify_jwt = false
+
+# Called from the signed-in app right after Sign in with Apple, so the caller
+# must present a valid Supabase access token.
+[functions.link-apple]
+verify_jwt = true
+
+# Called from Settings > delete account; needs a valid Supabase access token.
+[functions.delete-account]
+verify_jwt = true

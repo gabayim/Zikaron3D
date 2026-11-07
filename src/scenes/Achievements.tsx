@@ -34,6 +34,10 @@ const CATEGORIES: { id: 'all' | AchievementCategory; label: string }[] = [
   { id: 'burrows', label: 'BURROWS' },
   { id: 'orbs', label: 'ORBS' },
   { id: 'stars', label: 'STARS' },
+  { id: 'shells', label: 'SHELLS' },
+  { id: 'vines', label: 'VINES' },
+  { id: 'beats', label: 'BEATS' },
+  { id: 'peaks', label: 'PEAKS' },
   { id: 'general', label: 'GENERAL' },
 ];
 

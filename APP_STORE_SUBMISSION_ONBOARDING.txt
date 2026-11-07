@@ -1,0 +1,467 @@
+================================================================================
+  ZIKARON3D - APP STORE CONNECT ONBOARDING (iOS)
+  Every field App Store Connect asks for, in the order it asks for it.
+  Version 1.0.0 (build 1)  |  Bundle ID com.AdvBig.Zikaron3D  |  Team DAVRE4G59N
+  Updated: 2026-11-07
+================================================================================
+
+HOW TO USE THIS FILE
+  *  Blocks marked "PASTE"  -> copy exactly into App Store Connect.
+  *  Values in <ANGLE BRACKETS> -> only you know them (names, phone, prices,
+     screenshots). Search this file for "<" once you are done to be sure none
+     are left.
+  *  Sections are numbered in the order App Store Connect shows them.
+  *  Character limits are noted next to each field and were checked against the
+     current copy.
+
+COMPANION FILES (same repo)
+  APP_STORE_CONNECT_CHECKLIST.md ... the same answers, short reference
+  TESTFLIGHT_TEST_PLAN.md .......... device test pass BEFORE you submit
+  scripts/deploy/README.md ......... Supabase backend + zmz.ca site deployment
+  public-site/ ..................... the live legal pages
+
+--------------------------------------------------------------------------------
+STEP 0 - EVERYTHING THAT MUST EXIST BEFORE YOU OPEN APP STORE CONNECT
+--------------------------------------------------------------------------------
+[ ] Apple Developer Program active for team DAVRE4G59N.
+[ ] Agreements + tax + banking done (STEP 1 below) - without them IAP cannot ship.
+[ ] Backend live and verified:
+        node scripts/deploy/deploy-backend.mjs
+        node scripts/deploy/verify-live.mjs
+[ ] Five products created in App Store Connect (STEP 4) and added in RevenueCat.
+[ ] EXPO_PUBLIC_REVENUECAT_APPLE_KEY set as an EAS environment variable for the
+    production profile (public SDK key from RevenueCat > Project > API keys).
+[ ] Legal pages return HTTP 200:
+        https://zmz.ca/zikaron3d/privacy.html
+        https://zmz.ca/zikaron3d/terms.html
+        https://zmz.ca/zikaron3d/support.html
+[ ] Production build uploaded to TestFlight.
+[ ] TESTFLIGHT_TEST_PLAN.md pass is green on a real device.
+[ ] Screenshots captured (STEP 6b) - no prices, no promo codes in any image.
+
+Build + upload (run from the repo root):
+        npx eas-cli@latest build  --platform ios --profile production
+        npx eas-cli@latest submit --platform ios --profile production
+
+--------------------------------------------------------------------------------
+STEP 1 - AGREEMENTS, TAX, BANKING          (Business > Agreements, Tax, and
+                                            Banking - you must do this yourself)
+--------------------------------------------------------------------------------
+[ ] Free Apps agreement .................. accept
+[ ] Paid Apps agreement .................. accept  (required even when the app
+                                            itself is free, because it sells IAP)
+[ ] Tax forms ............................ complete (U.S. or your country's form
+                                            + the digital-services questions)
+[ ] Bank account ......................... <BANK ACCOUNT HOLDER>
+                                            <BANK COUNTRY> <ACCOUNT NUMBER/IBAN>
+[ ] Contacts ............................. <LEGAL CONTACT NAME + EMAIL>
+                                            <FINANCE CONTACT NAME + EMAIL>
+                                            <TECHNICAL CONTACT NAME + EMAIL>
+
+Symptom if skipped: the five in-app purchases stay "Missing Metadata" and the
+version cannot be submitted.
+
+--------------------------------------------------------------------------------
+STEP 2 - CREATE THE APP RECORD    (My Apps > "+" > New App)
+--------------------------------------------------------------------------------
+Platform ................. iOS
+Name ..................... Zikaron3D                    (limit 30 / used 9)
+Primary Language ......... English (U.S.)
+Bundle ID ................ com.AdvBig.Zikaron3D        (must match app.json exactly)
+SKU ...................... <YOUR-SKU>   e.g. ZIKARON3D-IOS-001
+                           (internal only, never shown in the store, cannot be
+                            changed later)
+User Access .............. Full Access
+
+Note: if "Zikaron3D" is taken as an app name, Apple will ask for another name
+but the bundle ID stays the same.
+
+--------------------------------------------------------------------------------
+STEP 3 - APP INFORMATION  (App Store tab > App Information)
+--------------------------------------------------------------------------------
+Name ..................... Zikaron3D
+Subtitle ................. PASTE:  Memory arcade for families        (limit 30 / 26)
+
+Primary Category ......... Games
+Primary Subcategory ...... Casual
+Secondary Category ....... Games > Puzzle            (optional but recommended)
+
+Content Rights ........... "Yes, it contains, shows, or accesses third-party
+                            content" -> NO. Select "No, it does not". All art,
+                            audio and music are yours / public-domain.
+
+Age Rating ............... Open the questionnaire and answer as below.
+   (If your account shows the newer tiers 4+/9+/13+/16+/18+, the resulting
+    rating is 4+. If it shows the older 4+/9+/12+/17+ model, also 4+.)
+
+   Cartoon or Fantasy Violence ................ None
+   Realistic Violence ......................... None
+   Prolonged Graphic or Sadistic Realistic
+     Violence ............................. None
+   Profanity or Crude Humor ................... None
+   Mature or Suggestive Themes ................ None
+   Horror or Fear Themes ...................... None
+   Medical or Treatment Information ........... None
+   Alcohol, Tobacco, or Drug Use .............. None
+   Simulated Gambling ......................... None
+   Sexual Content or Nudity ................... None
+   Graphic Sexual Content and Nudity .......... None
+   Unrestricted Web Access .................... No   (only fixed legal pages
+                                                    open in an in-app browser)
+   Gambling and Contests ...................... No
+   User-Generated Content ..................... No
+   Messaging / Chat ........................... No
+   Advertising ............................... No
+
+   Everything else (ads, contests, UGC, in-app purchases as a rating factor):
+   answer No / None if asked. In-app purchases do not change the rating.
+
+   RESULT: 4+
+
+--------------------------------------------------------------------------------
+STEP 4 - PRICING AND AVAILABILITY + THE FIVE IN-APP PURCHASES
+--------------------------------------------------------------------------------
+PRICING (App Store tab > Pricing and Availability)
+  Price ...................... Free            (recommended; revenue comes from
+                                               the crystal packs below)
+                              <or pick your price>
+  Availability ............... All countries and regions (or <LIST>)
+  Pre-order ................. No
+
+IN-APP PURCHASES (App Store tab > In-App Purchases > "+")
+  Create five CONSUMABLES. The Product ID cannot be changed afterwards and must
+  match src/services/monetization.ts exactly.
+
+  #  Reference Name      Product ID        Type        Display Name (30)   Price
+  1  Crystals 100        crystals_100      Consumable  100 Crystals        <TIER 1 / $0.99>
+  2  Crystals 500        crystals_500      Consumable  500 Crystals        <TIER 4 / $3.99>
+  3  Crystals 1200       crystals_1200     Consumable  1,200 Crystals      <TIER 8 / $7.99>
+  4  Starter Pack        starter_pack      Consumable  Starter Pack        <TIER 3 / $2.99>
+  5  10 Streak Shields   shield_pack_10    Consumable  10 Streak Shields   <TIER 1 / $0.99>
+
+  PASTE - Description field (limit 45 characters each):
+  crystals_100      -> Pouch of sparkling blue gems
+  crystals_500      -> Chest of crystals for world unlocks
+  crystals_1200     -> Vault of crystals - best value
+  starter_pack      -> 500 crystals + 3 rare skins, once
+  shield_pack_10    -> Protects arcade combo streaks
+
+  Per product you must also:
+  [ ] Add a Review Screenshot - a screenshot of the Gems tab showing that pack
+      (any size, no prices hard-coded in the app).
+  [ ] Leave "Cleared for sale" ON.
+  [ ] Leave localization at English (U.S.).
+  [ ] Do NOT create subscriptions or non-consumables - the code only reads the
+      five consumable ids above and grants items after the store confirms the
+      charge.
+  [ ] starter_pack is enforced one-per-account inside the app; no extra setup.
+
+--------------------------------------------------------------------------------
+STEP 5 - APP PRIVACY  (App Store tab > App Privacy > Edit)
+--------------------------------------------------------------------------------
+Question: "Do you or your third-party partners collect data from this app?"
+  Answer: YES
+
+Add exactly these three data types (all App Functionality, all linked, none for
+tracking):
+
+  DATA TYPE                  COLLECTED  LINKED TO USER  TRACKING  PURPOSE
+  Identifiers > User ID         Yes          Yes          No     App Functionality
+  Purchases > Purchase History  Yes          Yes          No     App Functionality
+  Other Data Types (gameplay
+    progress: levels, weekly
+    scores, cosmetics)          Yes          Yes          No     App Functionality
+
+  Do NOT add: Contact Info, Location, Contacts, Health, Financial Info,
+  Browsing/Search History, Sensitive Info, Diagnostics, Advertising Data,
+  Usage Data cookies. The app has no ad SDK, no analytics SDK and no crash SDK.
+
+Question: "Do you use data to track the user across apps/websites?" -> NO
+  (No App Tracking Transparency prompt is shown, because nothing is tracked.)
+
+Where the data goes (what Apple means by "third parties"):
+  Supabase ..... encrypted Postgres: anonymous user id, progress, scores.
+  RevenueCat ... receipt validation and the purchase ledger.
+  Apple ........ Sign in with Apple (anonymous id) and StoreKit payments.
+
+State clearly if a reviewer asks: no name, no email, no phone, no location, no
+device identifiers for advertising, no data sold.
+
+--------------------------------------------------------------------------------
+STEP 6 - VERSION PAGE (App Store tab > "1.0.0 Prepare for Submission")
+--------------------------------------------------------------------------------
+Version number ........... 1.0.0        (must equal CFBundleShortVersionString)
+Copyright ................ PASTE:  2026 ZMZ Softwares
+Routing app coverage ..... No
+
+SUPPORT URL .............. https://zmz.ca/zikaron3d/support.html
+MARKETING URL ............ https://zmz.ca/zikaron3d/
+PRIVACY POLICY URL ....... https://zmz.ca/zikaron3d/privacy.html
+   (Privacy URL is set on App Information / App Privacy; both must be reachable
+    without a login, which they are.)
+
+----------------------------------------------------------------------- PASTE
+SUBTITLE (already set in STEP 3):
+  Memory arcade for families
+
+PROMOTIONAL TEXT (limit 170 characters):
+  Seven worlds of memory games, one kid-safe mode and a weekly arcade league.
+  No ads, no tracking, plays offline.
+
+KEYWORDS (limit 100 characters, comma separated, no spaces):
+  memory,arcade,match,kids,family,brain,training,critters,puzzle,casual,relax,zen
+
+DESCRIPTION (limit 4000 characters):
+  Zikaron3D is a hand-built 3D memory arcade for the whole family: seven toy-like
+  worlds, seven different memory games and one calm place to play.
+
+  PLAY THREE WAYS
+  - TOYBOX: made for ages 4-7. No timers, gentle hints, no ads, and every
+    purchase or external link is locked behind a parental gate.
+  - ARCADE: combo streaks, streak shields and a weekly league where your best
+    week becomes your score.
+  - SANCTUARY: slow, quiet practice with soft audio and no pressure.
+
+  SEVEN WORLDS, SEVEN GAMES
+  Meadow - Critter Burrows: match the critters peeking out of their holes.
+  Crystal - Orb Merge: drop and merge critters up the evolution ladder.
+  Candy - Star Catcher: slide a resident under falling stars.
+  Deep Sea - Shell Shuffle: follow the shells as they shuffle.
+  Grove - Vine Flow: turn the tiles to light every vine.
+  Circuit - Beat Circuit: hit the lanes on the beat of public-domain tunes.
+  Summit - Echo Peaks: repeat patterns of stars, tones and colours.
+
+  COLLECT AND DRESS UP
+  Meet fifteen animated critters, then unlock skins, hats, auras and trails.
+  Everything you earn stays on your device; optional crystal packs buy cosmetics,
+  world unlocks and streak shields - nothing is paywalled to play.
+
+  FAIR AND QUIET BY DESIGN
+  - No ads, no analytics SDKs, no tracking across apps or websites.
+  - Plays fully offline. Cloud save and the weekly league are optional and use a
+    private anonymous account (Sign in with Apple, no name or email requested).
+  - Delete your cloud data at any time in Settings.
+  - In-App Purchases available.
+
+  Portrait, touch-first, designed for iPhone and iPad.
+----------------------------------------------------------------------- END PASTE
+
+--------------------------------------------------------------------------------
+STEP 6b - SCREENSHOTS  (same version page, "App Previews and Screenshots")
+--------------------------------------------------------------------------------
+Two slots are REQUIRED with this app.json (supportsTablet = true):
+
+  iPhone 6.9" display ... 1320 x 2868 px (portrait), 3-10 images
+  iPad 13" display ..... 2064 x 2752 px (portrait), 3-10 images
+
+  If you do NOT want an iPad build: set  "supportsTablet": false  in app.json,
+  rebuild, and only the iPhone slot is required.
+
+  Rules Apple enforces: no prices, no promo codes, no "download now" call-outs,
+  no other platforms' UI, and the screenshots must show the real app.
+
+  Suggested set (capture in this order, app in ARCADE unless noted):
+   1. Hub carousel ........... "Seven worlds to explore"
+   2. Critter Burrows
+      (TOYBOX mode) .......... "A kid-safe mode for ages 4-7"
+   3. Orb Merge .............. "Merge, chain and climb the ladder"
+   4. Leaderboard ............ "A new weekly arcade league"
+   5. Collection shelf ....... "Collect and dress up fifteen critters"
+   6. Parental gate dialog ... "Grown-up check before every purchase"
+
+  Optional App Preview video: 15-30 s, same sizes, no price messaging.
+
+  Capture helpers:
+   - Simulator: xcrun simctl io booted screenshot shot1.png
+   - Device/TestFlight: use the TestFlight build so StoreKit prices look real.
+   - Add captions in any editor; keep the same style for every slide.
+
+--------------------------------------------------------------------------------
+STEP 7 - BUILD + EXPORT COMPLIANCE
+--------------------------------------------------------------------------------
+Build section on the version page:
+  [ ] "+ Build" -> pick the newest production build (must read 1.0.0 (1)).
+  [ ] If it says "Missing Compliance", answer:
+        "Does your app use encryption?" ............ Yes
+        "Does it use only standard HTTPS/TLS and
+         qualify for the exemption?" ............... Yes
+      app.json already sets ITSAppUsesNonExemptEncryption = false, so usually
+      no question appears at all.
+  [ ] APP USES NON-EXEMPT ENCRYPTION ............. No
+  [ ] Advertising Identifier (IDFA) .............. No
+      (no ad SDK, no ATT prompt - this keeps the privacy label honest)
+
+--------------------------------------------------------------------------------
+STEP 8 - APP REVIEW INFORMATION
+--------------------------------------------------------------------------------
+Contact:
+  First name ....... <REVIEW CONTACT FIRST NAME>
+  Last name ........ <REVIEW CONTACT LAST NAME>
+  Phone ............ <+COUNTRYCODE PHONE>          (must work during review)
+  Email ............ <REVIEW CONTACT EMAIL>
+
+  Sign-in required? ....... No  <- important, the game is fully playable signed out
+  Demo account ............ Not needed. If a reviewer asks, reply:
+                            "Sign in with Apple is optional; cloud save and the
+                             weekly league use it. All gameplay, including IAP,
+                             works without an account."
+
+  ATTACHMENTS ............. none
+
+----------------------------------------------------------------------- PASTE
+APP REVIEW NOTES:
+  Thank you for reviewing Zikaron3D.
+
+  1. PLAY MODES
+  - TOYBOX (ages 4-7): no timers, no ads. Shop entry, SKIP LVL, world unlocks,
+    skin purchases and leaving the mode are all behind a math parental gate.
+  - ARCADE: weekly league, combo streaks and streak shields.
+  - SANCTUARY: calm, untimed practice.
+
+  2. PARENTAL GATE
+  In TOYBOX, tap the mode icon at the top-left of the hub to switch to ARCADE;
+  solve the two-digit x one-digit multiplication shown (for example 14 x 7).
+  Three wrong answers lock the gate for 30 seconds. The gate is also required
+  before any purchase, restore, sign-in or legal link.
+
+  3. ACCOUNT
+  Sign in with Apple is optional and requests no name or email. Without it the
+  game is fully playable offline. Cloud save + weekly leaderboard require it.
+  Account deletion: Settings (gear icon) > trash icon; this deletes the cloud
+  rows and revokes the Apple sign-in grant.
+
+  4. IN-APP PURCHASES
+  Arcade > Shop > Gems sells: crystals_100, crystals_500, crystals_1200,
+  starter_pack (one-time; includes 3 skins) and shield_pack_10. All are
+  consumables, priced by the App Store, all behind the parental gate.
+  RESTORE PURCHASES is available in Shop > Gems and in Settings.
+  Please test with a sandbox Apple ID.
+
+  5. PRIVACY
+  No ads, no analytics SDKs, no tracking, no ATT prompt. Data collected is an
+  anonymous user id, purchase history and gameplay progress - all used only for
+  app functionality.
+
+  6. LINKS
+  Privacy: https://zmz.ca/zikaron3d/privacy.html
+  Terms:   https://zmz.ca/zikaron3d/terms.html
+  Support: https://zmz.ca/zikaron3d/support.html
+  Email:   support@zmz.ca
+----------------------------------------------------------------------- END PASTE
+
+--------------------------------------------------------------------------------
+STEP 9 - SUBMIT
+--------------------------------------------------------------------------------
+[ ] Version Release: choose "Manually release this version" (recommended) so you
+    can pick the launch moment after approval.
+[ ] Check the "In-App Purchases" box on the version page lists all five
+    products, each with a review screenshot (otherwise the button is blocked).
+[ ] Confirm the build shows 1.0.0 (1) and no "Missing Compliance" warning.
+[ ] Press "Add for Review" then "Submit for Review".
+[ ] Watch email for the review status; typical first review is 24-48 h.
+--------------------------------------------------------------------------------
+STEP 10 - TESTFLIGHT, SANDBOX AND THE PURCHASE SIDE
+--------------------------------------------------------------------------------
+[ ] App Store Connect > Users and Access > Sandbox > Testers: create
+      <SANDBOX FIRST NAME> <SANDBOX LAST NAME> / <SANDBOX EMAIL> /
+      <SANDBOX PASSWORD> / <COUNTRY>. Use this on the review device.
+[ ] Install the production build from TestFlight with the sandbox Apple ID
+      signed in (Settings > App Store > Sandbox Account).
+[ ] Run TESTFLIGHT_TEST_PLAN.md end to end - it covers every check the audit
+      flagged (purchases, restore, delete account, forged score, parental gate,
+      practice rivals, console stripping).
+[ ] After one test purchase, Supabase > Table editor > purchases must show a new
+      row with your user id and a unique transaction id (proves the RevenueCat
+      webhook is wired).
+[ ] RevenueCat > Customers: the sandbox purchase appears under the same app user
+      id as the Supabase user id (proves Purchases.logIn is linking accounts).
+
+--------------------------------------------------------------------------------
+FILL-IN-THE-BLANKS LIST  (search this file for "<" when you finish)
+--------------------------------------------------------------------------------
+ 1. <YOUR-SKU> ................. internal app SKU, e.g. ZIKARON3D-IOS-001
+ 2. <REVIEW CONTACT FIRST NAME / LAST NAME / PHONE / EMAIL>
+ 3. <BANK ACCOUNT HOLDER>, <BANK COUNTRY>, <ACCOUNT NUMBER/IBAN>
+ 4. <LEGAL / FINANCE / TECHNICAL CONTACT> for the agreements page
+ 5. <TIER x / $y> for each of the five products (recommendations are filled in)
+ 6. <or pick your price> for the app itself (recommendation: Free)
+ 7. <LIST> of countries, or keep "All countries and regions"
+ 8. Screenshots: capture the six listed shots + write captions
+ 9. iPad: keep supportsTablet = true (then iPad 13" shots) or set it false
+10. <SANDBOX FIRST NAME / LAST NAME / EMAIL / PASSWORD / COUNTRY>
+11. RevenueCat public SDK key -> EAS env EXPO_PUBLIC_REVENUECAT_APPLE_KEY
+12. <COPYRIGHT HOLDER> - exact legal entity name for the store footer
+13. <SELLER / LEGAL ENTITY NAME> that Apple shows on the product page
+
+--------------------------------------------------------------------------------
+WHAT GETS APPS REJECTED HERE - AND WHY THIS BUILD DOES NOT
+--------------------------------------------------------------------------------
+ 2.1  Crashes / placeholder content
+      -> TestFlight pass (TESTFLIGHT_TEST_PLAN.md) before submitting.
+ 2.3  Inaccurate metadata or screenshots
+      -> No prices in screenshots; description matches the seven games.
+ 2.3.8 Kids category rules (external links, ads, data)
+      -> We ship in Games > Casual with a 4+ rating, not the Kids category;
+         TOYBOX still keeps everything behind the parental gate.
+ 3.1.1 Digital goods must use StoreKit
+      -> All five packs go through RevenueCat/StoreKit; hardcoded promo codes
+         were removed; prices come from the App Store.
+ 5.1.1(i) Privacy policy + data disclosure
+      -> Live policy at zmz.ca/zikaron3d/privacy.html; privacy labels match the
+         code (user id, purchases, gameplay progress; no tracking).
+ 5.1.1(v) Account deletion
+      -> Settings > trash icon deletes the cloud account and revokes the Apple
+         grant. Reviewers look for this when an app offers account creation.
+ 2.1  "Sign in with Apple required" complaints
+      -> Sign-in is optional; the review notes say so explicitly.
+ 4.0  Design / minimum functionality
+      -> Seven distinct games, progression, cosmetics, no web wrapper.
+
+--------------------------------------------------------------------------------
+REFERENCE - FIXED VALUES YOU WILL TYPE MORE THAN ONCE
+--------------------------------------------------------------------------------
+ App name ................. Zikaron3D
+ Bundle ID ................ com.AdvBig.Zikaron3D
+ Apple team ID ............ DAVRE4G59N
+ EAS project ID ........... 484d0ed3-4dd1-4ec7-812a-3d58773440f1
+ Version / build .......... 1.0.0 (1)
+ Support email ............ support@zmz.ca
+ Privacy policy ........... https://zmz.ca/zikaron3d/privacy.html
+ Terms of use ............. https://zmz.ca/zikaron3d/terms.html
+ Support page ............. https://zmz.ca/zikaron3d/support.html
+ Marketing page ........... https://zmz.ca/zikaron3d/
+ Webhook endpoint ......... https://<PROJECT-REF>.supabase.co/functions/v1/revenuecat-webhook
+ Edge functions ........... revenuecat-webhook, link-apple, delete-account
+
+ Product IDs (must match src/services/monetization.ts)
+   crystals_100 ...... 100 crystals
+   crystals_500 ...... 500 crystals
+   crystals_1200 ..... 1,200 crystals
+   starter_pack ...... 500 crystals + pip_chrome, bloop_crystal, fuzz_velvet
+                       (one per account)
+   shield_pack_10 .... +10 streak shields (cap 30)
+
+ Character limits
+   App name 30 | Subtitle 30 | Promotional text 170 | Keywords 100
+   Description 4000 | What's New 4000 | IAP display name 30 | IAP description 45
+
+--------------------------------------------------------------------------------
+QUICK PASTE ORDER (print this and tick as you go)
+--------------------------------------------------------------------------------
+ [ ] 1 Agreements, tax, banking
+ [ ] 2 New App: Zikaron3D / com.AdvBig.Zikaron3D / <SKU>
+ [ ] 3 Subtitle, categories, content rights, age rating (4+)
+ [ ] 4 Free price + 5 consumables with ids and review screenshots
+ [ ] 5 Privacy labels (3 data types, no tracking)
+ [ ] 6 Description, keywords, promo text, 3 URLs, What's New
+ [ ] 6b Screenshots: iPhone 6.9" (+ iPad 13")
+ [ ] 7 Build 1.0.0 (1), export compliance, IDFA = No
+ [ ] 8 Review contact + review notes, sign-in required = No
+ [ ] 9 Submit for review (manual release)
+ [ ] 10 TestFlight sandbox pass + purchases ledger row verified
+
+File ends. Keep this next to TESTFLIGHT_TEST_PLAN.md while submitting.
+
+
+
+

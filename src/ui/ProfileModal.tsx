@@ -8,7 +8,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -22,7 +21,6 @@ import {
   Palette,
   Smile,
   Sparkles,
-  Ticket,
   Trophy,
   Wand2,
   Wind,
@@ -64,7 +62,6 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
   const xp = useProfile((s) => s.xp);
   const mode = useProfile((s) => s.mode);
   const collectionCount = useProfile((s) => s.collection.length);
-  const redeemCoupon = useProfile((s) => s.redeemCoupon);
 
   const stardust = useEconomy((s) => s.stardust);
   const crystals = useEconomy((s) => s.crystals);
@@ -79,8 +76,6 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
   const unequipAccessory = useInventory((s) => s.unequipAccessory);
 
   const [activeSlot, setActiveSlot] = useState<WardrobeSlot>('hat');
-  const [code, setCode] = useState('');
-  const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
 
   const level = levelForXp(xp);
 
@@ -121,23 +116,6 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
       sfx.play('chime', 0.9);
       sfx.play('sparkle', 0.7);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
-  };
-
-  const handleApply = (inputCode?: string) => {
-    const targetCode = inputCode ?? code;
-    if (!targetCode.trim()) return;
-
-    const res = redeemCoupon(targetCode);
-    setFeedback(res);
-
-    if (res.success) {
-      sfx.play('chime', 0.9);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setCode('');
-    } else {
-      sfx.play('sad', 0.5);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
   };
 
@@ -491,65 +469,6 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
               </Pressable>
             )}
 
-            {/* ── 6. Coupon / Promo Section ── */}
-            <View style={styles.couponSection}>
-              <View style={styles.sectionHeader}>
-                <Ticket size={18} color="#E879F9" />
-                <Text style={styles.sectionTitle}>REDEEM PROMO CODE</Text>
-              </View>
-              <Text style={styles.sectionSub}>
-                Enter a promotional code to claim free rewards:
-              </Text>
-
-              {/* Input Row */}
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.input}
-                  value={code}
-                  onChangeText={(t) => {
-                    setCode(t);
-                    setFeedback(null);
-                  }}
-                  placeholder="ENTER CODE (e.g. WELCOME)"
-                  placeholderTextColor="#64748B"
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={() => handleApply()}
-                />
-                <Pressable
-                  style={[styles.applyBtn, !code.trim() && styles.applyBtnDisabled]}
-                  onPress={() => handleApply()}
-                  disabled={!code.trim()}
-                >
-                  <Text style={styles.applyBtnText}>APPLY</Text>
-                </Pressable>
-              </View>
-
-              {/* Feedback Message */}
-              {feedback && (
-                <View
-                  style={[
-                    styles.feedbackBanner,
-                    feedback.success ? styles.feedbackSuccess : styles.feedbackError,
-                  ]}
-                >
-                  {feedback.success ? (
-                    <Check size={16} color="#10B981" />
-                  ) : (
-                    <X size={16} color="#EF4444" />
-                  )}
-                  <Text
-                    style={[
-                      styles.feedbackText,
-                      feedback.success ? styles.feedbackSuccessText : styles.feedbackErrorText,
-                    ]}
-                  >
-                    {feedback.message}
-                  </Text>
-                </View>
-              )}
-            </View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -903,91 +822,5 @@ const styles = StyleSheet.create({
   dailySub: {
     color: '#94A3B8',
     fontSize: 11,
-  },
-  couponSection: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  sectionTitle: {
-    color: '#E879F9',
-    fontWeight: '800',
-    fontSize: 12,
-    letterSpacing: 0.6,
-  },
-  sectionSub: {
-    color: '#94A3B8',
-    fontSize: 11,
-    marginBottom: 12,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 10,
-  },
-  input: {
-    flex: 1,
-    height: 44,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderWidth: 1.5,
-    borderColor: '#334155',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    color: '#F8FAFC',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  applyBtn: {
-    backgroundColor: '#A855F7',
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  applyBtnDisabled: {
-    opacity: 0.4,
-  },
-  applyBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    fontSize: 12,
-    letterSpacing: 0.8,
-  },
-  feedbackBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 10,
-    borderRadius: 12,
-    marginTop: 4,
-  },
-  feedbackSuccess: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.4)',
-  },
-  feedbackError: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-  },
-  feedbackText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  feedbackSuccessText: {
-    color: '#34D399',
-  },
-  feedbackErrorText: {
-    color: '#F87171',
   },
 });

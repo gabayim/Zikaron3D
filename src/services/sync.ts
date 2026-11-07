@@ -1,5 +1,6 @@
 import { CREATURE_IDS, useProfile, type RemoteProfile } from '../store/profile';
 import { weekKey } from '../engine/daily';
+import { identifyPurchaser, reconcilePurchases } from './monetization';
 import { supabase, useAuth } from './supabase';
 
 const PUSH_DEBOUNCE_MS = 4000;
@@ -14,6 +15,10 @@ function snapshot(): RemoteProfile {
     orbBest: s.orbBest,
     starLevel: s.starLevel,
     starBest: s.starBest,
+    shellsLevel: s.shellsLevel,
+    vinesLevel: s.vinesLevel,
+    beatsLevel: s.beatsLevel,
+    peaksLevel: s.peaksLevel,
     shields: s.shields,
     unlockedWorlds: s.unlockedWorlds,
     celebratedWorlds: s.celebratedWorlds,
@@ -101,8 +106,10 @@ export function startSync(): void {
     timer = setTimeout(() => void push(), PUSH_DEBOUNCE_MS);
   };
   useProfile.subscribe(schedule);
+  const syncUser = (userId: string) => identifyPurchaser(userId).then(() => pull()).then(() => reconcilePurchases()).then(() => push());
   useAuth.subscribe((state, prev) => {
-    if (state.userId && state.userId !== prev.userId) void pull().then(push);
+    if (state.userId && state.userId !== prev.userId) void syncUser(state.userId);
   });
-  if (useAuth.getState().userId) void pull().then(push);
+  const current = useAuth.getState().userId;
+  if (current) void syncUser(current);
 }

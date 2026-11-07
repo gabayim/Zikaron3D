@@ -1,0 +1,14 @@
+{
+  "video_id": 433205026848108,
+  "trace_id": "9fd03437-b032-46dd-9ab9-622c789da364",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F5d74b41b-2191-41c0-b060-4bcd7e59e52e_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F82f2d3dc-6b34-45ac-afda-a28f3e94d5b3.jpg",
+  "prompt": "Locked static side-view camera, no zoom, no tilt, no push-in. The glossy bud stays on its stem in the exact same spot: its coral-pink petals open outward into a wide cup-shaped tulip bloom with a bouncy spring and a sparkling golden center, then it stays open and still. The stem and the two amber leaves stay fully visible at the bottom the whole time and the flower never grows bigger than the frame center. No face. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-11-02T19:37:26Z",
+  "cost_credits": 24
+}

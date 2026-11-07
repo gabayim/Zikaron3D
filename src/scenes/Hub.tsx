@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ParentalGate } from '../ui/ParentalGate';
 import { useParentalModeCycle } from '../ui/useParentalModeCycle';
+import { useParentalCommerceGate } from '../ui/useParentalCommerceGate';
 import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gem, Sparkles } from 'lucide-react-native';
 import { useEconomy } from '../store/economy';
@@ -52,16 +53,6 @@ import { sfx, useCrossfadeMusic } from '../fx/sound';
 import { useProfile, type GameId } from '../store/profile';
 import { levelForXp, levelProgress } from '../store/progression';
 import { WORLDS, type WorldDef, type WorldId } from '../worlds';
-
-const WORLD_GAME_MAP: Record<WorldId, GameId> = {
-  meadow: 'burrows',
-  crystal: 'orbs',
-  candy: 'stars',
-  deep_sea: 'burrows',
-  grove: 'stars',
-  circuit: 'orbs',
-  summit: 'stars',
-};
 
 /** Character shown standing in each world's portal (same order as WORLDS). */
 const FEATURED = ['fuzz', 'frost', 'zap', 'coral', 'moss', 'bolt', 'luna'];
@@ -301,6 +292,12 @@ export default function Hub({
   });
   const celebrated = useProfile((state) => state.celebratedWorlds);
   const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
+  const {
+    gateOpen: commerceGateOpen,
+    runGuarded: guardCommerce,
+    confirmGate: confirmCommerce,
+    cancelGate: cancelCommerce,
+  } = useParentalCommerceGate();
 
   // ---- layout -------------------------------------------------------------
   const geo = useMemo<Geo>(() => {
@@ -512,39 +509,47 @@ export default function Hub({
   const handleConfirmUnlock = useCallback(
     (currency: 'stardust' | 'crystals') => {
       if (!unlockTarget) return;
-      if (currency === 'stardust' && unlockTarget.priceStardust != null) {
-        const ok = spendStardust(unlockTarget.priceStardust);
-        if (ok) {
-          unlockWorld(unlockTarget.id);
-          markWorldCelebrated(unlockTarget.id);
-          sfx.play('chime', 0.9);
-          sfx.play('sparkle', 0.8);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Confetti, count: 120 });
-          emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Ring, count: 4 });
-          setUnlockTarget(null);
-        } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const doUnlock = () => {
+        if (currency === 'stardust' && unlockTarget.priceStardust != null) {
+          const ok = spendStardust(unlockTarget.priceStardust);
+          if (ok) {
+            unlockWorld(unlockTarget.id);
+            markWorldCelebrated(unlockTarget.id);
+            sfx.play('chime', 0.9);
+            sfx.play('sparkle', 0.8);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Confetti, count: 120 });
+            emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Ring, count: 4 });
+            setUnlockTarget(null);
+          } else {
+            sfx.play('sad', 0.5);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
+        } else if (currency === 'crystals' && unlockTarget.priceCrystals != null) {
+          const ok = spendCrystals(unlockTarget.priceCrystals);
+          if (ok) {
+            unlockWorld(unlockTarget.id);
+            markWorldCelebrated(unlockTarget.id);
+            sfx.play('chime', 0.9);
+            sfx.play('sparkle', 0.8);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Confetti, count: 120 });
+            emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Ring, count: 4 });
+            setUnlockTarget(null);
+          } else {
+            sfx.play('sad', 0.5);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
         }
-      } else if (currency === 'crystals' && unlockTarget.priceCrystals != null) {
-        const ok = spendCrystals(unlockTarget.priceCrystals);
-        if (ok) {
-          unlockWorld(unlockTarget.id);
-          markWorldCelebrated(unlockTarget.id);
-          sfx.play('chime', 0.9);
-          sfx.play('sparkle', 0.8);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Confetti, count: 120 });
-          emit({ x: W / 2, y: geo.cy, kind: ParticleKind.Ring, count: 4 });
-          setUnlockTarget(null);
-        } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
+      };
+
+      if (useProfile.getState().mode === 'TOYBOX') {
+        guardCommerce(doUnlock);
+      } else {
+        doUnlock();
       }
     },
-    [unlockTarget, spendStardust, spendCrystals, unlockWorld, markWorldCelebrated, emit, W, geo.cy],
+    [unlockTarget, spendStardust, spendCrystals, unlockWorld, markWorldCelebrated, emit, W, geo.cy, guardCommerce],
   );
 
   // A newly unlocked world: glide to its portal and celebrate once.
@@ -636,9 +641,7 @@ export default function Hub({
         emit({ x: hud.levels.x, y: hud.levels.y, kind: ParticleKind.Sparkle, count: 8 });
         sfx.play('whoosh', 0.6);
         Haptics.selectionAsync();
-        const curWorld = WORLDS[focusRef.current]?.id ?? 'meadow';
-        const game = WORLD_GAME_MAP[curWorld] ?? 'burrows';
-        onLevelSelect(game);
+        onLevelSelect((WORLDS[focusRef.current] ?? WORLDS[0]).game);
         return;
       }
 
@@ -878,12 +881,20 @@ export default function Hub({
   return (
     <View style={styles.root}>
       <ParentalGate
-        visible={gateOpen}
+        visible={gateOpen || commerceGateOpen}
         onSuccess={() => {
-          confirmGate();
-          sfx.play('sparkle', 0.5);
+          if (gateOpen) {
+            confirmGate();
+            sfx.play('sparkle', 0.5);
+          }
+          if (commerceGateOpen) {
+            confirmCommerce();
+          }
         }}
-        onCancel={cancelGate}
+        onCancel={() => {
+          cancelGate();
+          cancelCommerce();
+        }}
       />
 
       {/* World Unlock Modal */}

@@ -14,6 +14,16 @@
       "w": 195,
       "h": 258
     },
+    "dance": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": false,
+      "x": 35,
+      "y": 63,
+      "w": 186,
+      "h": 222
+    },
     "idle": {
       "frames": 49,
       "cols": 7,

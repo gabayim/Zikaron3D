@@ -1,7 +1,11 @@
+import type { GameId } from './store/profile';
+
 export type WorldId = 'meadow' | 'crystal' | 'candy' | 'deep_sea' | 'grove' | 'circuit' | 'summit';
 
 export interface WorldDef {
   id: WorldId;
+  /** The game this world's portal opens. Each world owns exactly one game. */
+  game: GameId;
   still: number;
   music: number;
   /** Primary accent for portal glow and UI tint. */
@@ -21,6 +25,7 @@ export interface WorldDef {
 export const WORLDS: WorldDef[] = [
   {
     id: 'meadow',
+    game: 'burrows',
     still: require('../assets/worlds/meadow/still.webp'),
     music: require('../assets/audio/music/meadow.m4a'),
     accent: '#FFB86B',
@@ -32,6 +37,7 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: 'crystal',
+    game: 'orbs',
     still: require('../assets/worlds/crystal/still.webp'),
     music: require('../assets/audio/music/crystal.m4a'),
     accent: '#7FE8FF',
@@ -43,6 +49,7 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: 'candy',
+    game: 'stars',
     still: require('../assets/worlds/candy/still.webp'),
     music: require('../assets/audio/music/candy.m4a'),
     accent: '#FF8FD0',
@@ -54,6 +61,7 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: 'deep_sea',
+    game: 'shells',
     still: require('../assets/worlds/deep_sea/still.webp'),
     music: require('../assets/audio/music/deep_sea.m4a'),
     accent: '#FF7F9F',
@@ -65,6 +73,7 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: 'grove',
+    game: 'vines',
     still: require('../assets/worlds/grove/still.webp'),
     music: require('../assets/audio/music/grove.m4a'),
     accent: '#7FBF5F',
@@ -76,6 +85,7 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: 'circuit',
+    game: 'beats',
     still: require('../assets/worlds/circuit/still.webp'),
     music: require('../assets/audio/music/circuit.m4a'),
     accent: '#FFB833',
@@ -87,6 +97,7 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: 'summit',
+    game: 'peaks',
     still: require('../assets/worlds/summit/still.webp'),
     music: require('../assets/audio/music/summit.m4a'),
     accent: '#C7A8FF',
@@ -100,6 +111,11 @@ export const WORLDS: WorldDef[] = [
 
 export function getWorld(id: WorldId): WorldDef {
   return WORLDS.find((w) => w.id === id) ?? WORLDS[0];
+}
+
+/** First world that hosts the game; Level Select launches it there. */
+export function homeWorld(game: GameId): WorldId {
+  return (WORLDS.find((w) => w.game === game) ?? WORLDS[0]).id;
 }
 
 export function isWorldUnlocked(id: WorldId, unlockedList?: WorldId[]): boolean {

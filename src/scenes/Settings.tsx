@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Alert, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Canvas, Fill, LinearGradient, Picture, Rect, Skia, vec, type SkCanvas } from '@shopify/react-native-skia';
 import { GestureDetector, useTapGesture } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
@@ -11,6 +11,7 @@ import { useProfile } from '../store/profile';
 import { deleteAccount, signOut, useAuth } from '../services/supabase';
 import { ParentalGate } from '../ui/ParentalGate';
 import { useParentalCommerceGate } from '../ui/useParentalCommerceGate';
+import { openLegal, PRIVACY_URL, TERMS_URL, SUPPORT_URL } from '../legal';
 
 const ROWS = [0.22, 0.32, 0.42, 0.54, 0.64, 0.77, 0.88];
 
@@ -221,10 +222,43 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           <Picture picture={picture} />
         </Canvas>
       </GestureDetector>
+      <View style={styles.legalFooter} pointerEvents="box-none">
+        <Pressable onPress={() => runGuarded(() => void openLegal(PRIVACY_URL))} hitSlop={8}>
+          <Text style={styles.legalText}>Privacy</Text>
+        </Pressable>
+        <Text style={styles.legalDot}>•</Text>
+        <Pressable onPress={() => runGuarded(() => void openLegal(TERMS_URL))} hitSlop={8}>
+          <Text style={styles.legalText}>Terms</Text>
+        </Pressable>
+        <Text style={styles.legalDot}>•</Text>
+        <Pressable onPress={() => runGuarded(() => void openLegal(SUPPORT_URL))} hitSlop={8}>
+          <Text style={styles.legalText}>Support</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#05010F' },
+  legalFooter: {
+    position: 'absolute',
+    bottom: 22,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 10,
+  },
+  legalText: {
+    color: 'rgba(255, 255, 255, 0.45)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  legalDot: {
+    color: 'rgba(255, 255, 255, 0.25)',
+    fontSize: 12,
+  },
 });

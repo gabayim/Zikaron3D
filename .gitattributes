@@ -1,0 +1,4 @@
+# Shell scripts and the Caddyfile are deployed to Linux hosts; keep LF endings
+# even when the repo is checked out on Windows.
+*.sh text eol=lf
+public-site/Caddyfile text eol=lf

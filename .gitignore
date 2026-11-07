@@ -33,6 +33,9 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+.env.production
+.env.staging
+.env.development
 
 # typescript
 *.tsbuildinfo
@@ -42,3 +45,8 @@ yarn-error.*
 /android
 .venv-assets/
 __pycache__/
+
+# Supabase CLI scratch state
+supabase/.temp/
+supabase/.branches/
+.supabase/

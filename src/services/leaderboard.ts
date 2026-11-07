@@ -11,6 +11,8 @@ export interface BoardRow {
   score: number;
   glyph: number;
   mine: boolean;
+  /** True for the offline practice rivals, which are not other players. */
+  practice?: boolean;
   skinId?: string;
   accessoryId?: string;
   prestige?: number;
@@ -72,7 +74,7 @@ export async function fetchBoard(): Promise<BoardRow[]> {
     prestige: 1,
   };
 
-  const all = [...MOCK_LEAGUE.map((m) => ({ ...m, mine: false, rank: 0 })), myRow];
+  const all = [...MOCK_LEAGUE.map((m) => ({ ...m, mine: false, practice: true, rank: 0 })), myRow];
   all.sort((a, b) => b.score - a.score);
 
   const ranked: BoardRow[] = all.slice(0, 10).map((r, idx) => ({

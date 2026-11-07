@@ -19,13 +19,38 @@ export const CAST: Record<string, CharacterSheet> = {
     frameWidth: 256,
     frameHeight: 320,
     fps: 12,
-    order: ["idle", "pop", "celebrate", "sad"],
-    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 42, "y": 59, "w": 171, "h": 227}, "pop": {"frames": 37, "cols": 19, "rows": 2, "loop": false, "x": 25, "y": 11, "w": 201, "h": 309}, "celebrate": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 30, "y": 33, "w": 195, "h": 258}, "sad": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 33, "y": 44, "w": 189, "h": 238}},
+    order: ["idle", "pop", "celebrate", "sad", "dance"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 42, "y": 59, "w": 171, "h": 227}, "pop": {"frames": 37, "cols": 19, "rows": 2, "loop": false, "x": 25, "y": 11, "w": 201, "h": 309}, "celebrate": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 30, "y": 33, "w": 195, "h": 258}, "sad": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 33, "y": 44, "w": 189, "h": 238}, "dance": {"frames": 49, "cols": 7, "rows": 7, "loop": false, "x": 35, "y": 63, "w": 186, "h": 222}},
     sources: {
       idle: require('../../assets/sprites/bolt/idle.webp'),
       pop: require('../../assets/sprites/bolt/pop.webp'),
       celebrate: require('../../assets/sprites/bolt/celebrate.webp'),
       sad: require('../../assets/sprites/bolt/sad.webp'),
+      dance: require('../../assets/sprites/bolt/dance.webp'),
+    },
+  },
+  bud: {
+    frameWidth: 256,
+    frameHeight: 320,
+    fps: 12,
+    order: ["idle", "pop", "sad"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 49, "y": 62, "w": 153, "h": 219}, "pop": {"frames": 37, "cols": 3, "rows": 13, "loop": false, "x": -14, "y": 44, "w": 284, "h": 237}, "sad": {"frames": 37, "cols": 19, "rows": 2, "loop": false, "x": 47, "y": 26, "w": 209, "h": 261}},
+    sources: {
+      idle: require('../../assets/sprites/bud/idle.webp'),
+      pop: require('../../assets/sprites/bud/pop.webp'),
+      sad: require('../../assets/sprites/bud/sad.webp'),
+    },
+  },
+  clam: {
+    frameWidth: 256,
+    frameHeight: 320,
+    fps: 12,
+    order: ["idle", "pop", "sad"],
+    clips: {"idle": {"frames": 49, "cols": 7, "rows": 7, "loop": true, "x": 18, "y": 9, "w": 226, "h": 262}, "pop": {"frames": 37, "cols": 3, "rows": 13, "loop": false, "x": 20, "y": 27, "w": 216, "h": 255}, "sad": {"frames": 37, "cols": 3, "rows": 13, "loop": false, "x": 19, "y": 18, "w": 218, "h": 265}},
+    sources: {
+      idle: require('../../assets/sprites/clam/idle.webp'),
+      pop: require('../../assets/sprites/clam/pop.webp'),
+      sad: require('../../assets/sprites/clam/sad.webp'),
     },
   },
   coral: {
@@ -201,4 +226,4 @@ export const CAST: Record<string, CharacterSheet> = {
   },
 };
 
-export const CAST_IDS = ["bloop", "bolt", "coral", "dusk", "ember", "frost", "fuzz", "grumble", "luna", "moss", "nova", "nutty", "pip", "titan", "zap"] as const;
+export const CAST_IDS = ["bloop", "bolt", "bud", "clam", "coral", "dusk", "ember", "frost", "fuzz", "grumble", "luna", "moss", "nova", "nutty", "pip", "titan", "zap"] as const;

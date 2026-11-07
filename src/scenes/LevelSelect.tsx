@@ -10,12 +10,16 @@ import {
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, Gem, Lock, Sparkles, Star, Zap } from 'lucide-react-native';
 import { sfx } from '../fx/sound';
-import { useProfile, type GameId } from '../store/profile';
+import { setGameLevel, useProfile, type GameId } from '../store/profile';
 import { useEconomy } from '../store/economy';
 import {
+  BEAT_LEVELS,
   BURROWS_LEVELS,
   ORB_LEVELS,
+  PEAK_LEVELS,
+  SHELL_LEVELS,
   STAR_LEVELS,
+  VINE_LEVELS,
 } from '../engine/levelTables';
 import { CurrencyBar } from '../ui/CurrencyBar';
 
@@ -30,13 +34,31 @@ const GAME_TITLES: Record<GameId, string> = {
   burrows: 'CRITTER BURROWS',
   orbs: 'ORB MERGE',
   stars: 'STAR CATCHER',
+  shells: 'SHELL SHUFFLE',
+  vines: 'VINE FLOW',
+  beats: 'BEAT CIRCUIT',
+  peaks: 'ECHO PEAKS',
 };
 
 const GAME_COLORS: Record<GameId, string> = {
   burrows: '#10B981',
   orbs: '#06B6D4',
   stars: '#F59E0B',
+  shells: '#FF7F9F',
+  vines: '#7FBF5F',
+  beats: '#00F0FF',
+  peaks: '#C7A8FF',
 };
+
+const GAME_LEVELS = {
+  burrows: BURROWS_LEVELS,
+  orbs: ORB_LEVELS,
+  stars: STAR_LEVELS,
+  shells: SHELL_LEVELS,
+  vines: VINE_LEVELS,
+  beats: BEAT_LEVELS,
+  peaks: PEAK_LEVELS,
+} satisfies Record<GameId, unknown>;
 
 export default function LevelSelect({
   game,
@@ -45,25 +67,29 @@ export default function LevelSelect({
   onOpenShop,
 }: LevelSelectProps) {
   // Progress from profile
-  const burrowsLevel = useProfile((s) => Math.max(1, (s.burrowsLevel || 0) + 1));
-  const orbLevel = useProfile((s) => Math.max(1, (s.orbLevel || 0) + 1));
-  const starLevel = useProfile((s) => Math.max(1, (s.starLevel || 0) + 1));
+  const cleared = useProfile((s) =>
+    game === 'burrows'
+      ? s.burrowsLevel
+      : game === 'orbs'
+        ? s.orbLevel
+        : game === 'stars'
+          ? s.starLevel
+          : game === 'shells'
+            ? s.shellsLevel
+            : game === 'vines'
+              ? s.vinesLevel
+              : game === 'beats'
+                ? s.beatsLevel
+                : s.peaksLevel,
+  );
   const spendStardust = useEconomy((s) => s.spendStardust);
   const spendCrystals = useEconomy((s) => s.spendCrystals);
   const [skipTargetLevel, setSkipTargetLevel] = useState<number | null>(null);
 
-  const maxUnlockedLevel = useMemo(() => {
-    if (game === 'burrows') return Math.min(30, Math.max(burrowsLevel, 1));
-    if (game === 'orbs') return Math.min(30, Math.max(orbLevel, 1));
-    return Math.min(30, Math.max(starLevel, 1));
-  }, [game, burrowsLevel, orbLevel, starLevel]);
+  const maxUnlockedLevel = Math.min(30, Math.max(1, (cleared || 0) + 1));
 
   type LevelItem = { level: number; mechanics?: string[]; stardustReward: number; firstClearBonus: number; };
-  const levelConfigs: LevelItem[] = useMemo(() => {
-    if (game === 'burrows') return BURROWS_LEVELS;
-    if (game === 'orbs') return ORB_LEVELS;
-    return STAR_LEVELS;
-  }, [game]);
+  const levelConfigs: LevelItem[] = useMemo(() => GAME_LEVELS[game], [game]);
 
   const handleLevelPress = useCallback(
     (lvl: number) => {
@@ -85,13 +111,7 @@ export default function LevelSelect({
       if (!skipTargetLevel) return;
       const ok = currency === 'stardust' ? spendStardust(150) : spendCrystals(10);
       if (ok) {
-        if (game === 'burrows') {
-          useProfile.getState().setBurrowsLevel(skipTargetLevel - 1);
-        } else if (game === 'orbs') {
-          useProfile.getState().setOrbLevel(skipTargetLevel - 1);
-        } else if (game === 'stars') {
-          useProfile.getState().setStarLevel(skipTargetLevel - 1);
-        }
+        setGameLevel(game, skipTargetLevel - 1);
         useProfile.getState().awardXp(50);
         sfx.play('chime', 0.9);
         sfx.play('sparkle', 0.8);

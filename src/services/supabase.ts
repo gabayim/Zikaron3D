@@ -1,24 +1,38 @@
 import 'react-native-url-polyfill/auto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { createSafeKV, type SafeKV } from '../storage/kv';
+import { openAuthStore } from '../storage/secureKv';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { create } from 'zustand';
-
-const kv: SafeKV = createSafeKV('zikaron3d-auth');
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
+/** Rejects a service-role key so it can never ship inside the app. */
+function clientKeyAllowed(key: string): boolean {
+  if (key.includes('your_') || key.startsWith('sb_secret_')) return false;
+  const part = key.split('.')[1];
+  if (!part) return true;
+  try {
+    const padded = part.replace(/-/g, '+').replace(/_/g, '/');
+    const json = JSON.parse(atob(padded)) as { role?: string };
+    return json.role !== 'service_role';
+  } catch {
+    return true;
+  }
+}
+
 /** Null when keys are missing: the app then runs fully offline. */
 export const supabase: SupabaseClient | null =
-  url?.startsWith('https://') && anon && !anon.includes('your_')
+  url?.startsWith('https://') && anon && clientKeyAllowed(anon)
     ? createClient(url, anon, {
         auth: {
           storage: {
-            getItem: (k: string) => kv?.getString(k) ?? null,
-            setItem: (k: string, v: string) => kv?.set(k, v),
-            removeItem: (k: string) => {
-              kv?.remove(k);
+            getItem: async (k: string) => (await openAuthStore()).getString(k) ?? null,
+            setItem: async (k: string, v: string) => {
+              (await openAuthStore()).set(k, v);
+            },
+            removeItem: async (k: string) => {
+              (await openAuthStore()).remove(k);
             },
           },
           persistSession: true,
@@ -59,6 +73,11 @@ export async function signInWithApple(): Promise<SignInResult> {
     const credential = await AppleAuthentication.signInAsync({ requestedScopes: [] });
     if (!credential.identityToken) return 'error';
     const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: credential.identityToken });
+    if (!error && credential.authorizationCode) {
+      void supabase.functions
+        .invoke('link-apple', { body: { code: credential.authorizationCode } })
+        .catch((err) => console.warn('[auth] link-apple failed', err));
+    }
     return error ? 'error' : 'ok';
   } catch (err) {
     if ((err as { code?: string }).code === 'ERR_REQUEST_CANCELED') return 'cancelled';
@@ -74,6 +93,11 @@ export async function signOut(): Promise<void> {
 /** Deletes the cloud account and its data (required by App Store 5.1.1(v)). Local progress stays on device. */
 export async function deleteAccount(): Promise<boolean> {
   if (!supabase) return false;
+  const fn = await supabase.functions.invoke('delete-account');
+  if (!fn.error) {
+    await supabase.auth.signOut();
+    return true;
+  }
   const { error } = await supabase.rpc('delete_my_account');
   if (error) {
     console.warn('[auth] delete account failed', error.message);

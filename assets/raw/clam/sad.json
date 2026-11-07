@@ -1,0 +1,14 @@
+{
+  "video_id": 433198740683830,
+  "trace_id": "5713b711-76de-44c6-9df6-f4cd5113bdaa",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Fb68b4526-0480-40ab-8462-84bab7ebe692_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2Fb8ddf102-93d8-4819-986e-d9e3cbf20c35.jpg",
+  "prompt": "The glossy clam shell opens slowly to show it is empty inside, wobbles side to side once, and slowly closes again with a soft droop. No face. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-11-02T18:46:17Z",
+  "cost_credits": 24
+}

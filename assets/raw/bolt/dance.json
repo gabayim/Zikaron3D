@@ -1,0 +1,14 @@
+{
+  "video_id": 433380907861915,
+  "trace_id": "e51b2e12-23ab-45dd-9003-c3cdb7e2c334",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F13eceabc-c979-4e70-b11e-316b237043d4_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F20fcf1a6-6272-49b3-ac32-fe94dd1e8c93.jpg",
+  "prompt": "The cute round robot dances in place to a steady beat: it bobs down and up on every beat, steps side to side left then right, antenna bulbs blink in rhythm, happy face. It stays exactly the same size, in the same spot, fully in frame, the camera never moves or zooms. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 4,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-11-03T19:28:45Z",
+  "cost_credits": 32
+}

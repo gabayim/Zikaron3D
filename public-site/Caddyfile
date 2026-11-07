@@ -1,0 +1,15 @@
+# Caddyfile for Zikaron3D Legal & Support Website
+# Place at /etc/caddy/Caddyfile on the VPS and run: sudo systemctl reload caddy
+
+zikaron3d.app, www.zikaron3d.app {
+    root * /var/www/zikaron3d
+    file_server
+    encode gzip zstd
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    }
+}

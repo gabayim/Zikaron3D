@@ -4,7 +4,6 @@ import { createSafeKV, type SafeKV } from '../storage/kv';
 import type { Mode } from '../engine/dda';
 import type { WorldId } from '../worlds';
 import { weekKey } from '../engine/daily';
-import { useEconomy } from './economy';
 
 const kv: SafeKV = createSafeKV('zikaron3d-profile');
 
@@ -27,7 +26,9 @@ export const CREATURE_IDS = [
   'titan',
 ] as const;
 export type CreatureId = (typeof CREATURE_IDS)[number];
-export type GameId = 'burrows' | 'orbs' | 'stars';
+export const GAME_IDS = ['burrows', 'orbs', 'stars', 'shells', 'vines', 'beats', 'peaks'] as const;
+export type GameId = (typeof GAME_IDS)[number];
+const isGameId = (g: string): g is GameId => GAME_IDS.includes(g as GameId);
 
 interface ProfileState {
   mode: Mode;
@@ -54,6 +55,18 @@ interface ProfileState {
   /** Most stars caught in a single Star Catcher run. */
   starBest: number;
   setStarBest: (n: number) => void;
+  /** Highest level reached in Shell Shuffle (0-based). */
+  shellsLevel: number;
+  setShellsLevel: (level: number) => void;
+  /** Highest level reached in Vine Flow (0-based). */
+  vinesLevel: number;
+  setVinesLevel: (level: number) => void;
+  /** Highest level reached in Beat Circuit (0-based). */
+  beatsLevel: number;
+  setBeatsLevel: (level: number) => void;
+  /** Highest level reached in Echo Peaks (0-based). */
+  peaksLevel: number;
+  setPeaksLevel: (level: number) => void;
   awardXp: (amount: number) => void;
   unlockCreature: (id: CreatureId) => boolean;
   completeDaily: (game: GameId) => boolean;
@@ -73,8 +86,6 @@ interface ProfileState {
   /** Arcade XP earned this UTC week; the leaderboard score. */
   weekKey: string;
   weeklyScore: number;
-  /** Redeem a promo or gift code. */
-  redeemCoupon: (code: string) => { success: boolean; message: string };
   /** Merges a cloud snapshot into local state (never loses progress). */
   mergeRemote: (remote: RemoteProfile) => void;
 }
@@ -88,6 +99,10 @@ export interface RemoteProfile {
   orbBest: number;
   starLevel?: number;
   starBest: number;
+  shellsLevel?: number;
+  vinesLevel?: number;
+  beatsLevel?: number;
+  peaksLevel?: number;
   shields: number;
   unlockedWorlds?: string[];
   celebratedWorlds: string[];
@@ -113,7 +128,7 @@ const parseDaily = (): GameId[] => {
   if (dailyKey !== todayKey()) return [];
   try {
     const stored = JSON.parse(kv?.getString('dailyCompleted') ?? '[]') as string[];
-    return stored.filter((game): game is GameId => game === 'burrows' || game === 'orbs' || game === 'stars');
+    return stored.filter(isGameId);
   } catch {
     return [];
   }
@@ -221,12 +236,16 @@ export const useProfile = create<ProfileState>((set, get) => ({
     const orbBest = Math.max(st.orbBest, r.orbBest);
     const starLevel = Math.max(st.starLevel, r.starLevel ?? 0);
     const starBest = Math.max(st.starBest, r.starBest);
+    const shellsLevel = Math.max(st.shellsLevel, r.shellsLevel ?? 0);
+    const vinesLevel = Math.max(st.vinesLevel, r.vinesLevel ?? 0);
+    const beatsLevel = Math.max(st.beatsLevel, r.beatsLevel ?? 0);
+    const peaksLevel = Math.max(st.peaksLevel, r.peaksLevel ?? 0);
     const shields = Math.min(MAX_SHIELDS, Math.max(st.shields, r.shields));
     const celebratedWorlds = Array.from(new Set<WorldId>([...st.celebratedWorlds, ...r.celebratedWorlds.filter((id): id is WorldId => WORLD_IDS.includes(id as WorldId))]));
     const unlockedWorlds = Array.from(new Set<WorldId>([...st.unlockedWorlds, ...(r.unlockedWorlds?.filter((id): id is WorldId => WORLD_IDS.includes(id as WorldId)) ?? [])]));
     const today = todayKey();
     const localDaily = st.dailyKey === today ? st.dailyCompleted : [];
-    const remoteDaily = r.dailyKey === today ? r.dailyCompleted.filter((g): g is GameId => g === 'burrows' || g === 'orbs' || g === 'stars') : [];
+    const remoteDaily = r.dailyKey === today ? r.dailyCompleted.filter(isGameId) : [];
     const dailyCompleted = Array.from(new Set<GameId>([...localDaily, ...remoteDaily]));
     const wk = weekKey();
     const weeklyScore = Math.max(st.weekKey === wk ? st.weeklyScore : 0, r.weekKey === wk ? r.weeklyScore : 0);
@@ -237,6 +256,10 @@ export const useProfile = create<ProfileState>((set, get) => ({
     kv?.set('orbBest', orbBest);
     kv?.set('starLevel', starLevel);
     kv?.set('starBest', starBest);
+    kv?.set('shellsLevel', shellsLevel);
+    kv?.set('vinesLevel', vinesLevel);
+    kv?.set('beatsLevel', beatsLevel);
+    kv?.set('peaksLevel', peaksLevel);
     kv?.set('shields', shields);
     kv?.set('celebratedWorlds', JSON.stringify(celebratedWorlds));
     kv?.set('unlockedWorlds', JSON.stringify(unlockedWorlds));
@@ -244,7 +267,7 @@ export const useProfile = create<ProfileState>((set, get) => ({
     kv?.set('dailyCompleted', JSON.stringify(dailyCompleted));
     kv?.set('weekKey', wk);
     kv?.set('weeklyScore', weeklyScore);
-    set({ xp, collection, burrowsLevel, orbLevel, orbBest, starLevel, starBest, shields, celebratedWorlds, unlockedWorlds, dailyKey: today, dailyCompleted, weekKey: wk, weeklyScore });
+    set({ xp, collection, burrowsLevel, orbLevel, orbBest, starLevel, starBest, shellsLevel, vinesLevel, beatsLevel, peaksLevel, shields, celebratedWorlds, unlockedWorlds, dailyKey: today, dailyCompleted, weekKey: wk, weeklyScore });
   },
   unlockedWorlds: parseUnlockedWorlds(),
   unlockWorld: (id) => {
@@ -282,33 +305,69 @@ export const useProfile = create<ProfileState>((set, get) => ({
     kv?.set('starBest', starBest);
     set({ starBest });
   },
-  redeemCoupon: (rawCode: string) => {
-    const code = rawCode.trim().toUpperCase();
-    if (!code) return { success: false, message: 'Please enter a promo code' };
-
-    if (code === 'WELCOME') {
-      useEconomy.getState().earnStardust(500);
-      useEconomy.getState().earnCrystals(25, true);
-      return { success: true, message: 'Welcome Gift: +500 Stardust & +25 Crystals!' };
-    }
-
-    if (code === 'STARDUST' || code === 'STAR') {
-      useEconomy.getState().earnStardust(1000);
-      return { success: true, message: '+1,000 Stardust Added!' };
-    }
-
-    if (code === 'CRYSTALS' || code === 'GEM') {
-      useEconomy.getState().earnCrystals(50, true);
-      return { success: true, message: '+50 Crystals Added!' };
-    }
-
-    if (code === 'VIP' || code === 'ADVENTURE') {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { useSeasonPass } = require('./seasonPass');
-      useSeasonPass.getState().upgradeToAdventurePass();
-      return { success: true, message: 'Adventure Pass Activated!' };
-    }
-
-    return { success: false, message: 'Invalid promo code' };
+  shellsLevel: kv?.getNumber('shellsLevel') ?? 0,
+  setShellsLevel: (shellsLevel) => {
+    if (shellsLevel <= get().shellsLevel) return;
+    kv?.set('shellsLevel', shellsLevel);
+    set({ shellsLevel });
+  },
+  vinesLevel: kv?.getNumber('vinesLevel') ?? 0,
+  setVinesLevel: (vinesLevel) => {
+    if (vinesLevel <= get().vinesLevel) return;
+    kv?.set('vinesLevel', vinesLevel);
+    set({ vinesLevel });
+  },
+  beatsLevel: kv?.getNumber('beatsLevel') ?? 0,
+  setBeatsLevel: (beatsLevel) => {
+    if (beatsLevel <= get().beatsLevel) return;
+    kv?.set('beatsLevel', beatsLevel);
+    set({ beatsLevel });
+  },
+  peaksLevel: kv?.getNumber('peaksLevel') ?? 0,
+  setPeaksLevel: (peaksLevel) => {
+    if (peaksLevel <= get().peaksLevel) return;
+    kv?.set('peaksLevel', peaksLevel);
+    set({ peaksLevel });
   },
 }));
+
+/** Levels cleared in a game (0-based; the next playable level is this + 1). */
+export function getGameLevel(game: GameId): number {
+  const s = useProfile.getState();
+  switch (game) {
+    case 'burrows':
+      return s.burrowsLevel || 0;
+    case 'orbs':
+      return s.orbLevel || 0;
+    case 'stars':
+      return s.starLevel || 0;
+    case 'shells':
+      return s.shellsLevel || 0;
+    case 'vines':
+      return s.vinesLevel || 0;
+    case 'beats':
+      return s.beatsLevel || 0;
+    case 'peaks':
+      return s.peaksLevel || 0;
+  }
+}
+
+export function setGameLevel(game: GameId, level: number): void {
+  const s = useProfile.getState();
+  switch (game) {
+    case 'burrows':
+      return s.setBurrowsLevel(level);
+    case 'orbs':
+      return s.setOrbLevel(level);
+    case 'stars':
+      return s.setStarLevel(level);
+    case 'shells':
+      return s.setShellsLevel(level);
+    case 'vines':
+      return s.setVinesLevel(level);
+    case 'beats':
+      return s.setBeatsLevel(level);
+    case 'peaks':
+      return s.setPeaksLevel(level);
+  }
+}

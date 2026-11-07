@@ -5,5 +5,5 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "exclude": ["node_modules", "archive", "ios", "dist"]
+  "exclude": ["node_modules", "archive", "ios", "dist", "supabase", "public-site"]
 }

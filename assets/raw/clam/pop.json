@@ -1,0 +1,14 @@
+{
+  "video_id": 433199156555642,
+  "trace_id": "3670b1f6-faeb-4ebf-b75e-110f9343370b",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F74e951e7-edec-4180-8d24-a95349cc4e64_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F2c572793-8a68-4569-989e-d671b5046061.jpg",
+  "prompt": "The glossy clam shell stays exactly where it is and keeps exactly the same size: only its top shell hinges open upward in place with a bouncy little spring, like a lid, showing the empty pearly-lavender inside with a soft sparkle, then it stays open and still. The bottom shell never moves. The camera does not move or zoom at all, the clam never gets bigger and never comes closer. No face. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-11-02T18:49:40Z",
+  "cost_credits": 24
+}

@@ -1,0 +1,14 @@
+{
+  "video_id": 433204833074088,
+  "trace_id": "7e073b0e-530f-4023-be48-6331d3cd06b9",
+  "status": "completed",
+  "video_url": "https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2F49747664-7012-4495-92c3-5a3c3a186dd7_seed0.mp4",
+  "cover_url": "https://media.pixverse.ai/pixverse%2Fvideo%2Fframe%2F50b980d0-89d2-4378-9e95-f146766cb675.jpg",
+  "prompt": "The glossy closed flower bud droops and wilts down on its stem with a sad sag, then slowly straightens back up and perks up again. It stays exactly the same size and in the same place, the camera never moves or zooms. No face. Locked static camera, no camera movement, no zoom, no push-in. Wide shot: the character stays the same small size in the frame the whole time and never moves closer to the camera. The background is a perfectly flat solid pure chroma green (#00FF00) the entire time, no shadows on it, no other objects, no hands, no people. The character always stays fully inside the frame. Premium glossy vinyl-toy 3D animation, smooth Pixar-quality motion.",
+  "model": "v6",
+  "duration": 3,
+  "width": 960,
+  "height": 960,
+  "created_at": "2026-11-02T19:35:51Z",
+  "cost_credits": 24
+}

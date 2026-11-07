@@ -1,0 +1,38 @@
+{
+  "character": "clam",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 18,
+      "y": 9,
+      "w": 226,
+      "h": 262
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 3,
+      "rows": 13,
+      "loop": false,
+      "x": 20,
+      "y": 27,
+      "w": 216,
+      "h": 255
+    },
+    "sad": {
+      "frames": 37,
+      "cols": 3,
+      "rows": 13,
+      "loop": false,
+      "x": 19,
+      "y": 18,
+      "w": 218,
+      "h": 265
+    }
+  }
+}

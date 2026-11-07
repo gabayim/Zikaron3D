@@ -108,6 +108,14 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
         drawIcon(c, 'star', 46, y, 7, ['#FFD84D', '#E2E8F0', '#F97316'][r.rank - 1], 1);
       }
 
+      // Practice rival tag (honest labeling of offline bots)
+      if (r.practice) {
+        paint.setStyle(0);
+        paint.setColor(Skia.Color('rgba(148, 163, 184, 0.2)'));
+        c.drawRRect(Skia.RRectXY(Skia.XYWHRect(W - 68, y - 8, 34, 16), 8, 8), paint);
+        drawIcon(c, 'gear', W - 51, y, 4.5, '#94A3B8', 0.85);
+      }
+
       // Accessory Hat/Crown indicator above avatar
       if (r.accessoryId === 'hat_crown' || r.rank === 1) {
         paint.setColor(Skia.Color('#F59E0B'));

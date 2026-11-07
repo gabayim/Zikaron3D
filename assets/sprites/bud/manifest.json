@@ -1,0 +1,38 @@
+{
+  "character": "bud",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "fps": 12,
+  "clips": {
+    "idle": {
+      "frames": 49,
+      "cols": 7,
+      "rows": 7,
+      "loop": true,
+      "x": 49,
+      "y": 62,
+      "w": 153,
+      "h": 219
+    },
+    "pop": {
+      "frames": 37,
+      "cols": 3,
+      "rows": 13,
+      "loop": false,
+      "x": -14,
+      "y": 44,
+      "w": 284,
+      "h": 237
+    },
+    "sad": {
+      "frames": 37,
+      "cols": 19,
+      "rows": 2,
+      "loop": false,
+      "x": 47,
+      "y": 26,
+      "w": 209,
+      "h": 261
+    }
+  }
+}

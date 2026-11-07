@@ -17,27 +17,25 @@ import { CurrencyBar } from './src/ui/CurrencyBar';
 import { DailyStreakModal } from './src/ui/DailyStreakModal';
 import { ProfileModal } from './src/ui/ProfileModal';
 import { useDailyLogin } from './src/store/dailyLogin';
-import { useProfile, type GameId } from './src/store/profile';
+import { getGameLevel, setGameLevel, useProfile, type GameId } from './src/store/profile';
 import { useEconomy } from './src/store/economy';
 import CritterBurrows from './src/games/burrows/CritterBurrows';
 import OrbMerge from './src/games/orbs/OrbMerge';
 import StarCatcher from './src/games/stars/StarCatcher';
-import { type WorldId } from './src/worlds';
+import ShellShuffle from './src/games/shells/ShellShuffle';
+import VineFlow from './src/games/vines/VineFlow';
+import BeatCircuit from './src/games/beats/BeatCircuit';
+import EchoPeaks from './src/games/peaks/EchoPeaks';
+import { WORLDS, getWorld, homeWorld, type WorldId } from './src/worlds';
 import { getDailyChallenge } from './src/engine/daily';
 import { sfx } from './src/fx/sound';
 import { initMonetization } from './src/services/monetization';
 import { initAuth } from './src/services/supabase';
 import { startSync } from './src/services/sync';
+import { ParentalGate } from './src/ui/ParentalGate';
+import { useParentalCommerceGate } from './src/ui/useParentalCommerceGate';
 
-const WORLD_GAME: Record<WorldId, GameId> = {
-  meadow: 'burrows',
-  crystal: 'orbs',
-  candy: 'stars',
-  deep_sea: 'burrows',
-  grove: 'stars',
-  circuit: 'orbs',
-  summit: 'stars',
-};
+const isWorld = (s: string): s is WorldId => WORLDS.some((w) => w.id === s);
 
 type Screen =
   | 'hub'
@@ -66,6 +64,8 @@ export default function App() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [shopInitialTab, setShopInitialTab] = useState<Tab>('skins');
+  const mode = useProfile((s) => s.mode);
+  const { gateOpen, runGuarded, confirmGate, cancelGate } = useParentalCommerceGate();
   const spendStardust = useEconomy((s) => s.spendStardust);
   const spendCrystals = useEconomy((s) => s.spendCrystals);
   const veil = useSharedValue(0);
@@ -88,25 +88,25 @@ export default function App() {
 
   const openShop = useCallback(
     (initialTab: Tab = 'skins') => {
-      setShopInitialTab(initialTab);
-      sfx.play('whoosh');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      transitionTo('shop');
+      const doOpen = () => {
+        setShopInitialTab(initialTab);
+        sfx.play('whoosh');
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        transitionTo('shop');
+      };
+      if (useProfile.getState().mode === 'TOYBOX') {
+        runGuarded(doOpen);
+      } else {
+        doOpen();
+      }
     },
-    [transitionTo],
+    [transitionTo, runGuarded],
   );
 
   const enter = useCallback(
     (world: WorldId, isDaily = false) => {
       setDaily(isDaily);
-      const game = WORLD_GAME[world] ?? 'burrows';
-      const curLvl =
-        game === 'burrows'
-          ? (useProfile.getState().burrowsLevel || 0) + 1
-          : game === 'orbs'
-          ? (useProfile.getState().orbLevel || 0) + 1
-          : (useProfile.getState().starLevel || 0) + 1;
-      setStartLevel(Math.max(1, curLvl));
+      setStartLevel(Math.max(1, getGameLevel(getWorld(world).game) + 1));
       sfx.play('whoosh');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       transitionTo(world);
@@ -116,29 +116,29 @@ export default function App() {
 
   const handleConfirmSkipInGame = useCallback(
     (currency: 'stardust' | 'crystals') => {
-      const ok = currency === 'stardust' ? spendStardust(150) : spendCrystals(10);
-      if (ok) {
-        const nextLvl = startLevel + 1;
-        const game = WORLD_GAME[screen as WorldId];
-        if (game === 'burrows') {
-          useProfile.getState().setBurrowsLevel(nextLvl - 1);
-        } else if (game === 'orbs') {
-          useProfile.getState().setOrbLevel(nextLvl - 1);
-        } else if (game === 'stars') {
-          useProfile.getState().setStarLevel(nextLvl - 1);
+      const doSkip = () => {
+        const ok = currency === 'stardust' ? spendStardust(150) : spendCrystals(10);
+        if (ok) {
+          const nextLvl = startLevel + 1;
+          if (isWorld(screen)) setGameLevel(getWorld(screen).game, nextLvl - 1);
+          useProfile.getState().awardXp(50);
+          sfx.play('chime', 0.9);
+          sfx.play('sparkle', 0.8);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setStartLevel(nextLvl);
+          setShowSkipModal(false);
+        } else {
+          sfx.play('sad', 0.5);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-        useProfile.getState().awardXp(50);
-        sfx.play('chime', 0.9);
-        sfx.play('sparkle', 0.8);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setStartLevel(nextLvl);
-        setShowSkipModal(false);
+      };
+      if (useProfile.getState().mode === 'TOYBOX') {
+        runGuarded(doSkip);
       } else {
-        sfx.play('sad', 0.5);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        doSkip();
       }
     },
-    [screen, startLevel, spendStardust, spendCrystals],
+    [screen, startLevel, spendStardust, spendCrystals, runGuarded],
   );
 
   const back = useCallback(() => {
@@ -181,16 +181,14 @@ export default function App() {
       ) : screen === 'leaderboard' ? (
         <Leaderboard onBack={back} />
       ) : screen === 'shop' ? (
-        <Shop key={`shop_${shopInitialTab}`} onBack={back} onCoupon={() => setShowProfileModal(true)} initialTab={shopInitialTab} />
+        <Shop key={`shop_${shopInitialTab}`} onBack={back} initialTab={shopInitialTab} />
       ) : screen === 'level_select' ? (
         <LevelSelect
           game={levelGame}
           onBack={back}
           onSelectLevel={(lvl) => {
             setStartLevel(lvl);
-            if (levelGame === 'burrows') setScreen('meadow');
-            else if (levelGame === 'orbs') setScreen('crystal');
-            else setScreen('candy');
+            setScreen(homeWorld(levelGame));
           }}
           onOpenShop={(tab) => openShop(tab)}
         />
@@ -198,10 +196,18 @@ export default function App() {
         <Achievements onBack={back} />
       ) : screen === 'season_pass' ? (
         <SeasonPass onBack={back} />
-      ) : WORLD_GAME[screen as WorldId] === 'burrows' ? (
-        <CritterBurrows key={`burrows_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen as WorldId} />
-      ) : WORLD_GAME[screen as WorldId] === 'orbs' ? (
-        <OrbMerge key={`orbs_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen as WorldId} />
+      ) : getWorld(screen).game === 'burrows' ? (
+        <CritterBurrows key={`burrows_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
+      ) : getWorld(screen).game === 'orbs' ? (
+        <OrbMerge key={`orbs_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
+      ) : getWorld(screen).game === 'shells' ? (
+        <ShellShuffle key={`shells_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
+      ) : getWorld(screen).game === 'vines' ? (
+        <VineFlow key={`vines_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
+      ) : getWorld(screen).game === 'beats' ? (
+        <BeatCircuit key={`beats_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
+      ) : getWorld(screen).game === 'peaks' ? (
+        <EchoPeaks key={`peaks_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
       ) : (
         <StarCatcher key={`stars_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen as WorldId} />
       )}
@@ -225,11 +231,13 @@ export default function App() {
               <Pressable style={styles.back} hitSlop={14} onPress={back}>
                 <View style={styles.chevron} />
               </Pressable>
-              <CurrencyBar
-                style={styles.gameCurrency}
-                onPressStardust={() => openShop('stardust')}
-                onPressCrystals={() => openShop('crystals')}
-              />
+              {mode !== 'TOYBOX' && (
+                <CurrencyBar
+                  style={styles.gameCurrency}
+                  onPressStardust={() => openShop('stardust')}
+                  onPressCrystals={() => openShop('crystals')}
+                />
+              )}
             </View>
             <Pressable
               style={styles.skipLvlBtn}
@@ -245,6 +253,7 @@ export default function App() {
           </View>
         )}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.veil, veilStyle]} />
+      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
       <DailyStreakModal />
       <ProfileModal
         visible={showProfileModal}

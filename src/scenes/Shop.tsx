@@ -10,7 +10,7 @@
  *  - 0 TypeScript errors, 0 ESLint warnings.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -37,7 +37,6 @@ import {
   Globe,
   Palette,
   Sparkles,
-  Ticket,
 } from 'lucide-react-native';
 import { sfx } from '../fx/sound';
 import { useEconomy } from '../store/economy';
@@ -60,7 +59,14 @@ import { WORLDS } from '../worlds';
 import { CurrencyBar } from '../ui/CurrencyBar';
 import { ParentalGate } from '../ui/ParentalGate';
 import { useParentalCommerceGate } from '../ui/useParentalCommerceGate';
-import { buyShieldPack } from '../services/monetization';
+import { openLegal, PRIVACY_URL, SUPPORT_URL, TERMS_URL } from '../legal';
+import {
+  buyPack,
+  loadProductPrices,
+  ownsStarterPack,
+  restorePurchases,
+  type ProductId,
+} from '../services/monetization';
 
 export type Tab = 'skins' | 'accessories' | 'stardust' | 'crystals' | 'worlds';
 
@@ -234,23 +240,35 @@ function ActionPill({
 // ---------------------------------------------------------------------------
 export interface ShopProps {
   onBack: () => void;
-  onCoupon?: () => void;
   initialTab?: Tab;
 }
 
-export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
+export default function Shop({ onBack, initialTab }: ShopProps) {
   const [tab, setTab] = useState<Tab>(initialTab ?? 'skins');
   const [selectedCreature, setSelectedCreature] = useState<CreatureId>('pip');
   const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
   const [needCrystalsAlert, setNeedCrystalsAlert] = useState(false);
 
   const { gateOpen, runGuarded, confirmGate, cancelGate } = useParentalCommerceGate();
+  const [prices, setPrices] = useState<Partial<Record<ProductId, string>>>({});
+  const [starterOwned, setStarterOwned] = useState(ownsStarterPack);
+
+  useEffect(() => {
+    void loadProductPrices().then(setPrices);
+  }, []);
+
+  const guardSpend = useCallback(
+    (action: () => void) => {
+      if (useProfile.getState().mode === 'TOYBOX') runGuarded(action);
+      else action();
+    },
+    [runGuarded],
+  );
 
   // Economy & Inventory
   const spendStardust = useEconomy((s) => s.spendStardust);
   const earnStardust  = useEconomy((s) => s.earnStardust);
   const spendCrystals = useEconomy((s) => s.spendCrystals);
-  const earnCrystals  = useEconomy((s) => s.earnCrystals);
 
   const ownedSkins       = useInventory((s) => s.ownedSkins);
   const addSkin          = useInventory((s) => s.addSkin);
@@ -275,6 +293,7 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
 
   const handleBuyStardustPack = useCallback(
     (pack: StardustPack) => {
+      guardSpend(() => {
       const ok = spendCrystals(pack.costCrystals);
       if (ok) {
         earnStardust(pack.stardust);
@@ -286,8 +305,9 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setNeedCrystalsAlert(true);
       }
+      });
     },
-    [spendCrystals, earnStardust],
+    [spendCrystals, earnStardust, guardSpend],
   );
 
   // ── Skin buy/equip ──────────────────────────────────────────────────────
@@ -308,31 +328,33 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         return;
       }
-      if (skin.priceStardust != null) {
-        const ok = spendStardust(skin.priceStardust);
-        if (ok) {
-          addSkin(skin.id);
-          equipSkin(skin.creatureId, skin.id);
-          sfx.play('chime', 0.8);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      guardSpend(() => {
+        if (skin.priceStardust != null) {
+          const ok = spendStardust(skin.priceStardust);
+          if (ok) {
+            addSkin(skin.id);
+            equipSkin(skin.creatureId, skin.id);
+            sfx.play('chime', 0.8);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } else {
+            sfx.play('sad', 0.5);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
+        } else if (skin.priceCrystals != null) {
+          const ok = spendCrystals(skin.priceCrystals);
+          if (ok) {
+            addSkin(skin.id);
+            equipSkin(skin.creatureId, skin.id);
+            sfx.play('chime', 0.8);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } else {
+            sfx.play('sad', 0.5);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
         }
-      } else if (skin.priceCrystals != null) {
-        const ok = spendCrystals(skin.priceCrystals);
-        if (ok) {
-          addSkin(skin.id);
-          equipSkin(skin.creatureId, skin.id);
-          sfx.play('chime', 0.8);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
-      }
+      });
     },
-    [ownedSkins, equippedSkins, spendStardust, spendCrystals, addSkin, equipSkin, unequipSkin],
+    [ownedSkins, equippedSkins, spendStardust, spendCrystals, addSkin, equipSkin, unequipSkin, guardSpend],
   );
 
   // ── Accessory buy/equip ─────────────────────────────────────────────────
@@ -353,54 +375,77 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         return;
       }
-      if (acc.priceStardust != null) {
-        const ok = spendStardust(acc.priceStardust);
-        if (ok) {
-          addAccessory(acc.id);
-          equipAccessory(acc.slot, acc.id);
-          sfx.play('chime', 0.8);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      guardSpend(() => {
+        if (acc.priceStardust != null) {
+          const ok = spendStardust(acc.priceStardust);
+          if (ok) {
+            addAccessory(acc.id);
+            equipAccessory(acc.slot, acc.id);
+            sfx.play('chime', 0.8);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } else {
+            sfx.play('sad', 0.5);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
+        } else if (acc.priceCrystals != null) {
+          const ok = spendCrystals(acc.priceCrystals);
+          if (ok) {
+            addAccessory(acc.id);
+            equipAccessory(acc.slot, acc.id);
+            sfx.play('chime', 0.8);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } else {
+            sfx.play('sad', 0.5);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
         }
-      } else if (acc.priceCrystals != null) {
-        const ok = spendCrystals(acc.priceCrystals);
-        if (ok) {
-          addAccessory(acc.id);
-          equipAccessory(acc.slot, acc.id);
-          sfx.play('chime', 0.8);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
-      }
+      });
     },
-    [ownedAccessories, equippedAccessories, spendStardust, spendCrystals, addAccessory, equipAccessory, unequipAccessory],
+    [ownedAccessories, equippedAccessories, spendStardust, spendCrystals, addAccessory, equipAccessory, unequipAccessory, guardSpend],
   );
 
   // ── Real money purchases ────────────────────────────────────────────────
-  const handleBuyPack = useCallback(
-    (crystalsGranted: number) => {
-      runGuarded(() => {
-        earnCrystals(crystalsGranted, false);
-        sfx.play('chime', 0.9);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const handleBuy = useCallback(
+    (productId: ProductId) => {
+      runGuarded(async () => {
+        const res = await buyPack(productId);
+        if (res === 'ok') {
+          sfx.play('chime', 0.9);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          if (productId === 'starter_pack') {
+            setStarterOwned(true);
+          }
+        } else if (res === 'error') {
+          sfx.play('sad', 0.5);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
       });
     },
-    [runGuarded, earnCrystals],
+    [runGuarded],
   );
 
-  const handleBuyShields = useCallback(() => {
+  const handleRestore = useCallback(() => {
     runGuarded(async () => {
-      const res = await buyShieldPack();
-      if (res === 'ok') {
+      const res = await restorePurchases();
+      if (res.ok) {
         sfx.play('chime', 0.8);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setStarterOwned(ownsStarterPack());
+      } else {
+        sfx.play('sad', 0.5);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       }
     });
   }, [runGuarded]);
+
+  const handleOpenLegal = useCallback(
+    (url: string) => {
+      runGuarded(() => {
+        void openLegal(url);
+      });
+    },
+    [runGuarded],
+  );
 
   // ── World unlock handler (spend Stardust or Crystals) ───────────────────
   const handleUnlockWorld = useCallback(
@@ -547,21 +592,6 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
             >
               <ArrowLeft size={22} color="#F8FAFC" />
             </Pressable>
-
-            {onCoupon && (
-              <Pressable
-                style={styles.couponButton}
-                onPress={() => {
-                  sfx.play('pop', 0.4);
-                  Haptics.selectionAsync();
-                  onCoupon();
-                }}
-                hitSlop={8}
-              >
-                <Ticket size={13} color="#F5D0FE" />
-                <Text style={styles.couponButtonText}>COUPON</Text>
-              </Pressable>
-            )}
           </View>
 
           <CurrencyBar
@@ -840,21 +870,26 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
         {/* ── GEMS / CRYSTALS TAB ── */}
         {tab === 'crystals' && (
           <ScrollView contentContainerStyle={styles.packsContainer}>
-            {/* Featured Starter Pack */}
+            {/* Featured Starter Pack (One-time only) */}
             <Pressable
-              style={[styles.solidPackCard, styles.starterPackCard]}
-              onPress={() => handleBuyPack(500)}
+              style={[styles.solidPackCard, styles.starterPackCard, starterOwned && { opacity: 0.6 }]}
+              disabled={starterOwned}
+              onPress={() => handleBuy('starter_pack')}
             >
               <View style={styles.packTopBanner}>
-                <Text style={styles.packTopBannerText}>⭐ STARTER PACK — ONE-TIME SPECIAL</Text>
+                <Text style={styles.packTopBannerText}>
+                  {starterOwned ? '✓ STARTER PACK UNLOCKED' : '⭐ STARTER PACK — ONE-TIME SPECIAL'}
+                </Text>
               </View>
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_starter')} style={styles.packIconLarge} resizeMode="contain" />
                 <View style={styles.packInfo}>
                   <Text style={styles.packTitle}>500 Crystals + 3 Rare Skins</Text>
-                  <Text style={styles.packSubtitle}>Everything you need to customize your team</Text>
-                  <View style={styles.packPriceButton}>
-                    <Text style={styles.packPriceText}>$2.99</Text>
+                  <Text style={styles.packSubtitle}>Chrome Pip, Crystal Bloop & Velvet Fuzz</Text>
+                  <View style={[styles.packPriceButton, starterOwned && { backgroundColor: '#10B981' }]}>
+                    <Text style={styles.packPriceText}>
+                      {starterOwned ? 'OWNED' : (prices.starter_pack ?? '$2.99')}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -863,7 +898,7 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
             {/* Vault of Astral Gems (Best Value) */}
             <Pressable
               style={[styles.solidPackCard, styles.bestValueCard]}
-              onPress={() => handleBuyPack(1200)}
+              onPress={() => handleBuy('crystals_1200')}
             >
               <View style={[styles.packTopBanner, { backgroundColor: '#F59E0B' }]}>
                 <Text style={styles.packTopBannerText}>🔥 BEST VALUE (+20% BONUS)</Text>
@@ -874,7 +909,7 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
                   <Text style={styles.packTitle}>1,200 Crystals</Text>
                   <Text style={styles.packSubtitle}>Vault of radiant astral gems</Text>
                   <View style={[styles.packPriceButton, { backgroundColor: '#F59E0B' }]}>
-                    <Text style={styles.packPriceText}>$7.99</Text>
+                    <Text style={styles.packPriceText}>{prices.crystals_1200 ?? '$7.99'}</Text>
                   </View>
                 </View>
               </View>
@@ -883,7 +918,7 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
             {/* Chest of Radiant Gems */}
             <Pressable
               style={styles.solidPackCard}
-              onPress={() => handleBuyPack(500)}
+              onPress={() => handleBuy('crystals_500')}
             >
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_chest')} style={styles.packIcon} resizeMode="contain" />
@@ -891,7 +926,7 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
                   <Text style={styles.packTitle}>500 Crystals</Text>
                   <Text style={styles.packSubtitle}>Chest overflowing with cosmic crystals</Text>
                   <View style={styles.packPriceButton}>
-                    <Text style={styles.packPriceText}>$3.99</Text>
+                    <Text style={styles.packPriceText}>{prices.crystals_500 ?? '$3.99'}</Text>
                   </View>
                 </View>
               </View>
@@ -900,7 +935,7 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
             {/* Pouch of Cosmic Gems */}
             <Pressable
               style={styles.solidPackCard}
-              onPress={() => handleBuyPack(100)}
+              onPress={() => handleBuy('crystals_100')}
             >
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_pouch')} style={styles.packIcon} resizeMode="contain" />
@@ -908,7 +943,7 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
                   <Text style={styles.packTitle}>100 Crystals</Text>
                   <Text style={styles.packSubtitle}>Pouch of sparkling blue gems</Text>
                   <View style={styles.packPriceButton}>
-                    <Text style={styles.packPriceText}>$0.99</Text>
+                    <Text style={styles.packPriceText}>{prices.crystals_100 ?? '$0.99'}</Text>
                   </View>
                 </View>
               </View>
@@ -917,7 +952,7 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
             {/* 10 Streak Shields */}
             <Pressable
               style={styles.solidPackCard}
-              onPress={handleBuyShields}
+              onPress={() => handleBuy('shield_pack_10')}
             >
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_shield')} style={styles.packIcon} resizeMode="contain" />
@@ -925,11 +960,31 @@ export default function Shop({ onBack, onCoupon, initialTab }: ShopProps) {
                   <Text style={styles.packTitle}>10 Streak Shields</Text>
                   <Text style={styles.packSubtitle}>Protects your arcade combo streaks from breaking</Text>
                   <View style={[styles.packPriceButton, { backgroundColor: '#3B82F6' }]}>
-                    <Text style={styles.packPriceText}>$0.99</Text>
+                    <Text style={styles.packPriceText}>{prices.shield_pack_10 ?? '$0.99'}</Text>
                   </View>
                 </View>
               </View>
             </Pressable>
+
+            {/* Restore Purchases Button */}
+            <Pressable style={styles.restoreBtn} onPress={handleRestore}>
+              <Text style={styles.restoreBtnText}>RESTORE PURCHASES</Text>
+            </Pressable>
+
+            {/* Legal Links Footer */}
+            <View style={styles.legalRow}>
+              <Pressable onPress={() => handleOpenLegal(PRIVACY_URL)} hitSlop={8}>
+                <Text style={styles.legalLinkText}>Privacy Policy</Text>
+              </Pressable>
+              <Text style={styles.legalDot}>•</Text>
+              <Pressable onPress={() => handleOpenLegal(TERMS_URL)} hitSlop={8}>
+                <Text style={styles.legalLinkText}>Terms of Use</Text>
+              </Pressable>
+              <Text style={styles.legalDot}>•</Text>
+              <Pressable onPress={() => handleOpenLegal(SUPPORT_URL)} hitSlop={8}>
+                <Text style={styles.legalLinkText}>Support</Text>
+              </Pressable>
+            </View>
           </ScrollView>
         )}
       </View>
@@ -1014,24 +1069,6 @@ const styles = StyleSheet.create({
     borderColor: '#334155',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  couponButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 12,
-    backgroundColor: '#86198F',
-    borderWidth: 1.5,
-    borderColor: '#C026D3',
-    alignSelf: 'center',
-  },
-  couponButtonText: {
-    color: '#F5D0FE',
-    fontWeight: '900',
-    fontSize: 11,
-    letterSpacing: 0.5,
   },
   titleRow: {
     paddingTop: 4,
@@ -1585,5 +1622,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  restoreBtn: {
+    marginTop: 18,
+    marginBottom: 8,
+    alignSelf: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    backgroundColor: '#1E293B',
+    borderWidth: 1.5,
+    borderColor: '#334155',
+  },
+  restoreBtnText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  legalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    marginBottom: 36,
+    gap: 10,
+  },
+  legalLinkText: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  legalDot: {
+    color: '#334155',
+    fontSize: 11,
   },
 });

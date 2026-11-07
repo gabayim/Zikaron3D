@@ -1,28 +1,26 @@
 import { useCallback, useRef, useState } from 'react';
-import { grantParentalCommerce, isParentalCommerceOk } from '../store/compliance';
+import { clearParentalCommerce } from '../store/compliance';
 
-/** Run store actions (restore, purchase) behind the math gate when the session is not cleared. */
+/** Every purchase, restore, sign-in and legal link asks the gate again. */
 export function useParentalCommerceGate() {
   const [gateOpen, setGateOpen] = useState(false);
   const pending = useRef<(() => void) | null>(null);
 
   const runGuarded = useCallback((action: () => void) => {
-    if (isParentalCommerceOk()) {
-      action();
-      return;
-    }
     pending.current = action;
     setGateOpen(true);
   }, []);
 
   const confirmGate = useCallback(() => {
-    grantParentalCommerce();
+    clearParentalCommerce();
     setGateOpen(false);
-    pending.current?.();
+    const action = pending.current;
     pending.current = null;
+    action?.();
   }, []);
 
   const cancelGate = useCallback(() => {
+    clearParentalCommerce();
     setGateOpen(false);
     pending.current = null;
   }, []);

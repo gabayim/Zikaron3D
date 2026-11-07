@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { grantParentalCommerce } from '../store/compliance';
 import { MODES, useProfile } from '../store/profile';
 
 /** Tap-to-cycle mode; Toybox → Arcade requires parental gate first. */
@@ -15,7 +14,6 @@ export function useParentalModeCycle() {
 
   const confirmGate = useCallback(() => {
     setGateOpen(false);
-    grantParentalCommerce();
     useProfile.getState().cycleMode();
   }, []);
 
