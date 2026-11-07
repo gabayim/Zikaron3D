@@ -20,10 +20,22 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
   }
 
-  const webhookAuth = req.headers.get('Authorization');
   const expectedAuth = Deno.env.get('REVENUECAT_WEBHOOK_SECRET');
+  const header = req.headers.get('Authorization');
+  // RevenueCat's v2 API cannot set a custom Authorization header on a webhook, so
+  // the shared secret may also travel as ?token=... on the webhook URL. Both are
+  // compared against REVENUECAT_WEBHOOK_SECRET; anything else is rejected.
+  const urlToken = (() => {
+    try {
+      return new URL(req.url).searchParams.get('token');
+    } catch {
+      return null;
+    }
+  })();
+  const authorised =
+    !expectedAuth || header === expectedAuth || header === `Bearer ${expectedAuth}` || urlToken === expectedAuth;
 
-  if (expectedAuth && webhookAuth !== expectedAuth && webhookAuth !== `Bearer ${expectedAuth}`) {
+  if (!authorised) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
