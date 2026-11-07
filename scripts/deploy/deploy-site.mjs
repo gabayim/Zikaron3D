@@ -40,6 +40,8 @@ const KEY = process.env.VPS_SSH_KEY ?? '';
 const SKIP_CADDY = process.env.VPS_SKIP_CADDY === '1';
 const OWNER = process.env.VPS_OWNER ?? '';
 const PAGES = ['index.html', 'privacy.html', 'terms.html', 'support.html'];
+// brand files written by scripts/assets/buildBrand.py: logo + share card + icon
+const BRAND = ['logo-dark.png', 'og-image.png', 'favicon.png'];
 
 function fail(message) {
   console.error(`\n✖ ${message}`);
@@ -86,9 +88,9 @@ console.log(`  pages : ${PAGES.join(', ')}`);
 
 run('Create the web root', 'ssh', [...sshOpts, target, `mkdir -p ${SITE_PATH}`]);
 
-for (const page of PAGES) {
-  if (!existsSync(path.join(SITE, page))) fail(`Missing page: public-site/${page}`);
-  run(`Upload ${page}`, 'scp', [...scpOpts, path.join(SITE, page), `${target}:${SITE_PATH}/${page}`]);
+for (const file of [...PAGES, ...BRAND]) {
+  if (!existsSync(path.join(SITE, file))) fail(`Missing file: public-site/${file}`);
+  run(`Upload ${file}`, 'scp', [...scpOpts, path.join(SITE, file), `${target}:${SITE_PATH}/${file}`]);
 }
 
 if (OWNER) {

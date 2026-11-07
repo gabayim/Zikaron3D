@@ -337,6 +337,12 @@ Two slots are REQUIRED with this app.json (supportsTablet = true):
    5. Collection shelf ....... "Collect and dress up fifteen critters"
    6. Parental gate dialog ... "Grown-up check before every purchase"
 
+  Branded frames at the exact Apple sizes are already generated:
+    assets/store/screenshots/templates/   (iphone-1..6.png, ipad-1..4.png)
+  Drop real captures in assets/store/screenshots/source/ and run
+    python scripts/assets/buildScreenshots.py
+  See assets/store/screenshots/README.txt for the capture list.
+
   Optional App Preview video: 15-30 s, same sizes, no price messaging.
 
   Capture helpers:
