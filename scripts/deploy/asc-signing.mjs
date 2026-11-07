@@ -34,7 +34,13 @@ const KEY_ID = arg('key-id', process.env.ASC_KEY_ID ?? '');
 const ISSUER = arg('issuer-id', process.env.ASC_ISSUER_ID ?? '');
 const BUNDLE = arg('bundle-id', 'com.AdvBig.Zikaron3D');
 const BASE = 'https://api.appstoreconnect.apple.com';
+// The mingw64 openssl ships the legacy provider, which is required to export a
+// PKCS#12 in the 3DES/SHA1 format Apple's `security import` (used by EAS on its
+// macOS builders) accepts. OpenSSL 3's default PBES2/AES-256 bags make EAS fail
+// with "Unknown error" in the Prepare credentials phase.
+const OPENSSL_MODULES = 'C:\\Program Files\\Git\\mingw64\\lib\\ossl-modules';
 const OPENSSL = [
+  'C:\\Program Files\\Git\\mingw64\\bin\\openssl.exe',
   'C:\\Program Files\\Git\\usr\\bin\\openssl.exe',
   'C:\\Windows\\System32\\openssl.exe',
   'openssl',
@@ -79,7 +85,12 @@ async function api(pathAndQuery, { method = 'GET', body } = {}) {
   return parsed;
 }
 
-const ssl = (...sslArgs) => execFileSync(OPENSSL, sslArgs, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+const ssl = (...sslArgs) =>
+  execFileSync(OPENSSL, sslArgs, {
+    encoding: 'utf8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: { ...process.env, OPENSSL_MODULES },
+  });
 
 async function main() {
   mkdirSync(OUT, { recursive: true });
@@ -116,7 +127,7 @@ async function main() {
   // 4. .p12 for EAS (random password, stored only in the git-ignored credentials.json)
   const password = randomBytes(18).toString('base64url');
   const p12 = path.join(OUT, 'dist.p12');
-  ssl('pkcs12', '-export', '-inkey', keyFile, '-in', pem, '-out', p12, '-passout', `pass:${password}`, '-name', 'Zikaron3D Distribution');
+  ssl('pkcs12', '-export', '-legacy', '-inkey', keyFile, '-in', pem, '-out', p12, '-passout', `pass:${password}`, '-name', 'Zikaron3D Distribution');
   console.log('wrote dist.p12');
 
   // 5. provisioning profile

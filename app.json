@@ -9,7 +9,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.AdvBig.Zikaron3D",
-      "buildNumber": "217",
+      "buildNumber": "218",
       "appleTeamId": "DAVRE4G59N",
       "config": {
         "usesNonExemptEncryption": false
