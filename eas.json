@@ -19,7 +19,7 @@
     },
     "production": {
       "autoIncrement": true,
-      "credentialsSource": "local",
+      "credentialsSource": "remote",
       "env": {
         "APP_VARIANT": "production",
         "EXPO_PUBLIC_SITE_URL": "https://zmz.ca/zikaron3d"
