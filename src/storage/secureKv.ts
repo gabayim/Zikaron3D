@@ -1,6 +1,13 @@
-import * as SecureStore from 'expo-secure-store';
 import { TurboModuleRegistry } from 'react-native';
 import { createSafeKV, type SafeKV } from './kv';
+
+let SecureStore: typeof import('expo-secure-store') | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  SecureStore = require('expo-secure-store');
+} catch {
+  SecureStore = null;
+}
 
 const KEY_NAME = 'zikaron3d.auth.mmkv';
 const STORE_ID = 'zikaron3d-auth-enc';
@@ -27,13 +34,18 @@ export function openAuthStore(): Promise<SafeKV> {
 async function open(): Promise<SafeKV> {
   try {
     const hasNitro = TurboModuleRegistry.get('NitroModules') != null;
-    if (!hasNitro) return createSafeKV(LEGACY_ID);
-    let key = await SecureStore.getItemAsync(KEY_NAME);
-    if (!key || key.length !== 32) {
-      key = randomKey();
-      await SecureStore.setItemAsync(KEY_NAME, key, {
-        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-      });
+    if (!hasNitro || !SecureStore?.getItemAsync) return createSafeKV(LEGACY_ID);
+    let key: string | null = null;
+    try {
+      key = await SecureStore.getItemAsync(KEY_NAME);
+      if (!key || key.length !== 32) {
+        key = randomKey();
+        await SecureStore.setItemAsync(KEY_NAME, key, {
+          keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+        });
+      }
+    } catch {
+      return createSafeKV(LEGACY_ID);
     }
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const mmkv = require('react-native-mmkv') as {

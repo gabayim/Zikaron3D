@@ -155,7 +155,7 @@ const parseUnlockedWorlds = (): WorldId[] => {
 const MAX_SHIELDS = 30;
 
 export const useProfile = create<ProfileState>((set, get) => ({
-  mode: storedMode && MODES.includes(storedMode) ? storedMode : 'TOYBOX',
+  mode: storedMode && MODES.includes(storedMode) ? storedMode : 'ARCADE',
   xp: kv?.getNumber('xp') ?? 0,
   collection: Array.from(new Set<CreatureId>(['pip', ...storedCollection])),
   dailyKey,

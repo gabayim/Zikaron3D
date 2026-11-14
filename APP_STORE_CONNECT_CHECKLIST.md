@@ -20,6 +20,8 @@ This document contains the exact answers and metadata needed when submitting **Z
 
 ## 2. Age Rating Questionnaire Answers
 
+> **NEW (Sep 2026):** Apple now includes **social media capability questions** in the age-rating questionnaire. Because Zikaron3D has a weekly Arcade **leaderboard** (a social ranking feed), answer **Yes** to social-feed / social-media questions. The rating stays **4+** but will carry a "Social Media" descriptor and "Time Allowances" category — this is correct and expected. Failure to answer honestly is a rejection reason.
+
 | Question | Answer |
 |---|---|
 | Cartoon or Fantasy Violence | None (0) |
@@ -34,7 +36,8 @@ This document contains the exact answers and metadata needed when submitting **Z
 | Graphic Sexual Content and Nudity | None (0) |
 | Unrestricted Web Access | No (0) |
 | Gambling and Contests | No (0) |
-| **Resulting Rating** | **4+** |
+| **Social Media / Social Feed** | **Yes** (leaderboard is a social ranking feed) |
+| **Resulting Rating** | **4+** (with Social Media descriptor) |
 
 ---
 

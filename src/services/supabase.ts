@@ -76,7 +76,7 @@ export async function signInWithApple(): Promise<SignInResult> {
     if (!error && credential.authorizationCode) {
       void supabase.functions
         .invoke('link-apple', { body: { code: credential.authorizationCode } })
-        .catch((err) => console.warn('[auth] link-apple failed', err));
+        .catch((err) => { if (__DEV__) console.warn('[auth] link-apple failed', err); });
     }
     return error ? 'error' : 'ok';
   } catch (err) {
@@ -100,7 +100,7 @@ export async function deleteAccount(): Promise<boolean> {
   }
   const { error } = await supabase.rpc('delete_my_account');
   if (error) {
-    console.warn('[auth] delete account failed', error.message);
+    if (__DEV__) console.warn('[auth] delete account failed', error.message);
     return false;
   }
   await supabase.auth.signOut();

@@ -31,7 +31,12 @@ A = lambda *p: os.path.join(ROOT, "assets", *p)
 
 GOLD = (255, 211, 110)
 WHITE = (255, 255, 255)
-FONT_DIR = r"C:\Windows\Fonts"
+FONT_DIRS = [
+    "/System/Library/Fonts/Supplemental",
+    "/System/Library/Fonts",
+    "/Library/Fonts",
+    r"C:\Windows\Fonts",
+]
 
 CAPTIONS = [
     ("iphone", "Seven worlds\nto explore", "meadow"),
@@ -50,18 +55,22 @@ SIZES = {"iphone": (1320, 2868), "ipad": (2064, 2752)}
 
 
 def font(names, size):
-    for name in names:
-        path = os.path.join(FONT_DIR, name)
-        if os.path.exists(path):
-            try:
-                return ImageFont.truetype(path, size)
-            except OSError:
-                continue
+    for d in FONT_DIRS:
+        for name in names:
+            path = os.path.join(d, name)
+            if os.path.exists(path):
+                try:
+                    return ImageFont.truetype(path, size)
+                except OSError:
+                    continue
     return ImageFont.load_default()
 
 
 def headline(size):
-    return font(["segoeuibl.ttf", "ariblk.ttf", "seguibl.ttf"], size)
+    return font(
+        ["Arial Rounded Bold.ttf", "Arial Black.ttf", "segoeuibl.ttf", "ariblk.ttf", "seguibl.ttf", "HelveticaNeue.ttc"],
+        size,
+    )
 
 
 def backdrop(world, size):

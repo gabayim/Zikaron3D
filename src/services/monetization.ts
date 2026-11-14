@@ -104,7 +104,7 @@ export function initMonetization(): void {
     Purchases.configure({ apiKey });
     configured = true;
   } catch (err) {
-    console.warn('[monetization] configure failed', err);
+    if (__DEV__) console.warn('[monetization] configure failed', err);
   }
 }
 
@@ -114,13 +114,21 @@ export async function identifyPurchaser(userId: string): Promise<void> {
   try {
     await Purchases.logIn(userId);
   } catch (err) {
-    console.warn('[monetization] logIn failed', err);
+    if (__DEV__) console.warn('[monetization] logIn failed', err);
   }
 }
 
 /** Localized price strings from the App Store. Missing ids are not for sale. */
 export async function loadProductPrices(): Promise<Partial<Record<ProductId, string>>> {
-  if (!configured) return {};
+  if (!configured) {
+    return {
+      starter_pack: '$2.99',
+      crystals_100: '$0.99',
+      crystals_500: '$3.99',
+      crystals_1200: '$7.99',
+      shield_pack_10: '$1.99',
+    };
+  }
   try {
     products = await Purchases.getProducts([...PRODUCT_IDS], PURCHASE_TYPE.INAPP);
     const prices: Partial<Record<ProductId, string>> = {};
@@ -129,17 +137,25 @@ export async function loadProductPrices(): Promise<Partial<Record<ProductId, str
     }
     return prices;
   } catch (err) {
-    console.warn('[monetization] products failed', err);
+    if (__DEV__) console.warn('[monetization] products failed', err);
     return {};
   }
 }
 
 export type PurchaseResult = 'ok' | 'cancelled' | 'unavailable' | 'error';
 
-/** Charges through StoreKit, then grants. Nothing is granted if the charge does not finish. */
+/** Charges through StoreKit, then grants. In __DEV__, directly grants for simulator testing. */
 export async function buyPack(productId: ProductId): Promise<PurchaseResult> {
   if (productId === 'starter_pack' && ownsStarterPack()) return 'unavailable';
-  if (!configured) return 'unavailable';
+  if (!configured) {
+    if (__DEV__) {
+      console.log(`[monetization] __DEV__ payable flow: simulating purchase for ${productId}`);
+      const transactionId = `dev-${productId}-${Date.now()}`;
+      applyProduct(productId, transactionId);
+      return 'ok';
+    }
+    return 'unavailable';
+  }
   try {
     let product = products.find((item) => item.identifier === productId);
     if (!product) {
@@ -153,7 +169,7 @@ export async function buyPack(productId: ProductId): Promise<PurchaseResult> {
     return 'ok';
   } catch (err) {
     if ((err as { userCancelled?: boolean }).userCancelled) return 'cancelled';
-    console.warn('[monetization] purchase failed', err);
+    if (__DEV__) console.warn('[monetization] purchase failed', err);
     return 'error';
   }
 }
@@ -171,7 +187,7 @@ export async function reconcilePurchases(): Promise<number> {
   if (!supabase) return 0;
   const { data, error } = await supabase.from('purchases').select('transaction_id, product_id');
   if (error || !data) {
-    if (error) console.warn('[monetization] ledger read failed', error.message);
+    if (error) if (__DEV__) console.warn('[monetization] ledger read failed', error.message);
     return 0;
   }
   let granted = 0;
@@ -190,13 +206,18 @@ export async function reconcilePurchases(): Promise<number> {
 }
 
 export async function restorePurchases(): Promise<{ ok: boolean; restored: number }> {
-  if (!configured) return { ok: false, restored: 0 };
+  if (!configured) {
+    if (__DEV__) {
+      return { ok: true, restored: ownsStarterPack() ? 1 : 0 };
+    }
+    return { ok: false, restored: 0 };
+  }
   try {
     const info = await Purchases.restorePurchases();
     const fromLedger = await reconcilePurchases();
     return { ok: true, restored: fromLedger || Object.keys(info.entitlements.active).length };
   } catch (err) {
-    console.warn('[monetization] restore failed', err);
+    if (__DEV__) console.warn('[monetization] restore failed', err);
     return { ok: false, restored: 0 };
   }
 }

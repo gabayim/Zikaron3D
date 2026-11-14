@@ -404,13 +404,16 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
     [ownedAccessories, equippedAccessories, spendStardust, spendCrystals, addAccessory, equipAccessory, unequipAccessory, guardSpend],
   );
 
-  // ── Real money purchases ────────────────────────────────────────────────
+  // ── Real money purchases (Guarded by parental gate in TOYBOX mode) ──
   const handleBuy = useCallback(
     (productId: ProductId) => {
-      runGuarded(async () => {
+      guardSpend(async () => {
+        sfx.play('whoosh', 0.3);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         const res = await buyPack(productId);
         if (res === 'ok') {
-          sfx.play('chime', 0.9);
+          sfx.play('chime', 0.95);
+          sfx.play('sparkle', 0.9);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           if (productId === 'starter_pack') {
             setStarterOwned(true);
@@ -421,28 +424,29 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         }
       });
     },
-    [runGuarded],
+    [guardSpend],
   );
 
-  const handleRestore = useCallback(() => {
-    runGuarded(async () => {
-      const res = await restorePurchases();
-      if (res.ok) {
-        sfx.play('chime', 0.8);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setStarterOwned(ownsStarterPack());
-      } else {
-        sfx.play('sad', 0.5);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      }
-    });
-  }, [runGuarded]);
+  const handleRestore = useCallback(async () => {
+    sfx.play('whoosh', 0.3);
+    const res = await restorePurchases();
+    if (res.ok) {
+      sfx.play('chime', 0.8);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setStarterOwned(ownsStarterPack());
+    } else {
+      sfx.play('sad', 0.5);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+  }, []);
 
   const handleOpenLegal = useCallback(
     (url: string) => {
-      runGuarded(() => {
+      if (useProfile.getState().mode === 'TOYBOX') {
+        runGuarded(() => void openLegal(url));
+      } else {
         void openLegal(url);
-      });
+      }
     },
     [runGuarded],
   );

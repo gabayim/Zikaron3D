@@ -30,7 +30,7 @@
     "production": {
       "ios": {
         "ascAppId": "475133336",
-        "ascApiKeyPath": "C:\\Users\\EREZ\\Documents\\AuthKey_9F3C3BR5Z2.p8",
+        "ascApiKeyPath": "./AuthKey_9F3C3BR5Z2.p8",
         "ascApiKeyIssuerId": "69a6de73-a0be-47e3-e053-5b8c7c11a4d1",
         "ascApiKeyId": "9F3C3BR5Z2"
       }

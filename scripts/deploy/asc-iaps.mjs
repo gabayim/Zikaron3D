@@ -92,7 +92,7 @@ async function api(pathAndQuery, { method = 'GET', body } = {}) {
 }
 
 async function findPricePoint(iapId, price) {
-  let next = `/v1/inAppPurchases/${iapId}/pricePoints?filter[territory]=${TERRITORY}&limit=200`;
+  let next = `/v2/inAppPurchases/${iapId}/pricePoints?filter[territory]=${TERRITORY}&limit=200`;
   while (next) {
     const page = await api(next);
     const hit = (page.data ?? []).find((p) => String(p.attributes.customerPrice) === price);
@@ -136,16 +136,49 @@ async function main() {
 
   for (const product of PRODUCTS) {
     const price = priceOverrides.get(product.productId) ?? product.price;
-    const current = byProduct.get(product.productId);
+    let current = byProduct.get(product.productId);
     if (!current) {
-      missing.push({ ...product, price });
-      continue;
+      if (DRY) {
+        missing.push({ ...product, price });
+        continue;
+      }
+      try {
+        console.log(`CREATE ${product.productId.padEnd(18)} type=CONSUMABLE ref="${product.ref}"`);
+        const res = await api('/v2/inAppPurchases', {
+          method: 'POST',
+          body: {
+            data: {
+              type: 'inAppPurchases',
+              attributes: {
+                name: product.ref,
+                productId: product.productId,
+                inAppPurchaseType: 'CONSUMABLE',
+              },
+              relationships: {
+                app: {
+                  data: {
+                    type: 'apps',
+                    id: APP_ID,
+                  },
+                },
+              },
+            },
+          },
+        });
+        current = res.data;
+        byProduct.set(product.productId, current);
+        console.log(`       created (id ${current.id})`);
+      } catch (err) {
+        console.log(`       create failed: ${err.message}`);
+        missing.push({ ...product, price });
+        continue;
+      }
     }
 
     console.log(`FOUND  ${product.productId.padEnd(18)} state=${current.attributes.state}`);
     if (DRY) continue;
 
-    const locs = await api(`/v1/inAppPurchases/${current.id}/inAppPurchaseLocalizations?limit=50`);
+    const locs = await api(`/v2/inAppPurchases/${current.id}/inAppPurchaseLocalizations?limit=50`);
     const en = (locs.data ?? []).find((l) => l.attributes.locale === 'en-US');
     if (!en) {
       await api('/v1/inAppPurchaseLocalizations', {
