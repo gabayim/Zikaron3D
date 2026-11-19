@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   FlatList,
   Pressable,
@@ -22,7 +22,6 @@ import {
 } from 'lucide-react-native';
 import { sfx } from '../fx/sound';
 import { CurrencyBar } from '../ui/CurrencyBar';
-import { ParentalGate } from '../ui/ParentalGate';
 import {
   SEASON_TIERS,
   SeasonTierReward,
@@ -32,8 +31,6 @@ import {
 } from '../store/seasonPass';
 
 export default function SeasonPass({ onBack }: { onBack: () => void }) {
-  const [showGate, setShowGate] = useState(false);
-
   const seasonName = useSeasonPass((s) => s.seasonName);
   const hasAdventurePass = useSeasonPass((s) => s.hasAdventurePass);
   const claimedFree = useSeasonPass((s) => s.claimedFree);
@@ -55,11 +52,6 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
   };
 
   const handleUpgradePress = () => {
-    setShowGate(true);
-  };
-
-  const handleGatePassed = () => {
-    setShowGate(false);
     const ok = upgradeToAdventurePass();
     if (ok) {
       sfx.play('chime', 1.0);
@@ -245,12 +237,6 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* Parental Gate for purchasing the Adventure Pass */}
-      <ParentalGate
-        visible={showGate}
-        onSuccess={handleGatePassed}
-        onCancel={() => setShowGate(false)}
-      />
     </View>
   );
 }

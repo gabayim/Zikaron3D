@@ -32,8 +32,6 @@ import { sfx } from './src/fx/sound';
 import { initMonetization } from './src/services/monetization';
 import { initAuth } from './src/services/supabase';
 import { startSync } from './src/services/sync';
-import { ParentalGate } from './src/ui/ParentalGate';
-import { useParentalCommerceGate } from './src/ui/useParentalCommerceGate';
 
 const isWorld = (s: string): s is WorldId => WORLDS.some((w) => w.id === s);
 
@@ -65,7 +63,6 @@ export default function App() {
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [shopInitialTab, setShopInitialTab] = useState<Tab>('skins');
   const mode = useProfile((s) => s.mode);
-  const { gateOpen, runGuarded, confirmGate, cancelGate } = useParentalCommerceGate();
   const spendStardust = useEconomy((s) => s.spendStardust);
   const spendCrystals = useEconomy((s) => s.spendCrystals);
   const veil = useSharedValue(0);
@@ -88,19 +85,12 @@ export default function App() {
 
   const openShop = useCallback(
     (initialTab: Tab = 'skins') => {
-      const doOpen = () => {
-        setShopInitialTab(initialTab);
-        sfx.play('whoosh');
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        transitionTo('shop');
-      };
-      if (useProfile.getState().mode === 'TOYBOX') {
-        runGuarded(doOpen);
-      } else {
-        doOpen();
-      }
+      setShopInitialTab(initialTab);
+      sfx.play('whoosh');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      transitionTo('shop');
     },
-    [transitionTo, runGuarded],
+    [transitionTo],
   );
 
   const enter = useCallback(
@@ -116,29 +106,22 @@ export default function App() {
 
   const handleConfirmSkipInGame = useCallback(
     (currency: 'stardust' | 'crystals') => {
-      const doSkip = () => {
-        const ok = currency === 'stardust' ? spendStardust(150) : spendCrystals(10);
-        if (ok) {
-          const nextLvl = startLevel + 1;
-          if (isWorld(screen)) setGameLevel(getWorld(screen).game, nextLvl - 1);
-          useProfile.getState().awardXp(50);
-          sfx.play('chime', 0.9);
-          sfx.play('sparkle', 0.8);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          setStartLevel(nextLvl);
-          setShowSkipModal(false);
-        } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
-      };
-      if (useProfile.getState().mode === 'TOYBOX') {
-        runGuarded(doSkip);
+      const ok = currency === 'stardust' ? spendStardust(150) : spendCrystals(10);
+      if (ok) {
+        const nextLvl = startLevel + 1;
+        if (isWorld(screen)) setGameLevel(getWorld(screen).game, nextLvl - 1);
+        useProfile.getState().awardXp(50);
+        sfx.play('chime', 0.9);
+        sfx.play('sparkle', 0.8);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setStartLevel(nextLvl);
+        setShowSkipModal(false);
       } else {
-        doSkip();
+        sfx.play('sad', 0.5);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     },
-    [screen, startLevel, spendStardust, spendCrystals, runGuarded],
+    [screen, startLevel, spendStardust, spendCrystals],
   );
 
   const back = useCallback(() => {
@@ -253,7 +236,6 @@ export default function App() {
           </View>
         )}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.veil, veilStyle]} />
-      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
       <DailyStreakModal />
       <ProfileModal
         visible={showProfileModal}

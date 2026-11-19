@@ -21,9 +21,8 @@ import { getBeatLevel } from '../../engine/levelTables';
 import { useProfile } from '../../store/profile';
 import { getWorld, type WorldId } from '../../worlds';
 import { ModeIcon } from '../../ui/ModeIcon';
-import { ParentalGate } from '../../ui/ParentalGate';
 import { ShieldIcon } from '../../ui/ShieldIcon';
-import { useParentalModeCycle } from '../../ui/useParentalModeCycle';
+import { useModeCycle } from '../../ui/useModeCycle';
 import { LevelSplash } from '../../ui/LevelSplash';
 import { drawBattery, drawBoard, drawLanes, LANE_COLORS } from './draw';
 import { generateMelody, pickMelody } from './melodies';
@@ -65,7 +64,7 @@ export default function BeatCircuit({
 }) {
   const worldDef = useMemo(() => getWorld(worldId), [worldId]);
   const { width: W, height: H } = useWindowDimensions();
-  const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
+  const requestCycle = useModeCycle();
   const mode = useProfile((s) => s.mode);
   const calm = mode === 'SANCTUARY';
   const juice = useJuice(W, H, 16);
@@ -590,7 +589,6 @@ export default function BeatCircuit({
 
   return (
     <View style={styles.root}>
-      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
       <LevelSplash level={currentLevel} gameTitle="BEAT CIRCUIT" worldName={worldDef.id.replace('_', ' ')} triggerKey={splashTrigger} />
       <GestureDetector gesture={touch}>
         <Canvas style={StyleSheet.absoluteFill}>

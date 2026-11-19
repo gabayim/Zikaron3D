@@ -41,9 +41,8 @@ import { getStarLevel } from '../../engine/levelTables';
 import { useProfile, type CreatureId } from '../../store/profile';
 import { getWorld, type WorldId } from '../../worlds';
 import { ModeIcon } from '../../ui/ModeIcon';
-import { ParentalGate } from '../../ui/ParentalGate';
 import { ShieldIcon } from '../../ui/ShieldIcon';
-import { useParentalModeCycle } from '../../ui/useParentalModeCycle';
+import { useModeCycle } from '../../ui/useModeCycle';
 import { LevelSplash } from '../../ui/LevelSplash';
 import { drawObjects } from './draw';
 import { FEVER_SECONDS, GOLD, StarSim, type SimEvent } from './sim';
@@ -62,7 +61,7 @@ export default function StarCatcher({
 }) {
   const worldDef = useMemo(() => getWorld(worldId), [worldId]);
   const { width: W, height: H } = useWindowDimensions();
-  const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
+  const requestCycle = useModeCycle();
   const mode = useProfile((s) => s.mode);
   const calm = mode === 'SANCTUARY';
   useMusic(worldDef.music, calm ? 0.3 : 0.42);
@@ -392,7 +391,6 @@ export default function StarCatcher({
 
   return (
     <View style={styles.root}>
-      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
       <LevelSplash level={currentLevel} gameTitle="STAR CATCHER" worldName={worldDef.id.replace('_', ' ')} triggerKey={splashTrigger} />
       <GestureDetector gesture={pan}>
         <Canvas style={StyleSheet.absoluteFill}>

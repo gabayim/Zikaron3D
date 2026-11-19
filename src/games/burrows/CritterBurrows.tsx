@@ -34,10 +34,9 @@ import { SkillTracker, type BurrowsDifficulty } from '../../engine/dda';
 import { useProfile, type CreatureId } from '../../store/profile';
 import { getWorld, type WorldId } from '../../worlds';
 import { ModeIcon } from '../../ui/ModeIcon';
-import { ParentalGate } from '../../ui/ParentalGate';
 import { ShieldIcon } from '../../ui/ShieldIcon';
 import { LevelSplash } from '../../ui/LevelSplash';
-import { useParentalModeCycle } from '../../ui/useParentalModeCycle';
+import { useModeCycle } from '../../ui/useModeCycle';
 import { Burrow, type BurrowApi } from './Burrow';
 import { computeLayout, hitTest, makeRound, SPECIES_COLOR, SPECIES_POOL, type Round } from './logic';
 
@@ -71,7 +70,7 @@ export default function CritterBurrows({
 }) {
   const worldDef = useMemo(() => getWorld(worldId), [worldId]);
   const { width: W, height: H } = useWindowDimensions();
-  const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
+  const requestCycle = useModeCycle();
   const mode = useProfile((s) => s.mode);
   const calm = mode === 'SANCTUARY';
   useMusic(worldDef.music, calm ? 0.3 : 0.4);
@@ -460,7 +459,6 @@ export default function CritterBurrows({
 
   return (
     <View style={styles.root}>
-      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
       <LevelSplash level={displayLevel} gameTitle="CRITTER BURROWS" worldName={worldDef.id.replace('_', ' ')} triggerKey={splashTrigger} />
       <GestureDetector gesture={tap}>
         <Canvas style={StyleSheet.absoluteFill}>

@@ -57,8 +57,6 @@ import {
 } from '../data/shopAssets';
 import { WORLDS } from '../worlds';
 import { CurrencyBar } from '../ui/CurrencyBar';
-import { ParentalGate } from '../ui/ParentalGate';
-import { useParentalCommerceGate } from '../ui/useParentalCommerceGate';
 import { openLegal, PRIVACY_URL, SUPPORT_URL, TERMS_URL } from '../legal';
 import {
   buyPack,
@@ -249,21 +247,13 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
   const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
   const [needCrystalsAlert, setNeedCrystalsAlert] = useState(false);
 
-  const { gateOpen, runGuarded, confirmGate, cancelGate } = useParentalCommerceGate();
+  const [storeIssue, setStoreIssue] = useState<'unavailable' | 'error' | 'restore' | null>(null);
   const [prices, setPrices] = useState<Partial<Record<ProductId, string>>>({});
   const [starterOwned, setStarterOwned] = useState(ownsStarterPack);
 
   useEffect(() => {
     void loadProductPrices().then(setPrices);
   }, []);
-
-  const guardSpend = useCallback(
-    (action: () => void) => {
-      if (useProfile.getState().mode === 'TOYBOX') runGuarded(action);
-      else action();
-    },
-    [runGuarded],
-  );
 
   // Economy & Inventory
   const spendStardust = useEconomy((s) => s.spendStardust);
@@ -293,7 +283,6 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
 
   const handleBuyStardustPack = useCallback(
     (pack: StardustPack) => {
-      guardSpend(() => {
       const ok = spendCrystals(pack.costCrystals);
       if (ok) {
         earnStardust(pack.stardust);
@@ -305,9 +294,8 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setNeedCrystalsAlert(true);
       }
-      });
     },
-    [spendCrystals, earnStardust, guardSpend],
+    [spendCrystals, earnStardust],
   );
 
   // ── Skin buy/equip ──────────────────────────────────────────────────────
@@ -328,33 +316,31 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         return;
       }
-      guardSpend(() => {
-        if (skin.priceStardust != null) {
-          const ok = spendStardust(skin.priceStardust);
-          if (ok) {
-            addSkin(skin.id);
-            equipSkin(skin.creatureId, skin.id);
-            sfx.play('chime', 0.8);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } else {
-            sfx.play('sad', 0.5);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          }
-        } else if (skin.priceCrystals != null) {
-          const ok = spendCrystals(skin.priceCrystals);
-          if (ok) {
-            addSkin(skin.id);
-            equipSkin(skin.creatureId, skin.id);
-            sfx.play('chime', 0.8);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } else {
-            sfx.play('sad', 0.5);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          }
+      if (skin.priceStardust != null) {
+        const ok = spendStardust(skin.priceStardust);
+        if (ok) {
+          addSkin(skin.id);
+          equipSkin(skin.creatureId, skin.id);
+          sfx.play('chime', 0.8);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          sfx.play('sad', 0.5);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-      });
+      } else if (skin.priceCrystals != null) {
+        const ok = spendCrystals(skin.priceCrystals);
+        if (ok) {
+          addSkin(skin.id);
+          equipSkin(skin.creatureId, skin.id);
+          sfx.play('chime', 0.8);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          sfx.play('sad', 0.5);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      }
     },
-    [ownedSkins, equippedSkins, spendStardust, spendCrystals, addSkin, equipSkin, unequipSkin, guardSpend],
+    [ownedSkins, equippedSkins, spendStardust, spendCrystals, addSkin, equipSkin, unequipSkin],
   );
 
   // ── Accessory buy/equip ─────────────────────────────────────────────────
@@ -375,56 +361,53 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         return;
       }
-      guardSpend(() => {
-        if (acc.priceStardust != null) {
-          const ok = spendStardust(acc.priceStardust);
-          if (ok) {
-            addAccessory(acc.id);
-            equipAccessory(acc.slot, acc.id);
-            sfx.play('chime', 0.8);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } else {
-            sfx.play('sad', 0.5);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          }
-        } else if (acc.priceCrystals != null) {
-          const ok = spendCrystals(acc.priceCrystals);
-          if (ok) {
-            addAccessory(acc.id);
-            equipAccessory(acc.slot, acc.id);
-            sfx.play('chime', 0.8);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } else {
-            sfx.play('sad', 0.5);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          }
-        }
-      });
-    },
-    [ownedAccessories, equippedAccessories, spendStardust, spendCrystals, addAccessory, equipAccessory, unequipAccessory, guardSpend],
-  );
-
-  // ── Real money purchases (Guarded by parental gate in TOYBOX mode) ──
-  const handleBuy = useCallback(
-    (productId: ProductId) => {
-      guardSpend(async () => {
-        sfx.play('whoosh', 0.3);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        const res = await buyPack(productId);
-        if (res === 'ok') {
-          sfx.play('chime', 0.95);
-          sfx.play('sparkle', 0.9);
+      if (acc.priceStardust != null) {
+        const ok = spendStardust(acc.priceStardust);
+        if (ok) {
+          addAccessory(acc.id);
+          equipAccessory(acc.slot, acc.id);
+          sfx.play('chime', 0.8);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          if (productId === 'starter_pack') {
-            setStarterOwned(true);
-          }
-        } else if (res === 'error') {
+        } else {
           sfx.play('sad', 0.5);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-      });
+      } else if (acc.priceCrystals != null) {
+        const ok = spendCrystals(acc.priceCrystals);
+        if (ok) {
+          addAccessory(acc.id);
+          equipAccessory(acc.slot, acc.id);
+          sfx.play('chime', 0.8);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          sfx.play('sad', 0.5);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      }
     },
-    [guardSpend],
+    [ownedAccessories, equippedAccessories, spendStardust, spendCrystals, addAccessory, equipAccessory, unequipAccessory],
+  );
+
+  // ── Real money purchases ──
+  const handleBuy = useCallback(
+    async (productId: ProductId) => {
+      sfx.play('whoosh', 0.3);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const res = await buyPack(productId);
+      if (res === 'ok') {
+        sfx.play('chime', 0.95);
+        sfx.play('sparkle', 0.9);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (productId === 'starter_pack') {
+          setStarterOwned(true);
+        }
+      } else if (res !== 'cancelled') {
+        sfx.play('sad', 0.5);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setStoreIssue(res);
+      }
+    },
+    [],
   );
 
   const handleRestore = useCallback(async () => {
@@ -437,19 +420,11 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
     } else {
       sfx.play('sad', 0.5);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setStoreIssue('restore');
     }
   }, []);
 
-  const handleOpenLegal = useCallback(
-    (url: string) => {
-      if (useProfile.getState().mode === 'TOYBOX') {
-        runGuarded(() => void openLegal(url));
-      } else {
-        void openLegal(url);
-      }
-    },
-    [runGuarded],
-  );
+  const handleOpenLegal = useCallback((url: string) => void openLegal(url), []);
 
   // ── World unlock handler (spend Stardust or Crystals) ───────────────────
   const handleUnlockWorld = useCallback(
@@ -1029,8 +1004,33 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         </View>
       </Modal>
 
-      {/* Parental Gate Modal */}
-      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
+      <Modal
+        visible={storeIssue !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setStoreIssue(null)}
+      >
+        <View style={styles.needGemsBackdrop}>
+          <View style={styles.needGemsBox}>
+            <Text style={styles.needGemsEmoji}>🛒</Text>
+            <Text style={styles.needGemsTitle}>
+              {storeIssue === 'unavailable' ? 'STORE UNAVAILABLE' : storeIssue === 'restore' ? 'RESTORE FAILED' : 'PURCHASE FAILED'}
+            </Text>
+            <Text style={styles.needGemsSubtitle}>
+              {storeIssue === 'unavailable'
+                ? 'This item could not be loaded from the App Store right now. Please check your connection and try again later.'
+                : storeIssue === 'restore'
+                  ? 'We could not reach the App Store to restore your purchases. Please try again later.'
+                  : 'The App Store could not complete this purchase. Please try again.'}
+            </Text>
+            <View style={styles.needGemsActions}>
+              <Pressable style={styles.needGemsConfirmBtn} onPress={() => setStoreIssue(null)}>
+                <Text style={styles.needGemsConfirmText}>OK</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

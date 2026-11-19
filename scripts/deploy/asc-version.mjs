@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Creates the 2.15.0 App Store version for Zikaron3D and fills its en-US metadata
+ * Creates the 2.15.1 App Store version for Zikaron3D and fills its en-US metadata
  * over the App Store Connect API, then verifies it. Also sets the app-level
  * subtitle and privacy policy URL.
  *
@@ -8,7 +8,7 @@
  *     --key-path "C:\Users\EREZ\Documents\AuthKey_9F3C3BR5Z2.p8" \
  *     --key-id 9F3C3BR5Z2 --issuer-id 69a6de73-a0be-47e3-e053-5b8c7c11a4d1
  *
- * Drop --dry-run to write. Idempotent: an existing 2.15.0 version is updated, not
+ * Drop --dry-run to write. Idempotent: an existing 2.15.1 version is updated, not
  * duplicated.
  */
 import { createPrivateKey, sign } from 'node:crypto';
@@ -24,7 +24,7 @@ const KEY_PATH = arg('key-path', process.env.ASC_KEY_PATH ?? '');
 const KEY_ID = arg('key-id', process.env.ASC_KEY_ID ?? '');
 const ISSUER = arg('issuer-id', process.env.ASC_ISSUER_ID ?? '');
 const APP_ID = arg('app-id', '475133336');
-const VERSION = arg('version', '2.15.0');
+const VERSION = arg('version', '2.15.1');
 const DRY = args.includes('--dry-run');
 const BASE = 'https://api.appstoreconnect.apple.com';
 
@@ -40,7 +40,7 @@ const METADATA = {
   description: `Zikaron3D is a hand-built 3D memory arcade for the whole family: seven toy-like worlds, seven different memory games and one calm place to play.
 
 PLAY THREE WAYS
-- TOYBOX: made for ages 4-7. No timers, gentle hints, no ads, and every purchase or external link is locked behind a parental gate.
+- TOYBOX: made for ages 4-7. No timers, gentle hints and no ads.
 - ARCADE: combo streaks, streak shields and a weekly league where your best week becomes your score.
 - SANCTUARY: slow, quiet practice with soft audio and no pressure.
 
@@ -68,15 +68,11 @@ Portrait, touch-first, designed for iPhone and iPad.`,
     'Seven worlds of memory games, one kid-safe mode and a weekly arcade league. No ads, no tracking, plays offline.',
   supportUrl: 'https://zmz.ca/zikaron3d/support.html',
   marketingUrl: 'https://zmz.ca/zikaron3d/',
-  whatsNew: `Real in-app purchases. Crystal packs, the one-time Starter Pack and streak shields are now charged through the App Store, with Restore Purchases in the Shop and in Settings.
+  whatsNew: `Crystal packs, the Starter Pack and streak shields can now be bought from the Shop.
 
-A stronger grown-up check. Opening the shop, skipping a level, unlocking a world or leaving Toybox now asks for a math gate that locks for 30 seconds after three wrong answers.
+Clear messages when the App Store is unavailable or a purchase does not go through.
 
-Four new games. Shell Shuffle, Vine Flow, Beat Circuit and Echo Peaks, plus new critters to collect and dress up.
-
-Honest leaderboard. Offline practice rivals are clearly labelled instead of looking like other players.
-
-Privacy and polish. New privacy policy and support pages, an encrypted sign-in store, and smaller fixes throughout.`,
+Smoother play: no more pop-up checks when opening the Shop, switching modes or unlocking worlds.`,
 };
 
 const b64url = (buf) => Buffer.from(buf).toString('base64url');

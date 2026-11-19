@@ -40,8 +40,7 @@ import { PhysicsWorld, type MergeEvent } from '../../engine/physics';
 import { useProfile, type CreatureId } from '../../store/profile';
 import { getWorld, type WorldId } from '../../worlds';
 import { ModeIcon } from '../../ui/ModeIcon';
-import { ParentalGate } from '../../ui/ParentalGate';
-import { useParentalModeCycle } from '../../ui/useParentalModeCycle';
+import { useModeCycle } from '../../ui/useModeCycle';
 import { LevelSplash } from '../../ui/LevelSplash';
 import { pickNext, radiiFor, SPRITE_PER_RADIUS, TIERS, TOP_TIER } from './logic';
 
@@ -122,7 +121,7 @@ export default function OrbMerge({
 }) {
   const worldDef = useMemo(() => getWorld(worldId), [worldId]);
   const { width: W, height: H } = useWindowDimensions();
-  const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
+  const requestCycle = useModeCycle();
   const mode = useProfile((s) => s.mode);
   const calm = mode === 'SANCTUARY';
   useMusic(worldDef.music, calm ? 0.3 : 0.4);
@@ -498,7 +497,6 @@ export default function OrbMerge({
 
   return (
     <View style={styles.root}>
-      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
       <LevelSplash level={currentLevel} gameTitle="ORB MERGE" worldName={worldDef.id.replace('_', ' ')} triggerKey={splashTrigger} />
       <GestureDetector gesture={pan}>
         <Canvas style={StyleSheet.absoluteFill}>

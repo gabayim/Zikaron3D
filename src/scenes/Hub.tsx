@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ParentalGate } from '../ui/ParentalGate';
-import { useParentalModeCycle } from '../ui/useParentalModeCycle';
-import { useParentalCommerceGate } from '../ui/useParentalCommerceGate';
+import { useModeCycle } from '../ui/useModeCycle';
 import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gem, Sparkles } from 'lucide-react-native';
 import { useEconomy } from '../store/economy';
@@ -291,13 +289,7 @@ export default function Hub({
     lockedRef.current = lockedFlags;
   });
   const celebrated = useProfile((state) => state.celebratedWorlds);
-  const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
-  const {
-    gateOpen: commerceGateOpen,
-    runGuarded: guardCommerce,
-    confirmGate: confirmCommerce,
-    cancelGate: cancelCommerce,
-  } = useParentalCommerceGate();
+  const requestCycle = useModeCycle();
 
   // ---- layout -------------------------------------------------------------
   const geo = useMemo<Geo>(() => {
@@ -542,14 +534,9 @@ export default function Hub({
           }
         }
       };
-
-      if (useProfile.getState().mode === 'TOYBOX') {
-        guardCommerce(doUnlock);
-      } else {
-        doUnlock();
-      }
+      doUnlock();
     },
-    [unlockTarget, spendStardust, spendCrystals, unlockWorld, markWorldCelebrated, emit, W, geo.cy, guardCommerce],
+    [unlockTarget, spendStardust, spendCrystals, unlockWorld, markWorldCelebrated, emit, W, geo.cy],
   );
 
   // A newly unlocked world: glide to its portal and celebrate once.
@@ -880,23 +867,6 @@ export default function Hub({
 
   return (
     <View style={styles.root}>
-      <ParentalGate
-        visible={gateOpen || commerceGateOpen}
-        onSuccess={() => {
-          if (gateOpen) {
-            confirmGate();
-            sfx.play('sparkle', 0.5);
-          }
-          if (commerceGateOpen) {
-            confirmCommerce();
-          }
-        }}
-        onCancel={() => {
-          cancelGate();
-          cancelCommerce();
-        }}
-      />
-
       {/* World Unlock Modal */}
       <Modal
         visible={!!unlockTarget}

@@ -9,8 +9,6 @@ import { buyShieldPack, restorePurchases } from '../services/monetization';
 import { useAudioSettings } from '../store/audioSettings';
 import { useProfile } from '../store/profile';
 import { deleteAccount, signOut, useAuth } from '../services/supabase';
-import { ParentalGate } from '../ui/ParentalGate';
-import { useParentalCommerceGate } from '../ui/useParentalCommerceGate';
 import { openLegal, PRIVACY_URL, TERMS_URL, SUPPORT_URL } from '../legal';
 
 const ROWS = [0.22, 0.32, 0.42, 0.54, 0.64, 0.77, 0.88];
@@ -100,8 +98,6 @@ export default function Settings({ onBack }: { onBack: () => void }) {
   const { toggleMusic, toggleSfx, toggleReduceMotion } = useAudioSettings();
   const shields = useProfile((s) => s.shields);
   const signedIn = useAuth((s) => !!s.userId);
-  const { gateOpen, runGuarded, confirmGate, cancelGate } = useParentalCommerceGate();
-
   const doRestore = useCallback(() => {
     void restorePurchases().then((r) => {
       if (r.ok) {
@@ -110,6 +106,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       } else {
         sfx.play('sad', 0.45);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Alert.alert('Restore failed', 'We could not reach the App Store to restore your purchases. Please try again later.');
       }
     });
   }, []);
@@ -122,6 +119,12 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       } else if (r !== 'cancelled') {
         sfx.play('sad', 0.4);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Alert.alert(
+          r === 'unavailable' ? 'Store unavailable' : 'Purchase failed',
+          r === 'unavailable'
+            ? 'This item could not be loaded from the App Store right now. Please check your connection and try again later.'
+            : 'The App Store could not complete this purchase. Please try again.',
+        );
       }
     });
   }, []);
@@ -195,24 +198,23 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         toggleReduceMotion();
         sfx.play('sparkle', 0.35);
       } else if (hit(ROWS[3])) {
-        runGuarded(doBuyShields);
+        doBuyShields();
       } else if (hit(ROWS[4])) {
-        runGuarded(doRestore);
+        doRestore();
       } else if (signedIn && hit(ROWS[5])) {
         void signOut();
         sfx.play('whoosh', 0.4);
       } else if (signedIn && hit(ROWS[6])) {
-        runGuarded(doDelete);
+        doDelete();
       } else return;
       Haptics.selectionAsync();
     },
-    [W, H, sfxOn, toggleMusic, toggleSfx, toggleReduceMotion, onBack, runGuarded, doRestore, doBuyShields, doDelete, signedIn],
+    [W, H, sfxOn, toggleMusic, toggleSfx, toggleReduceMotion, onBack, doRestore, doBuyShields, doDelete, signedIn],
   );
   const tap = useTapGesture({ runOnJS: true, onActivate: (e) => onTap(e.x, e.y) });
 
   return (
     <View style={styles.root}>
-      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
       <GestureDetector gesture={tap}>
         <Canvas style={StyleSheet.absoluteFill}>
           <Fill color="#0B0620" />
@@ -223,15 +225,15 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         </Canvas>
       </GestureDetector>
       <View style={styles.legalFooter} pointerEvents="box-none">
-        <Pressable onPress={() => runGuarded(() => void openLegal(PRIVACY_URL))} hitSlop={8}>
+        <Pressable onPress={() => void openLegal(PRIVACY_URL)} hitSlop={8}>
           <Text style={styles.legalText}>Privacy</Text>
         </Pressable>
         <Text style={styles.legalDot}>•</Text>
-        <Pressable onPress={() => runGuarded(() => void openLegal(TERMS_URL))} hitSlop={8}>
+        <Pressable onPress={() => void openLegal(TERMS_URL)} hitSlop={8}>
           <Text style={styles.legalText}>Terms</Text>
         </Pressable>
         <Text style={styles.legalDot}>•</Text>
-        <Pressable onPress={() => runGuarded(() => void openLegal(SUPPORT_URL))} hitSlop={8}>
+        <Pressable onPress={() => void openLegal(SUPPORT_URL)} hitSlop={8}>
           <Text style={styles.legalText}>Support</Text>
         </Pressable>
       </View>

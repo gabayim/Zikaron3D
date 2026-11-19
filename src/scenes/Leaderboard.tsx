@@ -11,9 +11,6 @@ import { appleSignInAvailable, signInWithApple, useAuth } from '../services/supa
 import { fetchBoard, type BoardRow } from '../services/leaderboard';
 import { CREATURE_IDS, useProfile } from '../store/profile';
 import { getSkinDef } from '../data/shopCatalog';
-import { ParentalGate } from '../ui/ParentalGate';
-import { useParentalCommerceGate } from '../ui/useParentalCommerceGate';
-
 const SHOWN = 10;
 const TOP = 0.18;
 const BOTTOM = 0.88;
@@ -26,8 +23,6 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
   const [rows, setRows] = useState<BoardRow[]>([]);
   const [canApple, setCanApple] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const { gateOpen, runGuarded, confirmGate, cancelGate } = useParentalCommerceGate();
-
   useEffect(() => {
     void appleSignInAvailable().then(setCanApple);
   }, []);
@@ -141,19 +136,12 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
     runOnJS: true,
     onActivate: (e) => {
       if (Math.hypot(e.x - 42, e.y - 72) < 34) onBack();
-      else if (!userId && canApple && !showButton && e.y > H * 0.9) runGuarded(doSignIn);
+      else if (!userId && canApple && !showButton && e.y > H * 0.9) doSignIn();
     },
   });
 
   return (
     <View style={styles.root}>
-      <ParentalGate
-        visible={gateOpen}
-        onSuccess={() => {
-          confirmGate();
-        }}
-        onCancel={cancelGate}
-      />
       <GestureDetector gesture={tap}>
         <Canvas style={StyleSheet.absoluteFill}>
           <Fill color="#0B0620" />

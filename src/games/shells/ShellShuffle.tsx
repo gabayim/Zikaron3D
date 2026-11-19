@@ -38,9 +38,8 @@ import { getShellLevel } from '../../engine/levelTables';
 import { useProfile } from '../../store/profile';
 import { getWorld, type WorldId } from '../../worlds';
 import { ModeIcon } from '../../ui/ModeIcon';
-import { ParentalGate } from '../../ui/ParentalGate';
 import { ShieldIcon } from '../../ui/ShieldIcon';
-import { useParentalModeCycle } from '../../ui/useParentalModeCycle';
+import { useModeCycle } from '../../ui/useModeCycle';
 import { LevelSplash } from '../../ui/LevelSplash';
 import { BUBBLE, drawInk, drawItems, HINT, PEARL, URCHIN } from './draw';
 import { buildRound, inkAt, posesAt, shellRules, ShellPicker, slotCell, type ShellRound, type ShellRules } from './logic';
@@ -130,7 +129,7 @@ export default function ShellShuffle({
 }) {
   const worldDef = useMemo(() => getWorld(worldId), [worldId]);
   const { width: W, height: H } = useWindowDimensions();
-  const { gateOpen, requestCycle, confirmGate, cancelGate } = useParentalModeCycle();
+  const requestCycle = useModeCycle();
   const mode = useProfile((s) => s.mode);
   const calm = mode === 'SANCTUARY';
   useMusic(worldDef.music, calm ? 0.3 : 0.42);
@@ -651,7 +650,6 @@ export default function ShellShuffle({
 
   return (
     <View style={styles.root}>
-      <ParentalGate visible={gateOpen} onSuccess={confirmGate} onCancel={cancelGate} />
       <LevelSplash level={currentLevel} gameTitle="SHELL SHUFFLE" worldName={worldDef.id.replace('_', ' ')} triggerKey={splashTrigger} />
       <GestureDetector gesture={pan}>
         <Canvas style={StyleSheet.absoluteFill}>
