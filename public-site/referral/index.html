@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zikaron3D - Your Friend Sent You a Gift!</title>
+  <link rel="icon" type="image/png" href="https://zmz.ca/zikaron3d/favicon.png?v=2">
+  <link rel="apple-touch-icon" href="https://zmz.ca/zikaron3d/favicon.png?v=2">
+  <meta name="description" content="A friend invited you to play Zikaron3D! Download now to claim your 50 Crystal welcome gift.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Zikaron3D - Special Gift Invitation">
+  <meta property="og:description" content="Your friend sent you 50 bonus Crystals in Zikaron3D! Tap to download on iPhone & iPad.">
+  <meta property="og:image" content="https://zmz.ca/zikaron3d/og-image.png?v=2">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://zmz.ca/zikaron3d/og-image.png?v=2">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      background: radial-gradient(circle at 50% 20%, #1e1145 0%, #0b0620 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justifyContent: center;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 40px 24px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+    }
+    .logo {
+      width: 100%;
+      max-width: 240px;
+      height: auto;
+      margin: 0 auto 20px;
+      display: block;
+    }
+    .gift-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fbbf24;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 900;
+      color: #f8fafc;
+      margin: 0 0 10px;
+      line-height: 1.25;
+    }
+    p.lead {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin: 0 0 24px;
+    }
+    .code-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      padding: 10px 16px;
+      margin-bottom: 24px;
+      display: inline-block;
+    }
+    .code-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .code-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: #38bdf8;
+      letter-spacing: 3px;
+    }
+    .btn-download {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: #0b132b;
+      font-size: 16px;
+      font-weight: 800;
+      text-decoration: none;
+      padding: 16px 28px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+      width: 100%;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-download:active {
+      transform: scale(0.98);
+    }
+    .desktop-qr {
+      display: none;
+      margin: 20px 0;
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 16px;
+      width: 180px;
+      height: 180px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .desktop-note {
+      display: none;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 12px;
+    }
+    .footer {
+      margin-top: 32px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    .footer a {
+      color: #94a3b8;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="https://zmz.ca/zikaron3d/logo-dark.png?v=2" alt="Zikaron3D Logo" width="240" height="63">
+
+    <div class="gift-badge">
+      <span>🎁</span> SPECIAL INVITATION
+    </div>
+
+    <h1>Your Friend Sent You 50 Free Crystals!</h1>
+    <p class="lead">Step into the colorful 3D memory arcade on iOS. Unlock adorable critters, customize skins, and test your brain skills.</p>
+
+    <div class="code-box">
+      <div class="code-label">Referral Code</div>
+      <div id="codeDisplay" class="code-val">WELCOME</div>
+    </div>
+
+    <button id="downloadBtn" class="btn-download">
+      <span></span> Get Zikaron3D Free
+    </button>
+
+    <img id="desktopQr" class="desktop-qr" alt="Scan QR to play on iOS">
+    <p id="desktopNote" class="desktop-note">Scan with your iPhone or iPad camera to install and claim your gift!</p>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2026 Zikaron3D &mdash; by <a href="https://zmz.ca/">ZMZ Softwares</a>. All rights reserved.</p>
+  </div>
+
+  <script>
+    (function () {
+      var APP_STORE_URL = 'https://apps.apple.com/app/id6738965008';
+      var SUPABASE_FUNCTION_URL = 'https://ggkrbyjabsihzdskdbrt.supabase.co/functions/v1/referral-click';
+
+      // Parse code from path /r/<CODE> or query param
+      var pathParts = window.location.pathname.split('/');
+      var code = 'WELCOME';
+      for (var i = 0; i < pathParts.length; i++) {
+        if (pathParts[i] === 'r' && pathParts[i + 1]) {
+          code = pathParts[i + 1].toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 7);
+          break;
+        }
+      }
+      var codeElem = document.getElementById('codeDisplay');
+      if (code && code !== 'WELCOME' && codeElem) {
+        codeElem.textContent = code;
+      }
+
+      // Detect Platform
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      var isAndroid = /Android/.test(ua);
+      var platform = isIOS ? 'ios' : isAndroid ? 'android' : 'desktop';
+
+      // Telemetry: send referral click
+      if (code && code !== 'WELCOME') {
+        try {
+          fetch(SUPABASE_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, platform: platform }),
+            mode: 'cors'
+          }).catch(function () {});
+        } catch (e) {}
+      }
+
+      // Desktop / Android QR display
+      if (!isIOS) {
+        var qrElem = document.getElementById('desktopQr');
+        var noteElem = document.getElementById('desktopNote');
+        if (qrElem && noteElem) {
+          qrElem.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(window.location.href);
+          qrElem.style.display = 'block';
+          noteElem.style.display = 'block';
+        }
+      }
+
+      // Download Button Action
+      var btn = document.getElementById('downloadBtn');
+      if (btn) {
+        btn.addEventListener('click', function () {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(window.location.href).catch(function () {});
+          }
+          window.location.href = APP_STORE_URL;
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

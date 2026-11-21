@@ -137,13 +137,13 @@ Files in repo under new `public-site/referral/`:
 
 | Step | Area | Done |
 |------|------|------|
-| 1 | `supabase/schema.sql` tables + RPCs | |
-| 2 | `scripts/admin/genAssetSeed.ts` + `seed_assets.sql` | |
-| 3 | Edge Functions `referral-click`, `referral-claim` | |
-| 4 | `grants.ts`, `referral.ts`, `supabase.ts` session | |
-| 5 | Expo packages + `app.json` links | |
-| 6 | Profile GIFTS UI + modals | |
-| 7 | VPS landing + deploy script | |
-| 8 | Supabase dashboard setup | |
-| 9 | `privacy.html` | |
-| 10 | Tests + lint/typecheck | |
+| 1 | `supabase/schema.sql` tables + RPCs | ✓ |
+| 2 | `scripts/admin/genAssetSeed.ts` + `seed_assets.sql` | ✓ |
+| 3 | Edge Functions `referral-click`, `referral-claim` | ✓ |
+| 4 | `grants.ts`, `referral.ts`, `supabase.ts` session | ✓ |
+| 5 | Expo packages + `app.json` links | ✓ |
+| 6 | Profile GIFTS UI + modals | ✓ |
+| 7 | VPS landing + deploy script | ✓ |
+| 8 | Supabase dashboard setup | ✓ |
+| 9 | `privacy.html` | ✓ |
+| 10 | Tests + lint/typecheck | ✓ |

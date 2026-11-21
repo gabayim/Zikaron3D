@@ -60,6 +60,35 @@ export function initAuth(): void {
   supabase.auth.onAuthStateChange((_event, session) => useAuth.getState().setUserId(session?.user.id ?? null));
 }
 
+/**
+ * Returns the current authenticated or anonymous user ID.
+ * If no session exists, signs in silently as an anonymous user.
+ */
+export async function ensureSession(): Promise<string | null> {
+  if (!supabase) return null;
+  const current = useAuth.getState().userId;
+  if (current) return current;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData.session?.user.id) {
+    const id = sessionData.session.user.id;
+    useAuth.getState().setUserId(id);
+    return id;
+  }
+
+  const { data: anonData, error } = await supabase.auth.signInAnonymously();
+  if (error) {
+    if (__DEV__) console.warn('[auth] anonymous sign-in failed', error.message);
+    return null;
+  }
+
+  const anonId = anonData.user?.id ?? null;
+  if (anonId) {
+    useAuth.getState().setUserId(anonId);
+  }
+  return anonId;
+}
+
 export type SignInResult = 'ok' | 'cancelled' | 'unavailable' | 'error';
 
 export async function appleSignInAvailable(): Promise<boolean> {

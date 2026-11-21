@@ -17,8 +17,10 @@ import {
   Crown,
   Flame,
   Gem,
+  Gift,
   Lock,
   Palette,
+  QrCode,
   Smile,
   Sparkles,
   Trophy,
@@ -40,6 +42,8 @@ import {
   type SkinDef,
 } from '../data/shopCatalog';
 import { ACCESSORY_ASSETS, getSkinImage } from '../data/shopAssets';
+import { RedeemCodeModal } from './RedeemCodeModal';
+import { InviteModal } from './InviteModal';
 
 interface ProfileModalProps {
   visible: boolean;
@@ -76,6 +80,8 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
   const unequipAccessory = useInventory((s) => s.unequipAccessory);
 
   const [activeSlot, setActiveSlot] = useState<WardrobeSlot>('hat');
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const level = levelForXp(xp);
 
@@ -420,7 +426,34 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
               )}
             </ScrollView>
 
-            {/* ── 4. Stats Overview ── */}
+            {/* ── 4. Gifts & Rewards ── */}
+            <View style={styles.giftsSection}>
+              <Pressable
+                style={styles.giftBtn}
+                onPress={() => {
+                  sfx.play('pop');
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowRedeemModal(true);
+                }}
+              >
+                <Gift size={18} color="#FBBF24" />
+                <Text style={styles.giftBtnText}>Redeem Code</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.inviteBtn}
+                onPress={() => {
+                  sfx.play('pop');
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowInviteModal(true);
+                }}
+              >
+                <QrCode size={18} color="#38BDF8" />
+                <Text style={styles.inviteBtnText}>Invite Friends</Text>
+              </Pressable>
+            </View>
+
+            {/* ── 5. Stats Overview ── */}
             <View style={styles.statsGrid}>
               <View style={styles.statBox}>
                 <Sparkles size={16} color="#FBBF24" />
@@ -472,6 +505,15 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
+
+      <RedeemCodeModal
+        visible={showRedeemModal}
+        onClose={() => setShowRedeemModal(false)}
+      />
+      <InviteModal
+        visible={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+      />
     </Modal>
   );
 }
@@ -822,5 +864,45 @@ const styles = StyleSheet.create({
   dailySub: {
     color: '#94A3B8',
     fontSize: 11,
+  },
+  giftsSection: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+    width: '100%',
+  },
+  giftBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(251, 191, 36, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.3)',
+    borderRadius: 14,
+    paddingVertical: 12,
+  },
+  giftBtnText: {
+    color: '#FBBF24',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  inviteBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderRadius: 14,
+    paddingVertical: 12,
+  },
+  inviteBtnText: {
+    color: '#38BDF8',
+    fontSize: 13,
+    fontWeight: '800',
   },
 });

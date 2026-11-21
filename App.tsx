@@ -32,6 +32,8 @@ import { sfx } from './src/fx/sound';
 import { initMonetization } from './src/services/monetization';
 import { initAuth } from './src/services/supabase';
 import { startSync } from './src/services/sync';
+import { tryClaimOnFirstLaunch } from './src/services/referral';
+import { FriendGiftBubble } from './src/ui/FriendGiftBubble';
 
 const isWorld = (s: string): s is WorldId => WORLDS.some((w) => w.id === s);
 
@@ -52,6 +54,7 @@ export default function App() {
     initMonetization();
     initAuth();
     startSync();
+    void tryClaimOnFirstLaunch();
     useDailyLogin.getState().checkLogin();
   }, []);
 
@@ -294,6 +297,8 @@ export default function App() {
           </View>
         </View>
       </Modal>
+
+      <FriendGiftBubble />
     </GestureHandlerRootView>
   );
 }

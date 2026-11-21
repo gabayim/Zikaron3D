@@ -1,6 +1,8 @@
+import { AppState } from 'react-native';
 import { CREATURE_IDS, useProfile, type RemoteProfile } from '../store/profile';
 import { weekKey } from '../engine/daily';
 import { identifyPurchaser, reconcilePurchases } from './monetization';
+import { reconcileGrants } from './grants';
 import { supabase, useAuth } from './supabase';
 
 const PUSH_DEBOUNCE_MS = 4000;
@@ -106,10 +108,22 @@ export function startSync(): void {
     timer = setTimeout(() => void push(), PUSH_DEBOUNCE_MS);
   };
   useProfile.subscribe(schedule);
-  const syncUser = (userId: string) => identifyPurchaser(userId).then(() => pull()).then(() => reconcilePurchases()).then(() => push());
+  const syncUser = (userId: string) =>
+    identifyPurchaser(userId)
+      .then(() => pull())
+      .then(() => reconcilePurchases())
+      .then(() => reconcileGrants())
+      .then(() => push());
   useAuth.subscribe((state, prev) => {
     if (state.userId && state.userId !== prev.userId) void syncUser(state.userId);
   });
   const current = useAuth.getState().userId;
   if (current) void syncUser(current);
+
+  // Foreground sync: re-check grants so referrers receive rewards when friends join
+  AppState.addEventListener('change', (status) => {
+    if (status === 'active' && useAuth.getState().userId) {
+      void reconcileGrants();
+    }
+  });
 }

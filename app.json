@@ -5,12 +5,16 @@
     "version": "2.15.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "zikaron3d",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.AdvBig.Zikaron3D",
       "buildNumber": "221",
       "appleTeamId": "DAVRE4G59N",
+      "associatedDomains": [
+        "applinks:go.zmz.ca"
+      ],
       "config": {
         "usesNonExemptEncryption": false
       },

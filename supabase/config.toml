@@ -4,6 +4,8 @@
 #   supabase functions deploy revenuecat-webhook --no-verify-jwt
 #   supabase functions deploy link-apple
 #   supabase functions deploy delete-account
+#   supabase functions deploy referral-click --no-verify-jwt
+#   supabase functions deploy referral-claim
 # The `--no-verify-jwt` flag and the sections below must agree.
 
 # RevenueCat signs its calls with its own Authorization header, not a Supabase
@@ -19,4 +21,12 @@ verify_jwt = true
 
 # Called from Settings > delete account; needs a valid Supabase access token.
 [functions.delete-account]
+verify_jwt = true
+
+# Public landing page telemetry: logs clicks before app is downloaded.
+[functions.referral-click]
+verify_jwt = false
+
+# Called on app first launch or via friend code to claim reward.
+[functions.referral-claim]
 verify_jwt = true
