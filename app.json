@@ -2,7 +2,7 @@
   "expo": {
     "name": "Zikaron3D",
     "slug": "zikaron3d",
-    "version": "2.15.1",
+    "version": "2.16.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "zikaron3d",
@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.AdvBig.Zikaron3D",
-      "buildNumber": "221",
+      "buildNumber": "222",
       "appleTeamId": "DAVRE4G59N",
       "associatedDomains": [
         "applinks:go.zmz.ca"

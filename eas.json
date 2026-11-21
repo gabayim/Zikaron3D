@@ -22,7 +22,9 @@
       "credentialsSource": "remote",
       "env": {
         "APP_VARIANT": "production",
-        "EXPO_PUBLIC_SITE_URL": "https://zmz.ca/zikaron3d"
+        "EXPO_PUBLIC_SITE_URL": "https://zmz.ca/zikaron3d",
+        "EXPO_PUBLIC_REFERRAL_HOST": "https://go.zmz.ca",
+        "EXPO_PUBLIC_APP_STORE_URL": "https://apps.apple.com/app/id6738965008"
       }
     }
   },
