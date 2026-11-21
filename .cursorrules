@@ -1,6 +1,6 @@
 # Zikaron3D - Architecture Rules (v2: animated arcade platform)
 
-Plan lives in `ZIKARON3D_BLUEPRINT.md` (single plan file). Do not create other planning docs.
+Plan lives in `ZIKARON3D_BLUEPRINT.md`. Feature sub-plans: `COUPONS_AND_QR_REFERRALS_PLAN.md` (do not duplicate elsewhere).
 
 1. STACK
  - Expo SDK 58 + React Native + TypeScript, run locally with `npx expo run:ios` (Metro on `localhost`).
