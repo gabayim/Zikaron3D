@@ -163,7 +163,11 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
             </Pressable>
           </View>
 
-          <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {/* ── 1. Character Showcase Stage ── */}
             <View style={styles.characterStage}>
               <View style={styles.stageBackdrop}>
@@ -290,12 +294,12 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                     <Text style={styles.itemCardName}>None</Text>
                     {!equippedAccessories[activeSlot as AccessorySlot] ? (
                       <View style={styles.itemBtnEquipped}>
-                        <Check size={12} color="#FFFFFF" />
-                        <Text style={styles.itemBtnText}>EQUIPPED</Text>
+                        <Check size={11} color="#FFFFFF" />
+                        <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
                       </View>
                     ) : (
                       <View style={styles.itemBtnEquip}>
-                        <Text style={styles.itemBtnText}>EQUIP</Text>
+                        <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
                       </View>
                     )}
                   </Pressable>
@@ -328,17 +332,17 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                         </Text>
                         {isEquipped ? (
                           <View style={styles.itemBtnEquipped}>
-                            <Check size={12} color="#FFFFFF" />
-                            <Text style={styles.itemBtnText}>EQUIPPED</Text>
+                            <Check size={11} color="#FFFFFF" />
+                            <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
                           </View>
                         ) : isOwned ? (
                           <View style={styles.itemBtnEquip}>
-                            <Text style={styles.itemBtnText}>EQUIP</Text>
+                            <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
                           </View>
                         ) : (
                           <View style={styles.itemBtnShop}>
-                            <Lock size={11} color="#FBBF24" />
-                            <Text style={styles.itemBtnShopText}>SHOP</Text>
+                            <Lock size={10} color="#FBBF24" />
+                            <Text style={styles.itemBtnShopText} numberOfLines={1}>SHOP</Text>
                           </View>
                         )}
                       </Pressable>
@@ -368,12 +372,12 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                     <Text style={styles.itemCardName}>Classic Pip</Text>
                     {(!equippedSkins['pip'] || equippedSkins['pip'] === 'pip_classic') ? (
                       <View style={styles.itemBtnEquipped}>
-                        <Check size={12} color="#FFFFFF" />
-                        <Text style={styles.itemBtnText}>EQUIPPED</Text>
+                        <Check size={11} color="#FFFFFF" />
+                        <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
                       </View>
                     ) : (
                       <View style={styles.itemBtnEquip}>
-                        <Text style={styles.itemBtnText}>EQUIP</Text>
+                        <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
                       </View>
                     )}
                   </Pressable>
@@ -406,17 +410,17 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                         </Text>
                         {isEquipped ? (
                           <View style={styles.itemBtnEquipped}>
-                            <Check size={12} color="#FFFFFF" />
-                            <Text style={styles.itemBtnText}>EQUIPPED</Text>
+                            <Check size={11} color="#FFFFFF" />
+                            <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
                           </View>
                         ) : isOwned ? (
                           <View style={styles.itemBtnEquip}>
-                            <Text style={styles.itemBtnText}>EQUIP</Text>
+                            <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
                           </View>
                         ) : (
                           <View style={styles.itemBtnShop}>
-                            <Lock size={11} color="#FBBF24" />
-                            <Text style={styles.itemBtnShopText}>SHOP</Text>
+                            <Lock size={10} color="#FBBF24" />
+                            <Text style={styles.itemBtnShopText} numberOfLines={1}>SHOP</Text>
                           </View>
                         )}
                       </Pressable>
@@ -439,8 +443,8 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                   setShowRedeemModal(true);
                 }}
               >
-                <Gift size={18} color="#FBBF24" />
-                <Text style={styles.giftBtnText}>Redeem Code</Text>
+                <Gift size={16} color="#FBBF24" />
+                <Text style={styles.giftBtnText} numberOfLines={1}>Redeem Code</Text>
               </Pressable>
 
               <Pressable
@@ -451,8 +455,8 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                   setShowInviteModal(true);
                 }}
               >
-                <QrCode size={18} color="#38BDF8" />
-                <Text style={styles.inviteBtnText}>Invite Friends</Text>
+                <QrCode size={16} color="#38BDF8" />
+                <Text style={styles.inviteBtnText} numberOfLines={1}>Invite Friends</Text>
               </Pressable>
             </View>
 
@@ -460,25 +464,25 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
             <View style={styles.statsGrid}>
               <View style={styles.statBox}>
                 <Sparkles size={16} color="#FBBF24" />
-                <Text style={styles.statVal}>{stardust.toLocaleString()}</Text>
+                <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{stardust.toLocaleString()}</Text>
                 <Text style={styles.statLabel}>STARDUST</Text>
               </View>
 
               <View style={styles.statBox}>
                 <Gem size={16} color="#38BDF8" />
-                <Text style={styles.statVal}>{crystals.toLocaleString()}</Text>
+                <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{crystals.toLocaleString()}</Text>
                 <Text style={styles.statLabel}>CRYSTALS</Text>
               </View>
 
               <View style={styles.statBox}>
                 <Flame size={16} color="#F97316" />
-                <Text style={styles.statVal}>{collectionCount} / 15</Text>
+                <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{collectionCount} / 15</Text>
                 <Text style={styles.statLabel}>CRITTERS</Text>
               </View>
 
               <View style={styles.statBox}>
                 <Trophy size={16} color="#A78BFA" />
-                <Text style={styles.statVal}>{mode}</Text>
+                <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{mode}</Text>
                 <Text style={styles.statLabel}>MODE</Text>
               </View>
             </View>
@@ -578,7 +582,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
   scroll: {
-    maxHeight: 560,
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
 
   // Character Showcase Stage
@@ -732,7 +740,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   itemCard: {
-    width: 106,
+    width: 112,
     backgroundColor: 'rgba(15, 23, 42, 0.95)',
     borderRadius: 16,
     borderWidth: 1.5,
@@ -740,7 +748,7 @@ const styles = StyleSheet.create({
     padding: 8,
     alignItems: 'center',
     gap: 6,
-    minHeight: 142,
+    minHeight: 144,
     justifyContent: 'space-between',
   },
   itemCardEquipped: {
@@ -772,16 +780,30 @@ const styles = StyleSheet.create({
   },
   itemBtnEquip: {
     backgroundColor: '#2563EB',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     paddingVertical: 5,
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   itemBtnEquipped: {
     backgroundColor: '#10B981',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     paddingVertical: 5,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  itemBtnShop: {
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    paddingHorizontal: 4,
+    paddingVertical: 4.5,
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
@@ -789,30 +811,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 3,
   },
-  itemBtnShop: {
-    backgroundColor: 'rgba(251, 191, 36, 0.15)',
-    borderWidth: 1,
-    borderColor: '#F59E0B',
-    paddingHorizontal: 8,
-    paddingVertical: 4.5,
-    borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 4,
-  },
   itemBtnText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '900',
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   },
   itemBtnShopText: {
     color: '#FDE047',
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '900',
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   },
 
   // Stats Grid
@@ -827,7 +836,8 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 14,
-    padding: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
@@ -835,9 +845,11 @@ const styles = StyleSheet.create({
   },
   statVal: {
     color: '#F8FAFC',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
     marginTop: 2,
+    textAlign: 'center',
+    width: '100%',
   },
   statLabel: {
     color: '#64748B',
@@ -854,7 +866,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(251, 191, 36, 0.3)',
     borderRadius: 14,
     padding: 12,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   dailyLeft: {
     flexDirection: 'row',
@@ -872,7 +884,7 @@ const styles = StyleSheet.create({
   },
   giftsSection: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     marginBottom: 16,
     width: '100%',
   },
@@ -892,16 +904,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     backgroundColor: 'rgba(251, 191, 36, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(251, 191, 36, 0.3)',
     borderRadius: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 6,
   },
   giftBtnText: {
     color: '#FBBF24',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
   },
   inviteBtn: {
@@ -909,16 +922,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     backgroundColor: 'rgba(56, 189, 248, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.3)',
     borderRadius: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 6,
   },
   inviteBtnText: {
     color: '#38BDF8',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
   },
 });

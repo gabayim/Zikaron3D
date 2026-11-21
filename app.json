@@ -2,7 +2,7 @@
   "expo": {
     "name": "Zikaron3D",
     "slug": "zikaron3d",
-    "version": "2.16.1",
+    "version": "2.16.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "zikaron3d",
