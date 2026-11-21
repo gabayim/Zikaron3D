@@ -260,10 +260,13 @@ export default function CritterBurrows({
     }, 500);
     level.current += 1;
     const profile = useProfile.getState();
+    const completedLevel = level.current - 1;
+    const isFirstClear = completedLevel > profile.burrowsLevel;
     profile.setBurrowsLevel(level.current);
     profile.awardXp(35 + r.species.length * 10);
     useAchievements.getState().setMetricMax('burrows_level', level.current + 1);
-    useEconomy.getState().earnStardust(10 + Math.min(30, level.current * 2));
+    const burrowsCfg = getBurrowsLevel(completedLevel);
+    useEconomy.getState().earnStardust(burrowsCfg.stardustReward + (isFirstClear ? burrowsCfg.firstClearBonus : 0));
     useSeasonPass.getState().addSeasonXp(25 + level.current);
     if (level.current >= 10 && Math.random() < 0.5) useEconomy.getState().earnCrystals(1, true);
     if (daily && profile.completeDaily('burrows')) profile.awardXp(80);

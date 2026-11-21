@@ -427,6 +427,9 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
             </ScrollView>
 
             {/* ── 4. Gifts & Rewards ── */}
+            <View style={styles.giftsSectionHeader}>
+              <Text style={styles.giftsSectionTitle}>✦ GIFTS & REWARDS ✦</Text>
+            </View>
             <View style={styles.giftsSection}>
               <Pressable
                 style={styles.giftBtn}
@@ -676,12 +679,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '900',
     letterSpacing: 0.8,
+    textAlign: 'center',
   },
   wardrobeSub: {
     color: '#94A3B8',
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
+    textAlign: 'center',
   },
 
   // Slot Navigation Tabs
@@ -870,6 +875,17 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 16,
     width: '100%',
+  },
+  giftsSectionHeader: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  giftsSectionTitle: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    textAlign: 'center',
   },
   giftBtn: {
     flex: 1,
