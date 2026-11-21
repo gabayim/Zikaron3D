@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.AdvBig.Zikaron3D",
-      "buildNumber": "223",
+      "buildNumber": "224",
       "appleTeamId": "DAVRE4G59N",
       "associatedDomains": [
         "applinks:go.zmz.ca"
