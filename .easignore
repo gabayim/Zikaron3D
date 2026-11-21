@@ -1,0 +1,14 @@
+# Reduce EAS archive size — files not needed for the cloud build
+assets/raw/
+scripts/
+docs/
+*.md
+!README.md
+.git/
+.gemini/
+credentials/
+archive/
+**/*.log
+**/*.mp4
+**/*.mov
+**/*.avi
