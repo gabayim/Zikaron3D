@@ -27,8 +27,6 @@ except ImportError:
 # Environment Configuration
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "https://hermes.bibb.io/ollama").rstrip("/")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "moondream").strip()
 QA_DASHBOARD_URL = os.environ.get("QA_DASHBOARD_URL", "https://hermes.bibb.io/qa").rstrip("/")
 DEVICE_UDID = os.environ.get("DEVICE_UDID", "booted").strip()
 DEVICE_NAME = os.environ.get("DEVICE_NAME", "iOS Simulator").strip()
@@ -165,88 +163,43 @@ Respond STRICTLY with a valid JSON object matching this schema:
 }}
 """
 
-    if GEMINI_API_KEY:
-        log(f"Querying Google Gemini API ({GEMINI_MODEL})...")
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
-        payload = {
-            "contents": [{
-                "parts": [
-                    {"text": prompt},
-                    {
-                        "inline_data": {
-                            "mime_type": "image/jpeg",
-                            "data": b64_image
-                        }
-                    }
-                ]
-            }],
-            "generationConfig": {
-                "temperature": 0.1,
-                "responseMimeType": "application/json"
-            }
-        }
-        for attempt in range(2):
-            try:
-                res = requests.post(url, json=payload, timeout=25)
-                res.raise_for_status()
-                data = res.json()
-                raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                return json.loads(raw_text)
-            except Exception as e:
-                if attempt == 0:
-                    time.sleep(1.5)
-                    continue
-                log(f"Gemini API error: {e}. Falling back to Ollama.")
-
-    # Distribute concurrent requests slightly to avoid CPU congestion if using local Ollama
-    jitter = (abs(hash(PERSONA)) % 3) * 0.75
-    time.sleep(jitter)
-
+    log(f"Querying Google Gemini Vision API ({GEMINI_MODEL})...")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
     payload = {
-        "model": OLLAMA_MODEL,
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt,
-                "images": [b64_image]
-            }
-        ],
-        "stream": False,
-        "options": {
-            "temperature": 0.1
+        "contents": [{
+            "parts": [
+                {"text": prompt},
+                {
+                    "inline_data": {
+                        "mime_type": "image/jpeg",
+                        "data": b64_image
+                    }
+                }
+            ]
+        }],
+        "generationConfig": {
+            "temperature": 0.1,
+            "responseMimeType": "application/json"
         }
     }
-
-    url = f"{OLLAMA_HOST}/api/chat"
     for attempt in range(2):
         try:
-            res = requests.post(url, json=payload, timeout=45)
+            res = requests.post(url, json=payload, timeout=30)
             res.raise_for_status()
             data = res.json()
-            raw_text = data["message"]["content"].strip()
-            # Clean markdown codeblocks
-            if "```" in raw_text:
-                parts = raw_text.split("```")
-                for part in parts:
-                    p = part.strip()
-                    if p.startswith("json"):
-                        p = p[4:].strip()
-                    if p.startswith("{") and p.endswith("}"):
-                        raw_text = p
-                        break
-            raw_text = raw_text.strip()
+            raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
             return json.loads(raw_text)
         except Exception as e:
             if attempt == 0:
-                time.sleep(2)
+                time.sleep(1.5)
                 continue
-            log(f"Ollama Vision API error: {e}")
+            log(f"Gemini Vision API error: {e}")
             return {
                 "status": "warning",
                 "bug": f"Vision analysis note: {str(e)}",
                 "severity": "minor",
                 "action": "done" if step_idx > 3 else "wait",
-                "reasoning": f"Ollama model responded or fallback invoked: {str(e)}"
+                "reasoning": f"Gemini Vision fallback invoked: {str(e)}"
             }
 
 def run_test_loop():
@@ -272,7 +225,7 @@ def run_test_loop():
                 "step": step,
                 "max_steps": max_steps,
                 "status": "evaluating",
-                "observation": f"Analyzing live frame with {OLLAMA_MODEL} vision AI...",
+                "observation": f"Analyzing live frame with Gemini Vision AI ({GEMINI_MODEL})...",
                 "screenshot": f"data:image/jpeg;base64,{thumb_b64}"
             })
         except Exception:

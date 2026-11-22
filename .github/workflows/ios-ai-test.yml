@@ -124,8 +124,6 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: "gemini-3.5-flash-lite"
-          OLLAMA_HOST: "https://hermes.bibb.io/ollama"
-          OLLAMA_MODEL: "moondream"
           QA_DASHBOARD_URL: "https://hermes.bibb.io/qa"
           DEVICE_UDID: ${{ env.SIM_UDID }}
           DEVICE_NAME: ${{ matrix.device }}
