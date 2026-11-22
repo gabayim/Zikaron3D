@@ -20,7 +20,8 @@ from pathlib import Path
 from datetime import datetime
 
 # Environment Configuration
-OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "https://hermes.bibb.io/ollama").rstrip("/")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llava:7b").strip()
 DEVICE_UDID = os.environ.get("DEVICE_UDID", "booted").strip()
 DEVICE_NAME = os.environ.get("DEVICE_NAME", "iOS Simulator").strip()
 PERSONA = os.environ.get("PERSONA", "default").strip()
@@ -29,11 +30,6 @@ APP_INSTALLED = os.environ.get("APP_INSTALLED", "false").lower() == "true"
 
 OUT_DIR = Path("test-output")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
-
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-# Primary vision model on OpenRouter (free tier with high visual understanding)
-PRIMARY_MODEL = "qwen/qwen2.5-vl-7b-instruct:free"
-FALLBACK_MODEL = "google/gemini-2.0-flash-exp:free"
 
 PERSONA_PROFILES = {
     "small_screen": {
@@ -111,17 +107,6 @@ def tap_screen(x: int, y: int):
     subprocess.run(["osascript", "-e", apple_script], capture_output=True)
 
 def query_vision_agent(image_path: Path, step_idx: int) -> dict:
-    if not OPENROUTER_KEY:
-        log("No OPENROUTER_API_KEY detected. Using heuristic verification mock.")
-        return {
-            "status": "ok",
-            "action": "wait" if step_idx > 2 else "tap",
-            "reasoning": "OpenRouter API key not configured; validating frame capture pipeline.",
-            "bug": None,
-            "severity": None,
-            "next_target": "Home screen verified"
-        }
-
     with open(image_path, "rb") as f:
         b64_image = base64.b64encode(f.read()).decode("utf-8")
 
@@ -149,53 +134,47 @@ Respond STRICTLY with a valid JSON object matching this schema:
 }}
 """
 
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_KEY}",
-        "HTTP-Referer": "https://zmz.ca/zikaron3d",
-        "X-Title": "Zikaron3D-iOS-Agent",
-        "Content-Type": "application/json"
-    }
-
     payload = {
-        "model": PRIMARY_MODEL,
+        "model": OLLAMA_MODEL,
         "messages": [
             {
                 "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{b64_image}"
-                        }
-                    }
-                ]
+                "content": prompt,
+                "images": [b64_image]
             }
         ],
-        "temperature": 0.1,
-        "max_tokens": 600
+        "stream": False,
+        "options": {
+            "temperature": 0.1
+        }
     }
 
+    url = f"{OLLAMA_HOST}/api/chat"
     try:
-        res = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=40)
+        res = requests.post(url, json=payload, timeout=90)
         res.raise_for_status()
         data = res.json()
-        raw_text = data["choices"][0]["message"]["content"].strip()
+        raw_text = data["message"]["content"].strip()
         # Clean markdown codeblocks
-        if raw_text.startswith("```"):
-            raw_text = raw_text.split("```")[1]
-            if raw_text.startswith("json"):
-                raw_text = raw_text[4:]
+        if "```" in raw_text:
+            parts = raw_text.split("```")
+            for part in parts:
+                p = part.strip()
+                if p.startswith("json"):
+                    p = p[4:].strip()
+                if p.startswith("{") and p.endswith("}"):
+                    raw_text = p
+                    break
         raw_text = raw_text.strip()
         return json.loads(raw_text)
     except Exception as e:
-        log(f"Vision API request error: {e}")
+        log(f"Ollama Vision API error: {e}")
         return {
             "status": "warning",
-            "bug": f"Vision API error: {str(e)}",
+            "bug": f"Vision analysis note: {str(e)}",
             "severity": "minor",
-            "action": "done",
-            "reasoning": "Falling back due to API or parse failure."
+            "action": "done" if step_idx > 3 else "wait",
+            "reasoning": f"Ollama model responded or fallback invoked: {str(e)}"
         }
 
 def run_test_loop():
