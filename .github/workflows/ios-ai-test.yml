@@ -1,0 +1,155 @@
+name: iOS AI Test Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_url:
+        description: "Direct URL to Zikaron3D.app.zip (optional, overrides secret)"
+        required: false
+        type: string
+  schedule:
+    - cron: '0 1 * * *' # Nightly at 1 AM UTC
+  push:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'app.json'
+      - '.github/workflows/ios-ai-test.yml'
+      - '.github/scripts/**'
+
+jobs:
+  test:
+    name: iOS AI Test (${{ matrix.persona }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device: "iPhone SE (3rd generation)"
+            persona: "small_screen"
+            description: "iPhone SE 3rd gen - compact screen, text overflow & touch target check"
+          - device: "iPhone 16 Pro"
+            persona: "flagship"
+            description: "iPhone 16 Pro - Dynamic Island & high-density display check"
+          - device: "iPad Air 11-inch (M2)"
+            persona: "tablet"
+            description: "iPad Air 11-inch M2 - tablet aspect ratio & scaling check"
+          - device: "iPhone 16"
+            persona: "rtl_hebrew"
+            description: "iPhone 16 - Hebrew RTL layout and localized text check"
+
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode Version
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app
+          xcrun simctl list devicetypes
+
+      - name: Boot iOS Simulator
+        id: boot_sim
+        run: |
+          echo "Resolving simulator for device: '${{ matrix.device }}'"
+          # Find available simulator device matching device name
+          DEVICE_LINE=$(xcrun simctl list devices available | grep -F "${{ matrix.device }}" | head -n 1)
+          if [ -z "$DEVICE_LINE" ]; then
+            echo "Device '${{ matrix.device }}' not found in available list. Falling back to default booted or first available iPhone."
+            DEVICE_LINE=$(xcrun simctl list devices available | grep -E "iPhone|iPad" | head -n 1)
+          fi
+          
+          UDID=$(echo "$DEVICE_LINE" | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}')
+          echo "Found Simulator UDID: $UDID"
+          echo "SIM_UDID=$UDID" >> $GITHUB_ENV
+
+          # Boot simulator and wait until fully booted
+          xcrun simctl boot $UDID || true
+          echo "Waiting for simulator to finish booting..."
+          xcrun simctl bootstatus $UDID -b
+
+          # Set locale for RTL persona
+          if [ "${{ matrix.persona }}" = "rtl_hebrew" ]; then
+            echo "Setting simulator locale to Hebrew (he_IL)..."
+            xcrun simctl spawn $UDID defaults write -g AppleLanguages '(he)'
+            xcrun simctl spawn $UDID defaults write -g AppleLocale 'he_IL'
+          fi
+
+      - name: Install Zikaron3D App Binary
+        id: install_app
+        run: |
+          BUILD_URL="${{ inputs.build_url }}"
+          if [ -z "$BUILD_URL" ]; then
+            BUILD_URL="${{ secrets.IOS_SIM_BUILD_URL }}"
+          fi
+
+          if [ -n "$BUILD_URL" ]; then
+            echo "Downloading app binary from provided URL..."
+            mkdir -p build_download
+            curl -fSL "$BUILD_URL" -o build_download/app.tar.gz || curl -fSL "$BUILD_URL" -o build_download/app.zip
+            
+            if [ -f build_download/app.tar.gz ]; then
+              tar -xzf build_download/app.tar.gz -C build_download/ || unzip -q build_download/app.tar.gz -d build_download/ || true
+            fi
+            if [ -f build_download/app.zip ]; then
+              unzip -q build_download/app.zip -d build_download/ || true
+            fi
+
+            APP_PATH=$(find build_download -name "*.app" -type d | head -n 1)
+            if [ -n "$APP_PATH" ]; then
+              echo "Installing $APP_PATH into simulator $SIM_UDID..."
+              xcrun simctl install $SIM_UDID "$APP_PATH"
+              echo "APP_INSTALLED=true" >> $GITHUB_ENV
+            else
+              echo "::warning ::No .app bundle found inside downloaded archive."
+              echo "APP_INSTALLED=false" >> $GITHUB_ENV
+            fi
+          else
+            echo "::notice ::No IOS_SIM_BUILD_URL secret configured. The agent will run in inspection/smoke test mode."
+            echo "APP_INSTALLED=false" >> $GITHUB_ENV
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Agent Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pillow
+
+      - name: Run iOS AI Test Agent
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          DEVICE_UDID: ${{ env.SIM_UDID }}
+          DEVICE_NAME: ${{ matrix.device }}
+          PERSONA: ${{ matrix.persona }}
+          APP_BUNDLE_ID: "com.AdvBig.Zikaron3D"
+          APP_INSTALLED: ${{ env.APP_INSTALLED }}
+        run: |
+          python3 .github/scripts/ios_test_agent.py
+
+      - name: Upload Test Report & Screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-test-report-${{ matrix.persona }}
+          path: test-output/
+          retention-days: 14
+
+      - name: Notify n8n Webhook on VPS
+        if: always() && secrets.N8N_WEBHOOK_URL != ''
+        run: |
+          curl -s -X POST "${{ secrets.N8N_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "project": "Zikaron3D",
+              "platform": "ios",
+              "persona": "${{ matrix.persona }}",
+              "device": "${{ matrix.device }}",
+              "github_run_id": "${{ github.run_id }}",
+              "github_run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "status": "${{ job.status }}"
+            }' || echo "Notice: n8n webhook call finished"
