@@ -1,4 +1,4 @@
-name: iOS AI Test Agent
+name: iOS AI Test Agent # Powered by Google Gemini Vision
 
 on:
   workflow_dispatch:
