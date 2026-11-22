@@ -11,6 +11,7 @@ Executes multi-device exploratory and regression E2E testing on iOS Simulators.
 
 import os
 import sys
+import io
 import time
 import json
 import base64
@@ -18,10 +19,14 @@ import requests
 import subprocess
 from pathlib import Path
 from datetime import datetime
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 # Environment Configuration
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "https://hermes.bibb.io/ollama").rstrip("/")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llava:7b").strip()
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "moondream").strip()
 QA_DASHBOARD_URL = os.environ.get("QA_DASHBOARD_URL", "https://hermes.bibb.io/qa").rstrip("/")
 DEVICE_UDID = os.environ.get("DEVICE_UDID", "booted").strip()
 DEVICE_NAME = os.environ.get("DEVICE_NAME", "iOS Simulator").strip()
@@ -116,9 +121,27 @@ def tap_screen(x: int, y: int):
     '''
     subprocess.run(["osascript", "-e", apple_script], capture_output=True)
 
-def query_vision_agent(image_path: Path, step_idx: int) -> dict:
+def encode_optimized_image(image_path: Path, max_dim: int = 640) -> str:
+    """Downscales and compresses retina screenshots to lightweight JPEG for rapid CPU inference."""
+    if Image is not None:
+        try:
+            with Image.open(image_path) as img:
+                img.thumbnail((max_dim, max_dim))
+                buf = io.BytesIO()
+                img.convert("RGB").save(buf, format="JPEG", quality=80)
+                return base64.b64encode(buf.getvalue()).decode("utf-8")
+        except Exception:
+            pass
+    # Fallback to direct file read if PIL is unavailable
     with open(image_path, "rb") as f:
-        b64_image = base64.b64encode(f.read()).decode("utf-8")
+        return base64.b64encode(f.read()).decode("utf-8")
+
+def query_vision_agent(image_path: Path, step_idx: int) -> dict:
+    b64_image = encode_optimized_image(image_path, max_dim=640)
+
+    # Distribute concurrent requests slightly to avoid CPU congestion
+    jitter = (abs(hash(PERSONA)) % 3) * 0.75
+    time.sleep(jitter)
 
     prompt = f"""
 You are an expert iOS QA test agent inspecting screenshots of the mobile game application 'Zikaron3D'.
@@ -160,32 +183,36 @@ Respond STRICTLY with a valid JSON object matching this schema:
     }
 
     url = f"{OLLAMA_HOST}/api/chat"
-    try:
-        res = requests.post(url, json=payload, timeout=90)
-        res.raise_for_status()
-        data = res.json()
-        raw_text = data["message"]["content"].strip()
-        # Clean markdown codeblocks
-        if "```" in raw_text:
-            parts = raw_text.split("```")
-            for part in parts:
-                p = part.strip()
-                if p.startswith("json"):
-                    p = p[4:].strip()
-                if p.startswith("{") and p.endswith("}"):
-                    raw_text = p
-                    break
-        raw_text = raw_text.strip()
-        return json.loads(raw_text)
-    except Exception as e:
-        log(f"Ollama Vision API error: {e}")
-        return {
-            "status": "warning",
-            "bug": f"Vision analysis note: {str(e)}",
-            "severity": "minor",
-            "action": "done" if step_idx > 3 else "wait",
-            "reasoning": f"Ollama model responded or fallback invoked: {str(e)}"
-        }
+    for attempt in range(2):
+        try:
+            res = requests.post(url, json=payload, timeout=45)
+            res.raise_for_status()
+            data = res.json()
+            raw_text = data["message"]["content"].strip()
+            # Clean markdown codeblocks
+            if "```" in raw_text:
+                parts = raw_text.split("```")
+                for part in parts:
+                    p = part.strip()
+                    if p.startswith("json"):
+                        p = p[4:].strip()
+                    if p.startswith("{") and p.endswith("}"):
+                        raw_text = p
+                        break
+            raw_text = raw_text.strip()
+            return json.loads(raw_text)
+        except Exception as e:
+            if attempt == 0:
+                time.sleep(2)
+                continue
+            log(f"Ollama Vision API error: {e}")
+            return {
+                "status": "warning",
+                "bug": f"Vision analysis note: {str(e)}",
+                "severity": "minor",
+                "action": "done" if step_idx > 3 else "wait",
+                "reasoning": f"Ollama model responded or fallback invoked: {str(e)}"
+            }
 
 def run_test_loop():
     log(f"Starting test loop: {active_profile['title']}")
@@ -200,7 +227,22 @@ def run_test_loop():
     for step in range(1, max_steps + 1):
         log(f"--- Step {step}/{max_steps} ---")
         screenshot_path = capture_screenshot(step)
+        thumb_b64 = encode_optimized_image(screenshot_path, max_dim=480)
         
+        # Stream live frame immediately to QA Dashboard
+        try:
+            report_to_dashboard("event", {
+                "persona": PERSONA,
+                "device": DEVICE_NAME,
+                "step": step,
+                "max_steps": max_steps,
+                "status": "evaluating",
+                "observation": f"Analyzing live frame with {OLLAMA_MODEL} vision AI...",
+                "screenshot": f"data:image/jpeg;base64,{thumb_b64}"
+            })
+        except Exception:
+            pass
+
         evaluation = query_vision_agent(screenshot_path, step)
         reasoning = evaluation.get("reasoning", "No explanation provided.")
         log(f"Observation: {reasoning}")
@@ -224,10 +266,8 @@ def run_test_loop():
             bugs_collected.append(bug_entry)
             log(f"⚠️ BUG DETECTED [{bug_entry['severity'].upper()}]: {bug_entry['title']}")
 
-        # Stream live progress event to QA Dashboard
+        # Update live progress event with evaluation result on QA Dashboard
         try:
-            with open(screenshot_path, "rb") as f:
-                thumb_b64 = base64.b64encode(f.read()).decode("utf-8")
             report_to_dashboard("event", {
                 "persona": PERSONA,
                 "device": DEVICE_NAME,
@@ -237,7 +277,7 @@ def run_test_loop():
                 "observation": reasoning,
                 "bug": evaluation.get("bug"),
                 "severity": evaluation.get("severity"),
-                "screenshot": f"data:image/png;base64,{thumb_b64}"
+                "screenshot": f"data:image/jpeg;base64,{thumb_b64}"
             })
         except Exception:
             pass

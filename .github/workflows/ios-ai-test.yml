@@ -123,7 +123,8 @@ jobs:
       - name: Run iOS AI Test Agent
         env:
           OLLAMA_HOST: "https://hermes.bibb.io/ollama"
-          OLLAMA_MODEL: "llava:7b"
+          OLLAMA_MODEL: "moondream"
+          QA_DASHBOARD_URL: "https://hermes.bibb.io/qa"
           DEVICE_UDID: ${{ env.SIM_UDID }}
           DEVICE_NAME: ${{ matrix.device }}
           PERSONA: ${{ matrix.persona }}
