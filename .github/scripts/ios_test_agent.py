@@ -25,6 +25,8 @@ except ImportError:
     Image = None
 
 # Environment Configuration
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "https://hermes.bibb.io/ollama").rstrip("/")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "moondream").strip()
 QA_DASHBOARD_URL = os.environ.get("QA_DASHBOARD_URL", "https://hermes.bibb.io/qa").rstrip("/")
@@ -139,10 +141,6 @@ def encode_optimized_image(image_path: Path, max_dim: int = 640) -> str:
 def query_vision_agent(image_path: Path, step_idx: int) -> dict:
     b64_image = encode_optimized_image(image_path, max_dim=640)
 
-    # Distribute concurrent requests slightly to avoid CPU congestion
-    jitter = (abs(hash(PERSONA)) % 3) * 0.75
-    time.sleep(jitter)
-
     prompt = f"""
 You are an expert iOS QA test agent inspecting screenshots of the mobile game application 'Zikaron3D'.
 Test Target: {DEVICE_NAME} (Persona: {active_profile['title']})
@@ -166,6 +164,43 @@ Respond STRICTLY with a valid JSON object matching this schema:
   "reasoning": "One concise sentence explaining your observation and chosen next action."
 }}
 """
+
+    if GEMINI_API_KEY:
+        log(f"Querying Google Gemini API ({GEMINI_MODEL})...")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": b64_image
+                        }
+                    }
+                ]
+            }],
+            "generationConfig": {
+                "temperature": 0.1,
+                "responseMimeType": "application/json"
+            }
+        }
+        for attempt in range(2):
+            try:
+                res = requests.post(url, json=payload, timeout=25)
+                res.raise_for_status()
+                data = res.json()
+                raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                return json.loads(raw_text)
+            except Exception as e:
+                if attempt == 0:
+                    time.sleep(1.5)
+                    continue
+                log(f"Gemini API error: {e}. Falling back to Ollama.")
+
+    # Distribute concurrent requests slightly to avoid CPU congestion if using local Ollama
+    jitter = (abs(hash(PERSONA)) % 3) * 0.75
+    time.sleep(jitter)
 
     payload = {
         "model": OLLAMA_MODEL,
