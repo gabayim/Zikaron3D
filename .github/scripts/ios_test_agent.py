@@ -22,6 +22,7 @@ from datetime import datetime
 # Environment Configuration
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "https://hermes.bibb.io/ollama").rstrip("/")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llava:7b").strip()
+QA_DASHBOARD_URL = os.environ.get("QA_DASHBOARD_URL", "https://hermes.bibb.io/qa").rstrip("/")
 DEVICE_UDID = os.environ.get("DEVICE_UDID", "booted").strip()
 DEVICE_NAME = os.environ.get("DEVICE_NAME", "iOS Simulator").strip()
 PERSONA = os.environ.get("PERSONA", "default").strip()
@@ -82,6 +83,15 @@ def capture_screenshot(step_idx: int) -> Path:
         # Fallback without mask
         run_simctl(["io", DEVICE_UDID, "screenshot", str(target_path)])
     return target_path
+
+def report_to_dashboard(endpoint: str, data: dict):
+    if not QA_DASHBOARD_URL:
+        return
+    try:
+        url = f"{QA_DASHBOARD_URL}/api/{endpoint}"
+        requests.post(url, json=data, timeout=5)
+    except Exception:
+        pass
 
 def launch_app():
     if APP_INSTALLED:
@@ -214,6 +224,24 @@ def run_test_loop():
             bugs_collected.append(bug_entry)
             log(f"⚠️ BUG DETECTED [{bug_entry['severity'].upper()}]: {bug_entry['title']}")
 
+        # Stream live progress event to QA Dashboard
+        try:
+            with open(screenshot_path, "rb") as f:
+                thumb_b64 = base64.b64encode(f.read()).decode("utf-8")
+            report_to_dashboard("event", {
+                "persona": PERSONA,
+                "device": DEVICE_NAME,
+                "step": step,
+                "max_steps": max_steps,
+                "status": evaluation.get("status", "ok"),
+                "observation": reasoning,
+                "bug": evaluation.get("bug"),
+                "severity": evaluation.get("severity"),
+                "screenshot": f"data:image/png;base64,{thumb_b64}"
+            })
+        except Exception:
+            pass
+
         action = evaluation.get("action", "wait")
         if action == "done" or evaluation.get("status") == "completed":
             log("Agent determined test flow is completed.")
@@ -291,6 +319,17 @@ def generate_reports(bugs: list, history: list):
             ev = h["evaluation"]
             obs = ev.get("reasoning", "-").replace("|", "/")
             f.write(f"| Step {h['step']} | {obs} | `{h['screenshot']}` |\n")
+
+    # Send final summary and markdown report to QA Dashboard
+    try:
+        report_to_dashboard("report", {
+            "persona": PERSONA,
+            "device": DEVICE_NAME,
+            "summary": summary_data,
+            "markdown": md_path.read_text(encoding="utf-8") if md_path.exists() else ""
+        })
+    except Exception:
+        pass
 
     log(f"Report generated successfully: {md_path}")
 
