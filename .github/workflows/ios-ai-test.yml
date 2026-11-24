@@ -7,6 +7,11 @@ on:
         description: "Direct URL to Zikaron3D.app.zip (optional, overrides secret)"
         required: false
         type: string
+      open_defects:
+        description: "Automatically open GitHub/Paperclip defects when bugs are verified"
+        required: false
+        default: "true"
+        type: string
   schedule:
     - cron: '0 1 * * *' # Nightly at 1 AM UTC
   push:
@@ -16,6 +21,10 @@ on:
       - 'app.json'
       - '.github/workflows/ios-ai-test.yml'
       - '.github/scripts/**'
+
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   test:
@@ -49,27 +58,30 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app
           xcrun simctl list devicetypes
 
+      - name: Install AXe Simulator Automation CLI
+        run: |
+          brew tap cameroncooke/axe
+          brew install axe
+          axe --version
+
       - name: Boot iOS Simulator
         id: boot_sim
         run: |
           echo "Resolving simulator for device: '${{ matrix.device }}'"
-          # Find available simulator device matching device name
           DEVICE_LINE=$(xcrun simctl list devices available | grep -F "${{ matrix.device }}" | head -n 1)
           if [ -z "$DEVICE_LINE" ]; then
             echo "Device '${{ matrix.device }}' not found in available list. Falling back to default booted or first available iPhone."
             DEVICE_LINE=$(xcrun simctl list devices available | grep -E "iPhone|iPad" | head -n 1)
           fi
-          
+
           UDID=$(echo "$DEVICE_LINE" | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}')
           echo "Found Simulator UDID: $UDID"
           echo "SIM_UDID=$UDID" >> $GITHUB_ENV
 
-          # Boot simulator and wait until fully booted
           xcrun simctl boot $UDID || true
           echo "Waiting for simulator to finish booting..."
           xcrun simctl bootstatus $UDID -b
 
-          # Set locale for RTL persona
           if [ "${{ matrix.persona }}" = "rtl_hebrew" ]; then
             echo "Setting simulator locale to Hebrew (he_IL)..."
             xcrun simctl spawn $UDID defaults write -g AppleLanguages '(he)'
@@ -88,7 +100,7 @@ jobs:
             echo "Downloading app binary from provided URL..."
             mkdir -p build_download
             curl -fSL "$BUILD_URL" -o build_download/app.tar.gz || curl -fSL "$BUILD_URL" -o build_download/app.zip
-            
+
             if [ -f build_download/app.tar.gz ]; then
               tar -xzf build_download/app.tar.gz -C build_download/ || unzip -q build_download/app.tar.gz -d build_download/ || true
             fi
@@ -123,13 +135,24 @@ jobs:
       - name: Run iOS AI Test Agent
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: "gemini-3.5-flash-lite"
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
+          GEMINI_FALLBACK_MODEL: "gemini-2.5-flash"
           QA_DASHBOARD_URL: "https://hermes.bibb.io/qa"
           DEVICE_UDID: ${{ env.SIM_UDID }}
           DEVICE_NAME: ${{ matrix.device }}
           PERSONA: ${{ matrix.persona }}
           APP_BUNDLE_ID: "com.AdvBig.Zikaron3D"
           APP_INSTALLED: ${{ env.APP_INSTALLED }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_SHA: ${{ github.sha }}
+          OPEN_GITHUB_DEFECTS: ${{ inputs.open_defects || 'true' }}
+          PAPERCLIP_API_URL: ${{ vars.PAPERCLIP_API_URL || 'https://hermes.bibb.io/api' }}
+          PAPERCLIP_API_KEY: ${{ secrets.PAPERCLIP_API_KEY }}
+          PAPERCLIP_COMPANY_ID: ${{ secrets.PAPERCLIP_COMPANY_ID }}
+          PAPERCLIP_PROJECT_ID: ${{ secrets.PAPERCLIP_PROJECT_ID }}
         run: |
           python3 .github/scripts/ios_test_agent.py
 
