@@ -10,6 +10,7 @@ Executes multi-device exploratory and regression E2E testing on iOS Simulators.
 - Detects stuck UI states via perceptual frame diffing and recovers automatically
 - Deduplicates defects by canonical defect_key with confidence gating
 - Automatically opens/updates deduplicated defects in GitHub Issues & Paperclip
+"""
 
 import base64
 import io
@@ -302,6 +303,8 @@ def tap_screen(
             return True
         log(f"AXe tap failed: {err}")
 
+    # 4. Fallback: AppleScript window activation
+    run_cmd(["osascript", "-e", 'tell application "Simulator" to activate'])
     return False
 
 
@@ -340,7 +343,7 @@ def swipe_screen(
 
 
 def frame_diff_score(prev_path: Optional[Path], curr_path: Path) -> float:
-    """Compute mean absolute pixel difference [0..255] on a 64x64 grayscale thumbnail."""
+    """Compute mean absolute pixel difference [0 to 255] on a 64x64 grayscale thumbnail."""
     if Image is None or ImageChops is None or ImageStat is None:
         return 100.0
     if not prev_path or not prev_path.exists() or not curr_path.exists():

@@ -59,10 +59,11 @@ jobs:
           xcrun simctl list devicetypes
 
       - name: Install AXe Simulator Automation CLI
+        continue-on-error: true
         run: |
-          brew tap cameroncooke/axe
-          brew install axe
-          axe --version
+          brew tap cameroncooke/axe || true
+          brew install cameroncooke/axe/axe || brew install axe || true
+          which axe || echo "AXe CLI not in PATH; will use AppleScript fallback"
 
       - name: Boot iOS Simulator
         id: boot_sim
