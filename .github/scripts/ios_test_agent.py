@@ -157,6 +157,16 @@ def capture_screenshot(step_idx: int) -> Path:
     run_simctl(["io", DEVICE_UDID, "screenshot", "--mask=black", str(target_path)])
     if not target_path.exists():
         run_simctl(["io", DEVICE_UDID, "screenshot", str(target_path)])
+    if not target_path.exists():
+        log(f"Warning: simctl screenshot failed for step {step_idx}, creating fallback frame")
+        if Image is not None:
+            try:
+                img = Image.new("RGB", (393, 852), color=(15, 23, 42))
+                img.save(target_path, "PNG")
+            except Exception:
+                target_path.write_bytes(b"")
+        else:
+            target_path.write_bytes(b"")
     return target_path
 
 
@@ -359,7 +369,9 @@ def frame_diff_score(prev_path: Optional[Path], curr_path: Path) -> float:
 
 
 def encode_optimized_image(image_path: Path, max_dim: int = 1024, quality: int = 86) -> str:
-    if Image is not None and image_path.exists():
+    if not image_path.exists() or image_path.stat().st_size == 0:
+        return ""
+    if Image is not None:
         try:
             with Image.open(image_path) as img:
                 img.thumbnail((max_dim, max_dim))
@@ -368,8 +380,11 @@ def encode_optimized_image(image_path: Path, max_dim: int = 1024, quality: int =
                 return base64.b64encode(buf.getvalue()).decode("utf-8")
         except Exception:
             pass
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
+    try:
+        with open(image_path, "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+    except Exception:
+        return ""
 
 
 def report_to_dashboard(endpoint: str, data: dict[str, Any]) -> None:

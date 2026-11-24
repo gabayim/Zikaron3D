@@ -85,8 +85,8 @@ jobs:
 
           if [ "${{ matrix.persona }}" = "rtl_hebrew" ]; then
             echo "Setting simulator locale to Hebrew (he_IL)..."
-            xcrun simctl spawn $UDID defaults write -g AppleLanguages '(he)'
-            xcrun simctl spawn $UDID defaults write -g AppleLocale 'he_IL'
+            xcrun simctl spawn $UDID defaults write -g AppleLanguages '("he")' || true
+            xcrun simctl spawn $UDID defaults write -g AppleLocale 'he_IL' || true
           fi
 
       - name: Install Zikaron3D App Binary
