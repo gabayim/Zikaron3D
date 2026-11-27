@@ -12,15 +12,6 @@ on:
         required: false
         default: "true"
         type: string
-  schedule:
-    - cron: '0 1 * * *' # Nightly at 1 AM UTC
-  push:
-    branches: [master]
-    paths:
-      - 'src/**'
-      - 'app.json'
-      - '.github/workflows/ios-ai-test.yml'
-      - '.github/scripts/**'
 
 permissions:
   contents: read

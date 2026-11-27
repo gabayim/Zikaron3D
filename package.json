@@ -52,7 +52,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest"
+    "test": "jest",
+    "qa:fix": "powershell -ExecutionPolicy Bypass -File scripts/qa/run-qa-and-fix.ps1"
   },
   "private": true
 }
