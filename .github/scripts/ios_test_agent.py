@@ -35,7 +35,10 @@ except ImportError:
 # Environment Configuration
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
-GEMINI_FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-2.5-flash").strip()
+GEMINI_FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.1-flash-lite").strip()
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat").strip()
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1").rstrip("/")
 QA_DASHBOARD_URL = os.environ.get("QA_DASHBOARD_URL", "https://hermes.bibb.io/qa").rstrip("/")
 DEVICE_UDID = os.environ.get("DEVICE_UDID", "booted").strip()
 DEVICE_NAME = os.environ.get("DEVICE_NAME", "iOS Simulator").strip()
@@ -132,6 +135,8 @@ def sanitize_text(text: str) -> str:
     cleaned = re.sub(r"(Bearer\s+)[A-Za-z0-9._\-]+", r"\1***REDACTED***", cleaned)
     if GEMINI_API_KEY and len(GEMINI_API_KEY) > 6:
         cleaned = cleaned.replace(GEMINI_API_KEY, "***REDACTED***")
+    if DEEPSEEK_API_KEY and len(DEEPSEEK_API_KEY) > 6:
+        cleaned = cleaned.replace(DEEPSEEK_API_KEY, "***REDACTED***")
     return cleaned
 
 
@@ -443,6 +448,55 @@ def format_ui_tree_for_prompt(ui_elements: list[dict[str, Any]], screen_w: int, 
     return "\n".join(items[:35])
 
 
+def _query_deepseek_fallback(prompt: str) -> tuple[Optional[dict[str, Any]], Optional[str]]:
+    """Fallback to DeepSeek text/accessibility reasoning when Gemini quota is exhausted."""
+    if not DEEPSEEK_API_KEY:
+        return None, "DEEPSEEK_API_KEY is not configured."
+
+    url = f"{DEEPSEEK_BASE_URL}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+    }
+    fallback_prompt = (
+        prompt
+        + "\n\nNOTE: Visual screenshot attachment is unavailable because the primary Gemini Vision API "
+        "quota was exhausted. Rely strictly on the NATIVE ACCESSIBILITY TREE, coordinates, and RECENT STEP HISTORY "
+        "above to detect layout/localization/navigation issues and choose the next action. Respond ONLY with valid JSON."
+    )
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [
+            {"role": "system", "content": "You are a strict JSON-only iOS QA automation agent."},
+            {"role": "user", "content": fallback_prompt},
+        ],
+        "temperature": 0.1,
+        "response_format": {"type": "json_object"},
+    }
+
+    last_err = ""
+    for attempt in range(3):
+        try:
+            log(f"Falling back to DeepSeek API ({DEEPSEEK_MODEL}, attempt {attempt + 1})...")
+            res = requests.post(url, headers=headers, json=payload, timeout=45)
+            if res.status_code in (429, 500, 502, 503, 504):
+                last_err = f"HTTP {res.status_code} from {DEEPSEEK_MODEL}"
+                time.sleep(1.5 * (2**attempt))
+                continue
+            res.raise_for_status()
+            data = res.json()
+            raw_text = data["choices"][0]["message"]["content"].strip()
+            parsed = json.loads(raw_text)
+            if not isinstance(parsed, dict):
+                raise ValueError("DeepSeek returned non-object JSON")
+            return parsed, None
+        except Exception as exc:
+            last_err = sanitize_text(str(exc))
+            if attempt < 2:
+                time.sleep(1.5 * (2**attempt))
+    return None, last_err
+
+
 def query_vision_agent(
     image_path: Path,
     step_idx: int,
@@ -454,17 +508,17 @@ def query_vision_agent(
     unchanged_streak: int,
     known_defect_keys: list[str],
 ) -> tuple[dict[str, Any], Optional[str]]:
-    """Query Google Gemini Vision API with structured defect schema. Returns (result_dict, infra_warning)."""
-    if not GEMINI_API_KEY:
+    """Query Google Gemini Vision API with structured defect schema, falling back to DeepSeek on quota exhaustion."""
+    if not GEMINI_API_KEY and not DEEPSEEK_API_KEY:
         return (
             {
                 "status": "completed",
                 "screen_name": "Unknown",
                 "bugs": [],
                 "action": "done",
-                "reasoning": "GEMINI_API_KEY is not configured; stopping safely without false bug reports.",
+                "reasoning": "Neither GEMINI_API_KEY nor DEEPSEEK_API_KEY is configured; stopping safely.",
             },
-            "Missing GEMINI_API_KEY environment variable.",
+            "Missing GEMINI_API_KEY and DEEPSEEK_API_KEY environment variables.",
         )
 
     b64_image = encode_optimized_image(image_path, max_dim=1024, quality=86)
@@ -556,34 +610,42 @@ Respond STRICTLY with valid JSON matching this schema:
         },
     }
 
-    last_err = ""
-    for model in models_to_try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        headers = {
-            "Content-Type": "application/json",
-            "x-goog-api-key": GEMINI_API_KEY,
-        }
-        for attempt in range(3):
-            try:
-                log(f"Querying Google Gemini Vision API ({model}, attempt {attempt + 1})...")
-                res = requests.post(url, headers=headers, json=payload, timeout=35)
-                if res.status_code in (429, 500, 502, 503, 504):
-                    last_err = f"HTTP {res.status_code} from {model}"
-                    time.sleep(1.5 * (2**attempt))
-                    continue
-                res.raise_for_status()
-                data = res.json()
-                raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                parsed = json.loads(raw_text)
-                if not isinstance(parsed, dict):
-                    raise ValueError("Model returned non-object JSON")
-                return parsed, None
-            except Exception as exc:
-                last_err = sanitize_text(str(exc))
-                if attempt < 2:
-                    time.sleep(1.5 * (2**attempt))
+    last_err = "GEMINI_API_KEY not configured" if not GEMINI_API_KEY else ""
+    if GEMINI_API_KEY:
+        for model in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            headers = {
+                "Content-Type": "application/json",
+                "x-goog-api-key": GEMINI_API_KEY,
+            }
+            for attempt in range(3):
+                try:
+                    log(f"Querying Google Gemini Vision API ({model}, attempt {attempt + 1})...")
+                    res = requests.post(url, headers=headers, json=payload, timeout=35)
+                    if res.status_code in (429, 500, 502, 503, 504):
+                        last_err = f"HTTP {res.status_code} from {model}"
+                        time.sleep(1.5 * (2**attempt))
+                        continue
+                    res.raise_for_status()
+                    data = res.json()
+                    raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                    parsed = json.loads(raw_text)
+                    if not isinstance(parsed, dict):
+                        raise ValueError("Model returned non-object JSON")
+                    return parsed, None
+                except Exception as exc:
+                    last_err = sanitize_text(str(exc))
+                    if attempt < 2:
+                        time.sleep(1.5 * (2**attempt))
 
-    log(f"Gemini Vision API infra warning after retries: {last_err}")
+    if DEEPSEEK_API_KEY:
+        log(f"Gemini unavailable ({last_err}); switching to DeepSeek fallback...")
+        ds_parsed, ds_err = _query_deepseek_fallback(prompt)
+        if ds_parsed is not None:
+            return ds_parsed, f"Used DeepSeek fallback ({DEEPSEEK_MODEL}) after Gemini failure: {last_err}"
+        last_err = f"Gemini: {last_err} | DeepSeek: {ds_err}"
+
+    log(f"All AI providers failed after retries: {last_err}")
     return (
         {
             "status": "ok",
