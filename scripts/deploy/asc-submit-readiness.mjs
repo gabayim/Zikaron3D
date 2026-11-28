@@ -20,7 +20,7 @@ const KEY_PATH = arg('key-path', process.env.ASC_KEY_PATH ?? '');
 const KEY_ID = arg('key-id', process.env.ASC_KEY_ID ?? '');
 const ISSUER = arg('issuer-id', process.env.ASC_ISSUER_ID ?? '');
 const APP_ID = arg('app-id', '475133336');
-const VERSION = arg('version', '2.15.0');
+const VERSION = arg('version', '2.17.0');
 const BASE = 'https://api.appstoreconnect.apple.com';
 const IAP_IDS = ['crystals_100', 'crystals_500', 'crystals_1200', 'starter_pack', 'shield_pack_10'];
 

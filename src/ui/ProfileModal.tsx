@@ -41,6 +41,7 @@ import {
   Palette,
   Pencil,
   QrCode,
+  Settings,
   ShoppingBag,
   Sparkles,
   Trophy,
@@ -81,6 +82,7 @@ interface ProfileModalProps {
   onClose: () => void;
   onStartDaily?: () => void;
   onOpenShop?: (tab: 'skins' | 'accessories') => void;
+  onOpenSettings?: () => void;
 }
 
 const ACCESSORY_AREAS: { slot: AccessorySlot; icon: React.FC<{ size: number; color: string }> }[] = [
@@ -239,7 +241,7 @@ function ProfileStage({
   );
 }
 
-export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: ProfileModalProps) {
+export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop, onOpenSettings }: ProfileModalProps) {
   const xp = useProfile((s) => s.xp);
   const mode = useProfile((s) => s.mode);
   const collectionCount = useProfile((s) => s.collection.length);
@@ -752,6 +754,29 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
               </Pressable>
             )}
 
+            {onOpenSettings && (
+              <Pressable
+                style={[styles.settingsBanner, rtl && styles.rowReverse]}
+                onPress={() => {
+                  sfx.play('whoosh', 0.45);
+                  Haptics.selectionAsync();
+                  onOpenSettings();
+                }}
+              >
+                <View style={[styles.dailyLeft, rtl && styles.rowReverse]}>
+                  <Settings size={18} color="#94A3B8" />
+                  <Text style={[styles.settingsBannerText, rtl && styles.rtlText]}>
+                    {strings.settings}
+                  </Text>
+                </View>
+                {rtl ? (
+                  <ChevronLeft size={18} color="#94A3B8" />
+                ) : (
+                  <ChevronRight size={18} color="#94A3B8" />
+                )}
+              </Pressable>
+            )}
+
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -1143,6 +1168,23 @@ const styles = StyleSheet.create({
   dailySub: {
     color: '#94A3B8',
     fontSize: 11,
+  },
+  settingsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 4,
+  },
+  settingsBannerText: {
+    color: '#E2E8F0',
+    fontWeight: '800',
+    fontSize: 12.5,
+    letterSpacing: 0.4,
   },
   giftsSection: {
     flexDirection: 'row',

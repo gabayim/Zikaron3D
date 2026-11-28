@@ -128,7 +128,7 @@ export async function loadProductPrices(): Promise<Partial<Record<ProductId, str
       crystals_100: '$0.99',
       crystals_500: '$3.99',
       crystals_1200: '$7.99',
-      shield_pack_10: '$1.99',
+      shield_pack_10: '$0.99',
     };
   }
   try {

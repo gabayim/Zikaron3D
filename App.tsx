@@ -254,6 +254,10 @@ export default function App() {
           setShowProfileModal(false);
           openShop(tab);
         }}
+        onOpenSettings={() => {
+          setShowProfileModal(false);
+          setScreen('settings');
+        }}
       />
       <InviteModal
         visible={showInviteModal}

@@ -24,7 +24,7 @@ const KEY_PATH = arg('key-path', process.env.ASC_KEY_PATH ?? '');
 const KEY_ID = arg('key-id', process.env.ASC_KEY_ID ?? '');
 const ISSUER = arg('issuer-id', process.env.ASC_ISSUER_ID ?? '');
 const APP_ID = arg('app-id', '475133336');
-const VERSION = arg('version', '2.15.1');
+const VERSION = arg('version', '2.17.0');
 const DRY = args.includes('--dry-run');
 const BASE = 'https://api.appstoreconnect.apple.com';
 
@@ -36,19 +36,35 @@ if (!KEY_PATH || !KEY_ID || !ISSUER) {
 const SUBTITLE = 'Memory arcade for families';
 const PRIVACY_URL = 'https://zmz.ca/zikaron3d/privacy.html';
 
+const REVIEW_NOTES = `Thank you for reviewing Zikaron3D!
+
+1. Play Modes (tap the mode icon at the top right inside any game to switch):
+- TOYBOX: gentle mode for young children (ages 4-7): no timers, hints, no ads.
+- ARCADE: competitive arcade memory experience with combos and streak shields.
+- SANCTUARY: zen, relaxing memory training mode.
+
+2. In-App Purchases (5 consumables, all active in the App Store):
+crystals_100, crystals_500, crystals_1200, starter_pack, shield_pack_10.
+Open the Shop (shopping bag icon at top right of the hub) > Gems tab and tap any pack to buy with a StoreKit Sandbox account. Streak shields can also be bought in Settings. Purchases can be restored with the "RESTORE PURCHASES" button in the Shop and in Settings.
+
+3. Account Deletion:
+In compliance with guideline 5.1.1(v), tap the Profile avatar (top left of the hub) > SETTINGS & ACCOUNT > tap the trash icon. It deletes the user profile and data from our database and revokes the Apple Sign In authorization.
+
+If you have any questions, please contact us at support@zmz.ca.`;
+
 const METADATA = {
-  description: `Zikaron3D is a hand-built 3D memory arcade for the whole family: seven toy-like worlds, seven different memory games and one calm place to play.
+  description: `Zikaron3D is a hand-built 3D memory arcade for the whole family: seven toy-like worlds, seven different games and one calm place to play.
 
 PLAY THREE WAYS
 - TOYBOX: made for ages 4-7. No timers, gentle hints and no ads.
-- ARCADE: combo streaks, streak shields and a weekly league where your best week becomes your score.
+- ARCADE: combo streaks, streak shields and Prism Fever chains.
 - SANCTUARY: slow, quiet practice with soft audio and no pressure.
 
 SEVEN WORLDS, SEVEN GAMES
 Meadow - Critter Burrows: match the critters peeking out of their holes.
-Crystal - Orb Merge: drop and merge critters up the evolution ladder.
-Candy - Star Catcher: slide a resident under falling stars.
+Crystal - Prism Chorus: repeat glowing harmonic crystal melodies with light beams, chords and mirror echoes.
 Deep Sea - Shell Shuffle: follow the shells as they shuffle.
+Candy - Star Catcher: slide a resident under falling stars.
 Grove - Vine Flow: turn the tiles to light every vine.
 Circuit - Beat Circuit: hit the lanes on the beat of public-domain tunes.
 Summit - Echo Peaks: repeat patterns of stars, tones and colours.
@@ -58,21 +74,21 @@ Meet fifteen animated critters, then unlock skins, hats, auras and trails. Every
 
 FAIR AND QUIET BY DESIGN
 - No ads, no analytics SDKs, no tracking across apps or websites.
-- Plays fully offline. Cloud save and the weekly league are optional and use a private anonymous account (Sign in with Apple, no name or email requested).
-- Delete your cloud data at any time in Settings.
+- Plays fully offline. Cloud save is optional and uses a private anonymous account (Sign in with Apple, no name or email requested).
+- Delete your cloud data at any time in Profile > Settings & Account.
 - In-App Purchases available.
 
 Portrait, touch-first, designed for iPhone and iPad.`,
   keywords: 'memory,arcade,match,kids,family,brain,training,critters,puzzle,casual,relax,zen',
   promotionalText:
-    'Seven worlds of memory games, one kid-safe mode and a weekly arcade league. No ads, no tracking, plays offline.',
+    'Seven worlds of memory and puzzle games, one kid-safe mode and offline play. No ads, no tracking.',
   supportUrl: 'https://zmz.ca/zikaron3d/support.html',
   marketingUrl: 'https://zmz.ca/zikaron3d/',
-  whatsNew: `Crystal packs, the Starter Pack and streak shields can now be bought from the Shop.
+  whatsNew: `New World 2 memory game: Prism Chorus! Watch and listen as glowing crystals sing cumulative harmonic melodies, chain light beams to ignite Prism Fever, and master twin chords and mirror echoes.
 
-Clear messages when the App Store is unavailable or a purchase does not go through.
+Memory games first: Deep Sea (Shell Shuffle) is now World 3 right alongside Meadow and Crystal Cavern.
 
-Smoother play: no more pop-up checks when opening the Shop, switching modes or unlocking worlds.`,
+Upgraded Hub & Profile: live world indicator and dedicated Levels button on the hub, animated character showcase with custom naming, owned-assets closet, music/SFX controls, and 500 Crystal friend invite QR rewards.`,
 };
 
 const b64url = (buf) => Buffer.from(buf).toString('base64url');
@@ -174,6 +190,22 @@ async function main() {
       },
     });
     console.log('Created the en-US localization.');
+  }
+
+  // Update review notes on the version's review detail if present.
+  if (!DRY && versionId !== '<new>') {
+    try {
+      const rev = await api(`/v1/appStoreVersions/${versionId}/appStoreReviewDetail`);
+      if (rev.data?.id) {
+        await api(`/v1/appStoreReviewDetails/${rev.data.id}`, {
+          method: 'PATCH',
+          body: { data: { type: 'appStoreReviewDetails', id: rev.data.id, attributes: { notes: REVIEW_NOTES } } },
+        });
+        console.log('Updated App Review notes.');
+      }
+    } catch (error) {
+      console.log(`⚠ review notes not updated: ${String(error.detail ?? error.message).slice(0, 260)}`);
+    }
   }
 
   // App info: Apple keeps one record per state. The live version's record is

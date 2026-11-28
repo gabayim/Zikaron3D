@@ -52,6 +52,7 @@ export interface ProfileStrings {
   modes: Record<ProfileMode, string>;
   dailyChallenge: string;
   dailyReward: (xp: number, stardust: number) => string;
+  settings: string;
 }
 
 const EN: ProfileStrings = {
@@ -100,6 +101,7 @@ const EN: ProfileStrings = {
   },
   dailyChallenge: 'DAILY CHALLENGE',
   dailyReward: (xp, stardust) => `Earn +${xp} XP & +${stardust} Stardust`,
+  settings: 'SETTINGS & ACCOUNT',
 };
 
 const HE: ProfileStrings = {
@@ -148,6 +150,7 @@ const HE: ProfileStrings = {
   },
   dailyChallenge: 'אתגר יומי',
   dailyReward: (xp, stardust) => `קבלו +${xp} ניסיון ו-+${stardust} אבק כוכבים`,
+  settings: 'הגדרות וחשבון',
 };
 
 const PROFILE_STRINGS: Record<Locale, ProfileStrings> = { en: EN, he: HE };
