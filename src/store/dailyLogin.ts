@@ -88,32 +88,45 @@ export const useDailyLogin = create<DailyLoginState>((set, get) => ({
 
   claimReward: () => {
     const reward = get().currentReward;
-    if (!reward || get().hasClaimedToday) return;
+
+    // A stale or duplicate claim (double tap, remount, already claimed today)
+    // must still close the modal; otherwise the claim button looks dead.
+    if (!reward || get().hasClaimedToday) {
+      set({ modalVisible: false });
+      return;
+    }
 
     const today = getUtcToday();
+    let granted = true;
 
-    // Grant currency
-    if (reward.stardust > 0) {
-      useEconomy.getState().earnStardust(reward.stardust);
-    }
-    if (reward.crystals > 0) {
-      useEconomy.getState().earnCrystals(reward.crystals, true);
-    }
-    if (reward.shields > 0) {
-      useProfile.getState().addShields(reward.shields);
-    }
-    if (reward.accessoryId) {
-      useInventory.getState().addAccessory(reward.accessoryId);
-    }
+    try {
+      // Grant currency
+      if (reward.stardust > 0) {
+        useEconomy.getState().earnStardust(reward.stardust);
+      }
+      if (reward.crystals > 0) {
+        useEconomy.getState().earnCrystals(reward.crystals, true);
+      }
+      if (reward.shields > 0) {
+        useProfile.getState().addShields(reward.shields);
+      }
+      if (reward.accessoryId) {
+        useInventory.getState().addAccessory(reward.accessoryId);
+      }
 
-    kv.set('streak', get().streak);
-    useAchievements.getState().setMetricMax('daily_streak', get().streak);
-    kv.set('lastLoginDate', today);
+      kv.set('streak', get().streak);
+      useAchievements.getState().setMetricMax('daily_streak', get().streak);
+      kv.set('lastLoginDate', today);
+    } catch {
+      // A failing grant must never trap the player behind the modal. Leave the
+      // day unclaimed so the reward can be retried on the next launch.
+      granted = false;
+    }
 
     set({
-      hasClaimedToday: true,
+      hasClaimedToday: granted,
       modalVisible: false,
-      lastLoginDate: today,
+      lastLoginDate: granted ? today : get().lastLoginDate,
     });
   },
 

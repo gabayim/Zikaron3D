@@ -12,103 +12,120 @@ export function DailyStreakModal() {
   const claimReward = useDailyLogin((s) => s.claimReward);
   const dismissModal = useDailyLogin((s) => s.dismissModal);
 
-  if (!modalVisible || !currentReward) return null;
+  const visible = modalVisible && currentReward != null;
 
   const handleClaim = () => {
-    sfx.play('chime', 0.9);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Feedback is best-effort: a failing audio or haptics call must never stop
+    // the claim from running, otherwise the modal stays up and looks dead.
+    try {
+      sfx.play('chime', 0.9);
+    } catch {
+      // Audio is optional; keep claiming.
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     claimReward();
   };
 
+  // Keep the native Modal mounted and toggle `visible`. Unmounting it in the
+  // same update that hides it can skip iOS's dismissal path and leave the
+  // modal window on screen, swallowing every touch.
   return (
     <Modal
-      visible={modalVisible}
+      visible={visible}
       transparent
       animationType="fade"
       onRequestClose={dismissModal}
     >
       <View style={styles.overlay}>
-        <View style={styles.card}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.fireRow}>
-              <Flame size={24} color="#F97316" />
-              <Text style={styles.streakTitle}>DAY {streak} STREAK!</Text>
+        {currentReward && (
+          <View style={styles.card}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.fireRow}>
+                <Flame size={24} color="#F97316" />
+                <Text style={styles.streakTitle}>DAY {streak} STREAK!</Text>
+              </View>
+              <Text style={styles.subtitle}>Log in daily to earn rare rewards</Text>
             </View>
-            <Text style={styles.subtitle}>Log in daily to earn rare rewards</Text>
-          </View>
 
-          {/* 7-Day Track */}
-          <View style={styles.track}>
-            {STREAK_REWARDS.map((r) => {
-              const isPast = r.day < streak;
-              const isToday = r.day === streak;
-              return (
-                <View
-                  key={`day_${r.day}`}
-                  style={[
-                    styles.dayNode,
-                    isToday && styles.dayNodeToday,
-                    isPast && styles.dayNodePast,
-                  ]}
-                >
-                  <Text style={styles.dayLabel}>D{r.day}</Text>
-                  <View style={styles.iconContainer}>
-                    {isPast ? (
-                      <Check size={16} color="#22C55E" />
-                    ) : r.crystals > 0 ? (
-                      <Gem size={18} color="#38BDF8" />
-                    ) : r.shields > 0 ? (
-                      <Shield size={18} color="#F59E0B" />
-                    ) : (
-                      <Sparkles size={18} color="#FBBF24" />
-                    )}
+            {/* 7-Day Track */}
+            <View style={styles.track}>
+              {STREAK_REWARDS.map((r) => {
+                const isPast = r.day < streak;
+                const isToday = r.day === streak;
+                return (
+                  <View
+                    key={`day_${r.day}`}
+                    style={[
+                      styles.dayNode,
+                      isToday && styles.dayNodeToday,
+                      isPast && styles.dayNodePast,
+                    ]}
+                  >
+                    <Text style={styles.dayLabel}>D{r.day}</Text>
+                    <View style={styles.iconContainer}>
+                      {isPast ? (
+                        <Check size={16} color="#22C55E" />
+                      ) : r.crystals > 0 ? (
+                        <Gem size={18} color="#38BDF8" />
+                      ) : r.shields > 0 ? (
+                        <Shield size={18} color="#F59E0B" />
+                      ) : (
+                        <Sparkles size={18} color="#FBBF24" />
+                      )}
+                    </View>
+                    <Text style={styles.rewardText}>
+                      {r.crystals > 0
+                        ? `+${r.crystals}💎`
+                        : r.shields > 0
+                        ? `+1🛡️`
+                        : `+${r.stardust}⭐`}
+                    </Text>
                   </View>
-                  <Text style={styles.rewardText}>
-                    {r.crystals > 0
-                      ? `+${r.crystals}💎`
-                      : r.shields > 0
-                      ? `+1🛡️`
-                      : `+${r.stardust}⭐`}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-
-          {/* Today's Reward Spotlight */}
-          <View style={styles.spotlight}>
-            <Text style={styles.spotlightTitle}>TODAY&apos;S REWARD</Text>
-            <View style={styles.rewardsRow}>
-              {currentReward.stardust > 0 && (
-                <View style={styles.rewardPill}>
-                  <Sparkles size={16} color="#FBBF24" />
-                  <Text style={styles.pillText}>+{currentReward.stardust} Stardust</Text>
-                </View>
-              )}
-              {currentReward.crystals > 0 && (
-                <View style={[styles.rewardPill, styles.crystalPill]}>
-                  <Gem size={16} color="#38BDF8" />
-                  <Text style={[styles.pillText, styles.crystalText]}>
-                    +{currentReward.crystals} Crystals
-                  </Text>
-                </View>
-              )}
-              {currentReward.shields > 0 && (
-                <View style={[styles.rewardPill, styles.shieldPill]}>
-                  <Shield size={16} color="#F59E0B" />
-                  <Text style={[styles.pillText, styles.shieldText]}>+1 Shield</Text>
-                </View>
-              )}
+                );
+              })}
             </View>
-          </View>
 
-          {/* Claim Button */}
-          <Pressable style={styles.claimButton} onPress={handleClaim}>
-            <Gift size={20} color="#0F172A" />
-            <Text style={styles.claimButtonText}>CLAIM REWARD</Text>
-          </Pressable>
-        </View>
+            {/* Today's Reward Spotlight */}
+            <View style={styles.spotlight}>
+              <Text style={styles.spotlightTitle}>TODAY&apos;S REWARD</Text>
+              <View style={styles.rewardsRow}>
+                {currentReward.stardust > 0 && (
+                  <View style={styles.rewardPill}>
+                    <Sparkles size={16} color="#FBBF24" />
+                    <Text style={styles.pillText}>+{currentReward.stardust} Stardust</Text>
+                  </View>
+                )}
+                {currentReward.crystals > 0 && (
+                  <View style={[styles.rewardPill, styles.crystalPill]}>
+                    <Gem size={16} color="#38BDF8" />
+                    <Text style={[styles.pillText, styles.crystalText]}>
+                      +{currentReward.crystals} Crystals
+                    </Text>
+                  </View>
+                )}
+                {currentReward.shields > 0 && (
+                  <View style={[styles.rewardPill, styles.shieldPill]}>
+                    <Shield size={16} color="#F59E0B" />
+                    <Text style={[styles.pillText, styles.shieldText]}>+1 Shield</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* Claim Button */}
+            <Pressable
+              style={styles.claimButton}
+              onPress={handleClaim}
+              accessibilityRole="button"
+              accessibilityLabel="Claim daily reward"
+              testID="daily-streak-claim"
+            >
+              <Gift size={20} color="#0F172A" />
+              <Text style={styles.claimButtonText}>CLAIM REWARD</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     </Modal>
   );
