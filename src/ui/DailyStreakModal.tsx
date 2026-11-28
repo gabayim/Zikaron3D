@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Check, Flame, Gem, Gift, Shield, Sparkles } from 'lucide-react-native';
 import { sfx } from '../fx/sound';
+import { getStreakCopy } from './i18n/streak';
 import { STREAK_REWARDS, useDailyLogin } from '../store/dailyLogin';
 
 export function DailyStreakModal() {
@@ -11,6 +12,7 @@ export function DailyStreakModal() {
   const currentReward = useDailyLogin((s) => s.currentReward);
   const claimReward = useDailyLogin((s) => s.claimReward);
   const dismissModal = useDailyLogin((s) => s.dismissModal);
+  const { strings, rtl } = getStreakCopy();
 
   if (!modalVisible || !currentReward) return null;
 
@@ -31,15 +33,17 @@ export function DailyStreakModal() {
         <View style={styles.card}>
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.fireRow}>
+            <View style={[styles.fireRow, rtl && styles.rowReverse]}>
               <Flame size={24} color="#F97316" />
-              <Text style={styles.streakTitle}>DAY {streak} STREAK!</Text>
+              <Text style={[styles.streakTitle, rtl && styles.rtlCentered]}>
+                {strings.streakTitle(streak)}
+              </Text>
             </View>
-            <Text style={styles.subtitle}>Log in daily to earn rare rewards</Text>
+            <Text style={[styles.subtitle, rtl && styles.rtlCentered]}>{strings.subtitle}</Text>
           </View>
 
           {/* 7-Day Track */}
-          <View style={styles.track}>
+          <View style={[styles.track, rtl && styles.rowReverse]}>
             {STREAK_REWARDS.map((r) => {
               const isPast = r.day < streak;
               const isToday = r.day === streak;
@@ -52,7 +56,14 @@ export function DailyStreakModal() {
                     isPast && styles.dayNodePast,
                   ]}
                 >
-                  <Text style={styles.dayLabel}>D{r.day}</Text>
+                  <Text
+                    style={[styles.dayLabel, rtl && styles.rtlCentered]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                  >
+                    {strings.dayLabel(r.day)}
+                  </Text>
                   <View style={styles.iconContainer}>
                     {isPast ? (
                       <Check size={16} color="#22C55E" />
@@ -64,7 +75,7 @@ export function DailyStreakModal() {
                       <Sparkles size={18} color="#FBBF24" />
                     )}
                   </View>
-                  <Text style={styles.rewardText}>
+                  <Text style={[styles.rewardText, rtl && styles.rtlCentered]}>
                     {r.crystals > 0
                       ? `+${r.crystals}💎`
                       : r.shields > 0
@@ -78,35 +89,43 @@ export function DailyStreakModal() {
 
           {/* Today's Reward Spotlight */}
           <View style={styles.spotlight}>
-            <Text style={styles.spotlightTitle}>TODAY&apos;S REWARD</Text>
-            <View style={styles.rewardsRow}>
+            <Text style={[styles.spotlightTitle, rtl && styles.rtlCentered]}>
+              {strings.todaysReward}
+            </Text>
+            <View style={[styles.rewardsRow, rtl && styles.rowReverse]}>
               {currentReward.stardust > 0 && (
-                <View style={styles.rewardPill}>
+                <View style={[styles.rewardPill, rtl && styles.rowReverse]}>
                   <Sparkles size={16} color="#FBBF24" />
-                  <Text style={styles.pillText}>+{currentReward.stardust} Stardust</Text>
+                  <Text style={[styles.pillText, rtl && styles.rtlCentered]}>
+                    {strings.stardust(currentReward.stardust)}
+                  </Text>
                 </View>
               )}
               {currentReward.crystals > 0 && (
-                <View style={[styles.rewardPill, styles.crystalPill]}>
+                <View style={[styles.rewardPill, styles.crystalPill, rtl && styles.rowReverse]}>
                   <Gem size={16} color="#38BDF8" />
-                  <Text style={[styles.pillText, styles.crystalText]}>
-                    +{currentReward.crystals} Crystals
+                  <Text style={[styles.pillText, styles.crystalText, rtl && styles.rtlCentered]}>
+                    {strings.crystals(currentReward.crystals)}
                   </Text>
                 </View>
               )}
               {currentReward.shields > 0 && (
-                <View style={[styles.rewardPill, styles.shieldPill]}>
+                <View style={[styles.rewardPill, styles.shieldPill, rtl && styles.rowReverse]}>
                   <Shield size={16} color="#F59E0B" />
-                  <Text style={[styles.pillText, styles.shieldText]}>+1 Shield</Text>
+                  <Text style={[styles.pillText, styles.shieldText, rtl && styles.rtlCentered]}>
+                    {strings.shield(currentReward.shields)}
+                  </Text>
                 </View>
               )}
             </View>
           </View>
 
           {/* Claim Button */}
-          <Pressable style={styles.claimButton} onPress={handleClaim}>
+          <Pressable style={[styles.claimButton, rtl && styles.rowReverse]} onPress={handleClaim}>
             <Gift size={20} color="#0F172A" />
-            <Text style={styles.claimButtonText}>CLAIM REWARD</Text>
+            <Text style={[styles.claimButtonText, rtl && styles.rtlCentered]}>
+              {strings.claimReward}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -115,6 +134,14 @@ export function DailyStreakModal() {
 }
 
 const styles = StyleSheet.create({
+  /** RTL: swap the visual order of icon/label rows. */
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  /** RTL: keep centered text centered, only fix the bidi paragraph direction. */
+  rtlCentered: {
+    writingDirection: 'rtl',
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(5, 1, 15, 0.85)',
