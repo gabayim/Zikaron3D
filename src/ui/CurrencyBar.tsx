@@ -5,6 +5,7 @@ import { Sparkles, Gem } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useEconomy } from '../store/economy';
 import { sfx } from '../fx/sound';
+import { getCurrencyCopy } from './i18n/currency';
 
 export interface CurrencyBarProps {
   onPressShop?: () => void;
@@ -21,6 +22,7 @@ export function CurrencyBar({
   style,
   compact = false,
 }: CurrencyBarProps) {
+  const copy = getCurrencyCopy();
   const stardust = useEconomy((s) => s.stardust);
   const crystals = useEconomy((s) => s.crystals);
 
@@ -108,6 +110,10 @@ export function CurrencyBar({
           onPress={handleDustPress}
           hitSlop={8}
           disabled={!hasDustAction}
+          accessibilityRole="button"
+          accessibilityLabel={`${copy.strings.stardust}: ${stardust.toLocaleString()}`}
+          accessibilityHint={hasDustAction ? copy.strings.openShop : undefined}
+          accessibilityState={{ disabled: !hasDustAction }}
         >
           <Sparkles size={compact ? 12 : 14} color="#FBBF24" />
           <Text style={[styles.text, styles.stardustText, compact && styles.compactText]}>
@@ -128,6 +134,10 @@ export function CurrencyBar({
           onPress={handleCrystalPress}
           hitSlop={8}
           disabled={!hasCrystalAction}
+          accessibilityRole="button"
+          accessibilityLabel={`${copy.strings.crystals}: ${crystals.toLocaleString()}`}
+          accessibilityHint={hasCrystalAction ? copy.strings.openShop : undefined}
+          accessibilityState={{ disabled: !hasCrystalAction }}
         >
           <Gem size={compact ? 12 : 14} color="#38BDF8" />
           <Text style={[styles.text, styles.crystalText, compact && styles.compactText]}>

@@ -29,8 +29,12 @@ import {
   useSeasonPass,
   XP_PER_TIER,
 } from '../store/seasonPass';
+import { getSeasonPassCopy, localizeSeasonRewardLabel } from '../ui/i18n/seasonPass';
+import { rtlTextStyle } from '../ui/i18n/text';
 
 export default function SeasonPass({ onBack }: { onBack: () => void }) {
+  const copy = getSeasonPassCopy();
+  const rtlStyle = rtlTextStyle(copy.rtl);
   const seasonName = useSeasonPass((s) => s.seasonName);
   const hasAdventurePass = useSeasonPass((s) => s.hasAdventurePass);
   const claimedFree = useSeasonPass((s) => s.claimedFree);
@@ -91,29 +95,29 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
               <Text style={styles.tierNumber}>{item.tier}</Text>
             )}
           </View>
-          <Text style={styles.tierSubtitle}>T{item.tier}</Text>
+          <Text style={styles.tierSubtitle}>{copy.strings.tierLabel(item.tier)}</Text>
         </View>
 
         {/* Free Track Card */}
         <View style={[styles.rewardCard, styles.freeCard, isFreeClaimed && styles.cardClaimed]}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTrackLabel}>FREE</Text>
+            <Text style={styles.cardTrackLabel}>{copy.strings.free}</Text>
             {renderRewardIcon(item.freeReward)}
           </View>
-          <Text style={styles.rewardTitle} numberOfLines={2}>
-            {item.freeReward.label}
+          <Text style={[styles.rewardTitle, rtlStyle]} numberOfLines={2}>
+            {localizeSeasonRewardLabel(item.freeReward.label, copy.locale)}
           </Text>
           {isFreeClaimed ? (
             <View style={styles.claimedPill}>
               <Check size={12} color="#22C55E" />
-              <Text style={styles.claimedText}>CLAIMED</Text>
+              <Text style={styles.claimedText}>{copy.strings.claimed}</Text>
             </View>
           ) : isUnlocked ? (
             <Pressable
               style={styles.claimBtn}
               onPress={() => handleClaim(item.tier, 'free')}
             >
-              <Text style={styles.claimBtnText}>CLAIM</Text>
+              <Text style={styles.claimBtnText}>{copy.strings.claim}</Text>
             </Pressable>
           ) : (
             <View style={styles.lockedPill}>
@@ -133,17 +137,17 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
           <View style={styles.cardHeader}>
             <View style={styles.goldBadge}>
               <Crown size={11} color="#FFD36E" />
-              <Text style={styles.goldBadgeText}>PASS</Text>
+              <Text style={styles.goldBadgeText}>{copy.strings.pass}</Text>
             </View>
             {renderRewardIcon(item.premiumReward, true)}
           </View>
-          <Text style={[styles.rewardTitle, styles.rewardTitleGold]} numberOfLines={2}>
-            {item.premiumReward.label}
+          <Text style={[styles.rewardTitle, styles.rewardTitleGold, rtlStyle]} numberOfLines={2}>
+            {localizeSeasonRewardLabel(item.premiumReward.label, copy.locale)}
           </Text>
           {isPremiumClaimed ? (
             <View style={styles.claimedPill}>
               <Check size={12} color="#22C55E" />
-              <Text style={styles.claimedText}>CLAIMED</Text>
+              <Text style={styles.claimedText}>{copy.strings.claimed}</Text>
             </View>
           ) : !hasAdventurePass ? (
             <Pressable
@@ -151,14 +155,14 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
               onPress={handleUpgradePress}
             >
               <Lock size={12} color="#FFD36E" />
-              <Text style={styles.lockedPassText}>UNLOCK</Text>
+              <Text style={styles.lockedPassText}>{copy.strings.unlock}</Text>
             </Pressable>
           ) : isUnlocked ? (
             <Pressable
               style={[styles.claimBtn, styles.claimBtnGold]}
               onPress={() => handleClaim(item.tier, 'premium')}
             >
-              <Text style={styles.claimBtnGoldText}>CLAIM</Text>
+              <Text style={styles.claimBtnGoldText}>{copy.strings.claim}</Text>
             </Pressable>
           ) : (
             <View style={styles.lockedPill}>
@@ -177,7 +181,9 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
         <Pressable onPress={onBack} hitSlop={14} style={styles.iconBtn}>
           <ArrowLeft size={20} color="#FFFFFF" />
         </Pressable>
-        <Text style={styles.screenTitle}>{seasonName.toUpperCase()}</Text>
+        <Text style={[styles.screenTitle, rtlStyle]}>
+          {copy.locale === 'he' ? copy.strings.seasonName : seasonName.toUpperCase()}
+        </Text>
         <CurrencyBar />
       </View>
 
@@ -188,11 +194,11 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
             <View style={styles.tierBadge}>
               <Flame size={14} color="#F97316" />
               <Text style={styles.tierBadgeText}>
-                TIER {currentTier} OF {TOTAL_TIERS}
+                {copy.strings.tierOf(currentTier, TOTAL_TIERS)}
               </Text>
             </View>
             <Text style={styles.xpText}>
-              {xpInTier} / {XP_PER_TIER} XP
+              {copy.strings.xp(xpInTier, XP_PER_TIER)}
             </Text>
           </View>
 
@@ -200,7 +206,7 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
           {hasAdventurePass ? (
             <View style={styles.passActiveBadge}>
               <Crown size={16} color="#FFD36E" />
-              <Text style={styles.passActiveText}>ADVENTURE PASS ACTIVE</Text>
+              <Text style={styles.passActiveText}>{copy.strings.passActive}</Text>
             </View>
           ) : (
             <Pressable
@@ -208,7 +214,7 @@ export default function SeasonPass({ onBack }: { onBack: () => void }) {
               onPress={handleUpgradePress}
             >
               <Crown size={16} color="#0B0620" />
-              <Text style={styles.upgradeBtnText}>GET PASS</Text>
+              <Text style={styles.upgradeBtnText}>{copy.strings.getPass}</Text>
               <View style={styles.crystalCost}>
                 <Gem size={12} color="#0B0620" />
                 <Text style={styles.crystalCostText}>250</Text>
