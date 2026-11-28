@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { Copy, Gem, Plus, QrCode, Share2, Users, X } from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { sfx } from '../fx/sound';
+import { REFERRAL_CRYSTALS, getInviteCopy } from './i18n/invite';
 import {
   createReferralCode,
   listMyReferralCodes,
@@ -31,6 +32,7 @@ export function InviteModal({ visible, onClose }: InviteModalProps) {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const referralCount = useReferral((s) => s.referralCount);
+  const { strings, rtl } = getInviteCopy();
 
   useEffect(() => {
     if (!visible) return;
@@ -74,7 +76,7 @@ export function InviteModal({ visible, onClose }: InviteModalProps) {
     const url = referralUrl(code);
     try {
       await Share.share({
-        message: `Play Zikaron3D with me and get a 50 Crystal welcome gift! ${url}`,
+        message: strings.shareMessage(url, REFERRAL_CRYSTALS),
         url,
       });
     } catch {
@@ -97,16 +99,20 @@ export function InviteModal({ visible, onClose }: InviteModalProps) {
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={onClose} />
         <View style={styles.card}>
-          <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={12}>
+          <Pressable
+            style={[styles.closeBtn, rtl ? styles.closeBtnRtl : styles.closeBtnLtr]}
+            onPress={onClose}
+            hitSlop={12}
+          >
             <X size={20} color="#94A3B8" />
           </Pressable>
 
-          <View style={styles.headerRow}>
+          <View style={[styles.headerRow, rtl && styles.rowReverse]}>
             <QrCode size={24} color="#38BDF8" />
-            <Text style={styles.title}>Invite Friends</Text>
+            <Text style={[styles.title, rtl && styles.rtlText]}>{strings.title}</Text>
           </View>
-          <Text style={styles.subtitle}>
-            Share your QR code or referral link. When friends install, you both earn 50 Crystals!
+          <Text style={[styles.subtitle, rtl && styles.rtlSubtitle]}>
+            {strings.subtitle(REFERRAL_CRYSTALS)}
           </Text>
 
           <View style={styles.qrContainer}>
@@ -120,37 +126,53 @@ export function InviteModal({ visible, onClose }: InviteModalProps) {
           </View>
 
           {code ? (
-            <View style={styles.codeRow}>
-              <Text style={styles.codeText}>{code}</Text>
-              <Pressable style={styles.newCodeBtn} onPress={handleNewCode} hitSlop={8}>
+            <View style={[styles.codeRow, rtl && styles.rowReverse]}>
+              <Text style={[styles.codeText, styles.codeTextLtr]}>{code}</Text>
+              <Pressable
+                style={[styles.newCodeBtn, rtl && styles.rowReverse]}
+                onPress={handleNewCode}
+                hitSlop={8}
+              >
                 <Plus size={16} color="#94A3B8" />
-                <Text style={styles.newCodeText}>New</Text>
+                <Text style={styles.newCodeText}>{strings.newCode}</Text>
               </Pressable>
             </View>
           ) : null}
 
           {/* Stats & Reward Badge */}
-          <View style={styles.rewardBanner}>
-            <View style={styles.rewardLeft}>
+          <View style={[styles.rewardBanner, rtl && styles.rowReverse]}>
+            <View style={[styles.rewardLeft, rtl && styles.rowReverse]}>
               <Gem size={18} color="#A78BFA" />
-              <Text style={styles.rewardText}>+50 Crystals per friend</Text>
+              <Text style={[styles.rewardText, rtl && styles.rtlText]}>
+                {strings.rewardPerFriend(REFERRAL_CRYSTALS)}
+              </Text>
             </View>
-            <View style={styles.statsBadge}>
+            <View style={[styles.statsBadge, rtl && styles.rowReverse]}>
               <Users size={14} color="#38BDF8" />
-              <Text style={styles.statsText}>{referralCount} joined</Text>
+              <Text style={styles.statsText}>{strings.joined(referralCount)}</Text>
             </View>
           </View>
 
           {/* Action buttons */}
-          <View style={styles.actionsRow}>
-            <Pressable style={styles.copyBtn} onPress={handleCopy} disabled={!code}>
+          <View style={[styles.actionsRow, rtl && styles.rowReverse]}>
+            <Pressable
+              style={[styles.copyBtn, rtl && styles.rowReverse]}
+              onPress={handleCopy}
+              disabled={!code}
+            >
               <Copy size={16} color="#F8FAFC" />
-              <Text style={styles.copyBtnText}>{copied ? 'Copied!' : 'Copy Link'}</Text>
+              <Text style={[styles.copyBtnText, rtl && styles.rtlText]}>
+                {copied ? strings.copied : strings.copyLink}
+              </Text>
             </Pressable>
 
-            <Pressable style={styles.shareBtn} onPress={handleShare} disabled={!code}>
+            <Pressable
+              style={[styles.shareBtn, rtl && styles.rowReverse]}
+              onPress={handleShare}
+              disabled={!code}
+            >
               <Share2 size={16} color="#0B132B" />
-              <Text style={styles.shareBtnText}>Share Link</Text>
+              <Text style={[styles.shareBtnText, rtl && styles.rtlText]}>{strings.shareLink}</Text>
             </Pressable>
           </View>
         </View>
@@ -188,9 +210,24 @@ const styles = StyleSheet.create({
   closeBtn: {
     position: 'absolute',
     top: 16,
-    right: 16,
     zIndex: 10,
     padding: 4,
+  },
+  closeBtnLtr: {
+    right: 16,
+  },
+  closeBtnRtl: {
+    left: 16,
+  },
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  rtlText: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  rtlSubtitle: {
+    writingDirection: 'rtl',
   },
   headerRow: {
     flexDirection: 'row',
@@ -238,6 +275,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 3,
   },
+  codeTextLtr: {
+    writingDirection: 'ltr',
+  },
   newCodeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -267,12 +307,14 @@ const styles = StyleSheet.create({
   rewardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
     gap: 6,
   },
   rewardText: {
     color: '#F8FAFC',
     fontSize: 12,
     fontWeight: '700',
+    flexShrink: 1,
   },
   statsBadge: {
     flexDirection: 'row',
