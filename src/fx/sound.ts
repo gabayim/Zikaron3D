@@ -160,9 +160,9 @@ export function useCrossfadeMusic(sources: readonly number[], active: number, vo
       list.forEach((p, i) => {
         const goal = i === a ? base : 0;
         const next = p.volume + Math.sign(goal - p.volume) * Math.min(Math.abs(goal - p.volume), 0.03);
-        if (i === a && !p.playing) p.play();
+        if (i === a && musicOn && !p.playing) p.play();
         if (next !== p.volume) p.volume = next;
-        if (i !== a && next === 0 && p.playing) p.pause();
+        if ((!musicOn || i !== a) && next === 0 && p.playing) p.pause();
       });
     }, 50);
     return () => {

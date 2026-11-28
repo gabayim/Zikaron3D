@@ -1,3 +1,4 @@
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import Purchases, { PURCHASE_TYPE, type PurchasesStoreProduct } from 'react-native-purchases';
 import { createSafeKV, type SafeKV } from '../storage/kv';
@@ -83,9 +84,10 @@ function looksPublic(key: string, platform: string): boolean {
   return platform === 'ios' ? key.trim().startsWith('appl_') : key.trim().startsWith('goog_');
 }
 
-/** Call once at app start. No-op without RevenueCat keys. */
+/** Call once at app start. No-op in Expo Go or without RevenueCat keys. */
 export function initMonetization(): void {
   if (configured) return;
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return;
   const appleKey = process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY;
   const googleKey = process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY;
   const apiKey = Platform.OS === 'ios' ? appleKey : googleKey;

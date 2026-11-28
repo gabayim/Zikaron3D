@@ -188,8 +188,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       const hit = (frac: number) => Math.abs(y - H * frac) < 36 && x > W * 0.2 && x < W * 0.8;
       if (hit(ROWS[0])) {
         toggleMusic();
-        applyMusicMute(useAudioSettings.getState().musicOn);
-        if (useAudioSettings.getState().musicOn) sfx.play('sparkle', 0.4);
+        const next = useAudioSettings.getState().musicOn;
+        applyMusicMute(!next);
+        if (next) sfx.play('sparkle', 0.4);
       } else if (hit(ROWS[1])) {
         const wasOn = sfxOn;
         toggleSfx();

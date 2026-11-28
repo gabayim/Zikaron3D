@@ -1,7 +1,7 @@
 import type { CreatureId } from '../store/profile';
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
-export type AccessorySlot = 'hat' | 'trail' | 'aura' | 'expression';
+export type AccessorySlot = 'hat' | 'trail' | 'aura';
 
 export interface SkinDef {
   id: string;
@@ -668,53 +668,6 @@ export const ACCESSORY_CATALOG: AccessoryDef[] = [
     priceStardust: 400,
     priceCrystals: 50,
     color: '#64748B',
-  },
-
-  // EXPRESSIONS
-  {
-    id: 'expr_sunglasses',
-    slot: 'expression',
-    name: 'Cool Shades',
-    rarity: 'rare',
-    priceStardust: 300,
-    priceCrystals: 35,
-    color: '#0F172A',
-  },
-  {
-    id: 'expr_blush',
-    slot: 'expression',
-    name: 'Rosy Cheeks',
-    rarity: 'common',
-    priceStardust: 100,
-    priceCrystals: null,
-    color: '#FB7185',
-  },
-  {
-    id: 'expr_sleepy',
-    slot: 'expression',
-    name: 'Sleepy Dreamer',
-    rarity: 'common',
-    priceStardust: 120,
-    priceCrystals: null,
-    color: '#818CF8',
-  },
-  {
-    id: 'expr_hearteyes',
-    slot: 'expression',
-    name: 'Heart Eyes',
-    rarity: 'rare',
-    priceStardust: null,
-    priceCrystals: 45,
-    color: '#E11D48',
-  },
-  {
-    id: 'expr_starry',
-    slot: 'expression',
-    name: 'Star Eyes',
-    rarity: 'epic',
-    priceStardust: null,
-    priceCrystals: 90,
-    color: '#FBBF24',
   },
 ];
 

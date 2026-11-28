@@ -1,6 +1,6 @@
 import type { GameId } from './store/profile';
 
-export type WorldId = 'meadow' | 'crystal' | 'candy' | 'deep_sea' | 'grove' | 'circuit' | 'summit';
+export type WorldId = 'meadow' | 'crystal' | 'deep_sea' | 'candy' | 'grove' | 'circuit' | 'summit';
 
 export interface WorldDef {
   id: WorldId;
@@ -37,7 +37,7 @@ export const WORLDS: WorldDef[] = [
   },
   {
     id: 'crystal',
-    game: 'orbs',
+    game: 'prisms',
     still: require('../assets/worlds/crystal/still.webp'),
     music: require('../assets/audio/music/crystal.m4a'),
     accent: '#7FE8FF',
@@ -48,18 +48,6 @@ export const WORLDS: WorldDef[] = [
     priceCrystals: null,
   },
   {
-    id: 'candy',
-    game: 'stars',
-    still: require('../assets/worlds/candy/still.webp'),
-    music: require('../assets/audio/music/candy.m4a'),
-    accent: '#FF8FD0',
-    accent2: '#8CFFC1',
-    residents: ['zap', 'nutty', 'ember'],
-    unlockLevel: 5,
-    priceStardust: 800,
-    priceCrystals: null,
-  },
-  {
     id: 'deep_sea',
     game: 'shells',
     still: require('../assets/worlds/deep_sea/still.webp'),
@@ -67,6 +55,18 @@ export const WORLDS: WorldDef[] = [
     accent: '#FF7F9F',
     accent2: '#48CAE4',
     residents: ['coral'],
+    unlockLevel: 5,
+    priceStardust: 800,
+    priceCrystals: null,
+  },
+  {
+    id: 'candy',
+    game: 'stars',
+    still: require('../assets/worlds/candy/still.webp'),
+    music: require('../assets/audio/music/candy.m4a'),
+    accent: '#FF8FD0',
+    accent2: '#8CFFC1',
+    residents: ['zap', 'nutty', 'ember'],
     unlockLevel: 7,
     priceStardust: 1200,
     priceCrystals: null,

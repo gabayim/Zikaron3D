@@ -32,7 +32,7 @@ interface AchievementsProps {
 const CATEGORIES: { id: 'all' | AchievementCategory; label: string }[] = [
   { id: 'all', label: 'ALL' },
   { id: 'burrows', label: 'BURROWS' },
-  { id: 'orbs', label: 'ORBS' },
+  { id: 'prisms', label: 'PRISMS' },
   { id: 'stars', label: 'STARS' },
   { id: 'shells', label: 'SHELLS' },
   { id: 'vines', label: 'VINES' },

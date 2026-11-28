@@ -28,10 +28,14 @@ function parseEquippedAccessories(
     hat: null,
     trail: null,
     aura: null,
-    expression: null,
   };
   try {
-    return { ...fallback, ...JSON.parse(raw ?? '{}') };
+    const parsed = JSON.parse(raw ?? '{}') as Partial<Record<AccessorySlot, string | null>>;
+    return {
+      hat: parsed.hat ?? null,
+      trail: parsed.trail ?? null,
+      aura: parsed.aura ?? null,
+    };
   } catch {
     return fallback;
   }

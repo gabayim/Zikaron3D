@@ -120,7 +120,7 @@ export function drawHalo(canvas: SkCanvas, cx: number, cy: number, rx: number, r
 /** Icon-only HUD glyphs (no text anywhere). All drawn centred on (cx, cy) with half-size s. */
 export function drawIcon(
   canvas: SkCanvas,
-  kind: 'avatar' | 'star' | 'gear' | 'back' | 'cup' | 'door' | 'trash' | 'bag' | 'pass' | 'levels' | 'grid',
+  kind: 'avatar' | 'star' | 'gear' | 'back' | 'cup' | 'door' | 'trash' | 'bag' | 'pass' | 'levels' | 'grid' | 'qr',
   cx: number,
   cy: number,
   s: number,
@@ -220,6 +220,29 @@ export function drawIcon(
     canvas.drawCircle(cx + d, cy - d, r, fill);
     canvas.drawCircle(cx - d, cy + d, r, fill);
     canvas.drawCircle(cx + d, cy + d, r, fill);
+  } else if (kind === 'qr') {
+    const q = s * 0.74;
+    const b = s * 0.56;
+    const qrStroke = Skia.Paint();
+    qrStroke.setAntiAlias(true);
+    qrStroke.setColor(Skia.Color(color));
+    qrStroke.setAlphaf(alpha);
+    qrStroke.setStyle(PaintStyle.Stroke);
+    qrStroke.setStrokeWidth(s * 0.15);
+    const dot = s * 0.18;
+    // Three corner finder squares
+    canvas.drawRect(Skia.XYWHRect(cx - q, cy - q, b, b), qrStroke);
+    canvas.drawRect(Skia.XYWHRect(cx - q + (b - dot) / 2, cy - q + (b - dot) / 2, dot, dot), fill);
+    canvas.drawRect(Skia.XYWHRect(cx + q - b, cy - q, b, b), qrStroke);
+    canvas.drawRect(Skia.XYWHRect(cx + q - b + (b - dot) / 2, cy - q + (b - dot) / 2, dot, dot), fill);
+    canvas.drawRect(Skia.XYWHRect(cx - q, cy + q - b, b, b), qrStroke);
+    canvas.drawRect(Skia.XYWHRect(cx - q + (b - dot) / 2, cy + q - b + (b - dot) / 2, dot, dot), fill);
+    // Bottom-right data modules
+    const m = s * 0.22;
+    canvas.drawRect(Skia.XYWHRect(cx + s * 0.12, cy + s * 0.12, m, m), fill);
+    canvas.drawRect(Skia.XYWHRect(cx + q - m, cy + s * 0.12, m, m), fill);
+    canvas.drawRect(Skia.XYWHRect(cx + s * 0.12, cy + q - m, m, m), fill);
+    canvas.drawRect(Skia.XYWHRect(cx + q - m, cy + q - m, m, m), fill);
   } else if (kind === 'trash') {
     canvas.drawLine(cx - s * 0.8, cy - s * 0.55, cx + s * 0.8, cy - s * 0.55, p);
     canvas.drawLine(cx - s * 0.3, cy - s * 0.55, cx - s * 0.3, cy - s * 0.85, p);

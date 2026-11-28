@@ -26,7 +26,7 @@ export const CREATURE_IDS = [
   'titan',
 ] as const;
 export type CreatureId = (typeof CREATURE_IDS)[number];
-export const GAME_IDS = ['burrows', 'orbs', 'stars', 'shells', 'vines', 'beats', 'peaks'] as const;
+export const GAME_IDS = ['burrows', 'prisms', 'stars', 'shells', 'vines', 'beats', 'peaks'] as const;
 export type GameId = (typeof GAME_IDS)[number];
 const isGameId = (g: string): g is GameId => GAME_IDS.includes(g as GameId);
 
@@ -43,10 +43,15 @@ interface ProfileState {
   /** Highest round reached in Critter Burrows (0-based). */
   burrowsLevel: number;
   setBurrowsLevel: (level: number) => void;
-  /** Highest level reached in Orb Merge (0-based). */
+  /** Highest level reached in Prism Chorus (0-based). */
+  prismsLevel: number;
+  setPrismsLevel: (level: number) => void;
+  /** Highest combo streak in Prism Chorus. */
+  prismsBest: number;
+  setPrismsBest: (combo: number) => void;
+  /** Legacy Orb Merge fields kept for cloud sync compatibility. */
   orbLevel: number;
   setOrbLevel: (level: number) => void;
-  /** Highest creature tier ever merged in Orb Merge (0-based). */
   orbBest: number;
   setOrbBest: (tier: number) => void;
   /** Highest level reached in Star Catcher (0-based). */
@@ -72,6 +77,9 @@ interface ProfileState {
   completeDaily: (game: GameId) => boolean;
   setMode: (mode: Mode) => void;
   cycleMode: () => Mode;
+  /** Custom display name for the player's mascot character (defaults to 'Pip'). */
+  characterName: string;
+  setCharacterName: (name: string) => void;
   /** Worlds unlocked by the player via Stardust/Crystals (Meadow is always free). */
   unlockedWorlds: WorldId[];
   unlockWorld: (id: WorldId) => void;
@@ -95,6 +103,8 @@ export interface RemoteProfile {
   xp: number;
   collection: string[];
   burrowsLevel: number;
+  prismsLevel?: number;
+  prismsBest?: number;
   orbLevel?: number;
   orbBest: number;
   starLevel?: number;
@@ -134,7 +144,7 @@ const parseDaily = (): GameId[] => {
   }
 };
 const storedDaily = parseDaily();
-const WORLD_IDS: WorldId[] = ['meadow', 'crystal', 'candy', 'deep_sea', 'grove', 'circuit', 'summit'];
+const WORLD_IDS: WorldId[] = ['meadow', 'crystal', 'deep_sea', 'candy', 'grove', 'circuit', 'summit'];
 const parseCelebrated = (): WorldId[] => {
   try {
     const stored = JSON.parse(kv?.getString('celebratedWorlds') ?? '[]') as string[];
@@ -193,6 +203,12 @@ export const useProfile = create<ProfileState>((set, get) => ({
     return true;
   },
   burrowsLevel: kv?.getNumber('burrowsLevel') ?? 0,
+  characterName: kv?.getString('characterName') || 'Pip',
+  setCharacterName: (rawName) => {
+    const characterName = rawName.trim().slice(0, 18) || 'Pip';
+    kv?.set('characterName', characterName);
+    set({ characterName });
+  },
   setMode: (mode) => {
     kv?.set('mode', mode);
     set({ mode });
@@ -232,6 +248,8 @@ export const useProfile = create<ProfileState>((set, get) => ({
     const xp = Math.max(st.xp, r.xp);
     const collection = Array.from(new Set<CreatureId>([...st.collection, ...r.collection.filter((id): id is CreatureId => CREATURE_IDS.includes(id as CreatureId))]));
     const burrowsLevel = Math.max(st.burrowsLevel, r.burrowsLevel);
+    const prismsLevel = Math.max(st.prismsLevel, r.prismsLevel ?? 0);
+    const prismsBest = Math.max(st.prismsBest, r.prismsBest ?? 0);
     const orbLevel = Math.max(st.orbLevel, r.orbLevel ?? 0);
     const orbBest = Math.max(st.orbBest, r.orbBest);
     const starLevel = Math.max(st.starLevel, r.starLevel ?? 0);
@@ -252,6 +270,8 @@ export const useProfile = create<ProfileState>((set, get) => ({
     kv?.set('xp', xp);
     kv?.set('collection', JSON.stringify(collection));
     kv?.set('burrowsLevel', burrowsLevel);
+    kv?.set('prismsLevel', prismsLevel);
+    kv?.set('prismsBest', prismsBest);
     kv?.set('orbLevel', orbLevel);
     kv?.set('orbBest', orbBest);
     kv?.set('starLevel', starLevel);
@@ -267,7 +287,7 @@ export const useProfile = create<ProfileState>((set, get) => ({
     kv?.set('dailyCompleted', JSON.stringify(dailyCompleted));
     kv?.set('weekKey', wk);
     kv?.set('weeklyScore', weeklyScore);
-    set({ xp, collection, burrowsLevel, orbLevel, orbBest, starLevel, starBest, shellsLevel, vinesLevel, beatsLevel, peaksLevel, shields, celebratedWorlds, unlockedWorlds, dailyKey: today, dailyCompleted, weekKey: wk, weeklyScore });
+    set({ xp, collection, burrowsLevel, prismsLevel, prismsBest, orbLevel, orbBest, starLevel, starBest, shellsLevel, vinesLevel, beatsLevel, peaksLevel, shields, celebratedWorlds, unlockedWorlds, dailyKey: today, dailyCompleted, weekKey: wk, weeklyScore });
   },
   unlockedWorlds: parseUnlockedWorlds(),
   unlockWorld: (id) => {
@@ -323,6 +343,18 @@ export const useProfile = create<ProfileState>((set, get) => ({
     kv?.set('beatsLevel', beatsLevel);
     set({ beatsLevel });
   },
+  prismsLevel: kv?.getNumber('prismsLevel') ?? 0,
+  setPrismsLevel: (prismsLevel) => {
+    if (prismsLevel <= get().prismsLevel) return;
+    kv?.set('prismsLevel', prismsLevel);
+    set({ prismsLevel });
+  },
+  prismsBest: kv?.getNumber('prismsBest') ?? 0,
+  setPrismsBest: (prismsBest) => {
+    if (prismsBest <= get().prismsBest) return;
+    kv?.set('prismsBest', prismsBest);
+    set({ prismsBest });
+  },
   peaksLevel: kv?.getNumber('peaksLevel') ?? 0,
   setPeaksLevel: (peaksLevel) => {
     if (peaksLevel <= get().peaksLevel) return;
@@ -337,8 +369,8 @@ export function getGameLevel(game: GameId): number {
   switch (game) {
     case 'burrows':
       return s.burrowsLevel || 0;
-    case 'orbs':
-      return s.orbLevel || 0;
+    case 'prisms':
+      return s.prismsLevel || 0;
     case 'stars':
       return s.starLevel || 0;
     case 'shells':
@@ -357,8 +389,8 @@ export function setGameLevel(game: GameId, level: number): void {
   switch (game) {
     case 'burrows':
       return s.setBurrowsLevel(level);
-    case 'orbs':
-      return s.setOrbLevel(level);
+    case 'prisms':
+      return s.setPrismsLevel(level);
     case 'stars':
       return s.setStarLevel(level);
     case 'shells':

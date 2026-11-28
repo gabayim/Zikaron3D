@@ -17,11 +17,6 @@ export const ACCESSORY_ASSETS: Record<string, number> = {
   'aura_hearts': require('../../assets/shop/items/aura_hearts.png'),
   'aura_fireflies': require('../../assets/shop/items/aura_fireflies.png'),
   'aura_storm': require('../../assets/shop/items/aura_storm.png'),
-  'expr_sunglasses': require('../../assets/shop/items/expr_sunglasses.png'),
-  'expr_blush': require('../../assets/shop/items/expr_blush.png'),
-  'expr_sleepy': require('../../assets/shop/items/expr_sleepy.png'),
-  'expr_hearteyes': require('../../assets/shop/items/expr_hearteyes.png'),
-  'expr_starry': require('../../assets/shop/items/expr_starry.png'),
 };
 
 export const PACK_ASSETS: Record<string, number> = {

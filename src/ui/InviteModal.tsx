@@ -74,7 +74,7 @@ export function InviteModal({ visible, onClose }: InviteModalProps) {
     const url = referralUrl(code);
     try {
       await Share.share({
-        message: `Play Zikaron3D with me and get a 50 Crystal welcome gift! ${url}`,
+        message: `Play Zikaron3D with me and get a 500 Crystal welcome gift! ${url}`,
         url,
       });
     } catch {
@@ -106,7 +106,7 @@ export function InviteModal({ visible, onClose }: InviteModalProps) {
             <Text style={styles.title}>Invite Friends</Text>
           </View>
           <Text style={styles.subtitle}>
-            Share your QR code or referral link. When friends install, you both earn 50 Crystals!
+            Share your QR code or referral link. When friends install, you both earn 500 Crystals!
           </Text>
 
           <View style={styles.qrContainer}>
@@ -133,7 +133,7 @@ export function InviteModal({ visible, onClose }: InviteModalProps) {
           <View style={styles.rewardBanner}>
             <View style={styles.rewardLeft}>
               <Gem size={18} color="#A78BFA" />
-              <Text style={styles.rewardText}>+50 Crystals per friend</Text>
+              <Text style={styles.rewardText}>+500 Crystals per friend</Text>
             </View>
             <View style={styles.statsBadge}>
               <Users size={14} color="#38BDF8" />

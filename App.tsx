@@ -15,12 +15,13 @@ import Achievements from './src/scenes/Achievements';
 import SeasonPass from './src/scenes/SeasonPass';
 import { CurrencyBar } from './src/ui/CurrencyBar';
 import { DailyStreakModal } from './src/ui/DailyStreakModal';
+import { InviteModal } from './src/ui/InviteModal';
 import { ProfileModal } from './src/ui/ProfileModal';
 import { useDailyLogin } from './src/store/dailyLogin';
 import { getGameLevel, setGameLevel, useProfile, type GameId } from './src/store/profile';
 import { useEconomy } from './src/store/economy';
 import CritterBurrows from './src/games/burrows/CritterBurrows';
-import OrbMerge from './src/games/orbs/OrbMerge';
+import PrismChorus from './src/games/prisms/PrismChorus';
 import StarCatcher from './src/games/stars/StarCatcher';
 import ShellShuffle from './src/games/shells/ShellShuffle';
 import VineFlow from './src/games/vines/VineFlow';
@@ -63,8 +64,9 @@ export default function App() {
   const [levelGame, setLevelGame] = useState<GameId>('burrows');
   const [startLevel, setStartLevel] = useState<number>(1);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSkipModal, setShowSkipModal] = useState(false);
-  const [shopInitialTab, setShopInitialTab] = useState<Tab>('skins');
+  const [shopInitialTab, setShopInitialTab] = useState<Tab>('accessories');
   const mode = useProfile((s) => s.mode);
   const spendStardust = useEconomy((s) => s.spendStardust);
   const spendCrystals = useEconomy((s) => s.spendCrystals);
@@ -87,7 +89,7 @@ export default function App() {
   );
 
   const openShop = useCallback(
-    (initialTab: Tab = 'skins') => {
+    (initialTab: Tab = 'accessories') => {
       setShopInitialTab(initialTab);
       sfx.play('whoosh');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -148,19 +150,20 @@ export default function App() {
           onCollection={() => setScreen('collection')}
           onSettings={() => setScreen('settings')}
           onLeaderboard={() => setScreen('leaderboard')}
-          onShop={() => openShop('skins')}
+          onShop={() => openShop('accessories')}
           onSeasonPass={() => setScreen('season_pass')}
           onLevelSelect={(game) => {
             setLevelGame(game);
             setScreen('level_select');
           }}
           onProfile={() => setShowProfileModal(true)}
+          onInvite={() => setShowInviteModal(true)}
         />
       ) : screen === 'collection' ? (
         <Collection
           onBack={back}
           onAchievements={() => setScreen('achievements')}
-          onShop={() => openShop('skins')}
+          onShop={() => openShop('accessories')}
         />
       ) : screen === 'settings' ? (
         <Settings onBack={back} />
@@ -184,8 +187,8 @@ export default function App() {
         <SeasonPass onBack={back} />
       ) : getWorld(screen).game === 'burrows' ? (
         <CritterBurrows key={`burrows_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
-      ) : getWorld(screen).game === 'orbs' ? (
-        <OrbMerge key={`orbs_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
+      ) : getWorld(screen).game === 'prisms' ? (
+        <PrismChorus key={`prisms_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
       ) : getWorld(screen).game === 'shells' ? (
         <ShellShuffle key={`shells_${screen}_${startLevel}`} daily={daily} startLevel={startLevel} worldId={screen} />
       ) : getWorld(screen).game === 'vines' ? (
@@ -251,6 +254,10 @@ export default function App() {
           setShowProfileModal(false);
           openShop(tab);
         }}
+      />
+      <InviteModal
+        visible={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
       />
 
       {/* In-Game Skip Level Modal */}

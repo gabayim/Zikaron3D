@@ -7,7 +7,7 @@ const kv: SafeKV = createSafeKV('zikaron3d-achievements');
 
 export type AchievementCategory =
   | 'burrows'
-  | 'orbs'
+  | 'prisms'
   | 'stars'
   | 'shells'
   | 'vines'
@@ -74,43 +74,43 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     rewardItemId: 'hat_crown',
   },
 
-  // ORB MERGE
+  // PRISM CHORUS
   {
-    id: 'orbs_novice',
-    category: 'orbs',
-    name: 'First Fusion',
-    description: 'Merge up to Grumble tier',
-    metric: 'orb_tier',
-    target: 4,
+    id: 'prisms_combo',
+    category: 'prisms',
+    name: 'Crystal Echo',
+    description: 'Reach a 10-note combo in Prism Chorus',
+    metric: 'prisms_combo',
+    target: 10,
     rewardType: 'stardust',
     rewardAmount: 50,
   },
   {
-    id: 'orbs_expert',
-    category: 'orbs',
-    name: 'Deep Fusion',
-    description: 'Merge up to Dusk tier',
-    metric: 'orb_tier',
-    target: 7,
+    id: 'prisms_fever',
+    category: 'prisms',
+    name: 'Prism Fever',
+    description: 'Ignite Prism Fever in Crystal Cavern',
+    metric: 'prisms_fever',
+    target: 1,
     rewardType: 'crystals',
     rewardAmount: 15,
   },
   {
-    id: 'orbs_pip',
-    category: 'orbs',
-    name: 'Pip Ascended',
-    description: 'Merge the ultimate top-tier Pip',
-    metric: 'orb_tier',
-    target: 8,
+    id: 'prisms_mirror',
+    category: 'prisms',
+    name: 'Mirror Mind',
+    description: 'Clear a reverse Mirror Echo wave',
+    metric: 'prisms_mirror',
+    target: 1,
     rewardType: 'crystals',
     rewardAmount: 35,
   },
   {
-    id: 'orbs_grandmaster',
-    category: 'orbs',
-    name: 'Gravity Sovereign',
-    description: 'Complete Level 30 in Orb Merge',
-    metric: 'orbs_level',
+    id: 'prisms_grandmaster',
+    category: 'prisms',
+    name: 'Cavern Sovereign',
+    description: 'Complete Level 30 in Prism Chorus',
+    metric: 'prisms_level',
     target: 30,
     rewardType: 'accessory',
     rewardAmount: 0,

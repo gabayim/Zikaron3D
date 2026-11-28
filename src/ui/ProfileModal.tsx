@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -8,8 +8,26 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
+import {
+  BlurMask,
+  Canvas,
+  Group,
+  Image as SkiaImage,
+  Oval,
+  useImage,
+  vec,
+} from '@shopify/react-native-skia';
+import {
+  useDerivedValue,
+  useFrameCallback,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import {
   Check,
@@ -18,23 +36,26 @@ import {
   Flame,
   Gem,
   Gift,
-  Lock,
+  Music,
   Palette,
+  Pencil,
   QrCode,
-  Smile,
+  ShoppingBag,
   Sparkles,
   Trophy,
+  Volume2,
+  VolumeX,
   Wand2,
   Wind,
   X,
 } from 'lucide-react-native';
-import { sfx } from '../fx/sound';
+import { applyMusicMute, sfx } from '../fx/sound';
+import { useAudioSettings } from '../store/audioSettings';
 import { useProfile } from '../store/profile';
 import { useEconomy } from '../store/economy';
 import { useInventory } from '../store/inventory';
 import { levelForXp } from '../store/progression';
 import {
-  ACCESSORY_CATALOG,
   getAccessoriesBySlot,
   getSkinsForCreature,
   type AccessoryDef,
@@ -42,6 +63,8 @@ import {
   type SkinDef,
 } from '../data/shopCatalog';
 import { ACCESSORY_ASSETS, getSkinImage } from '../data/shopAssets';
+import { PIP } from '../render/sprites';
+import { SpriteCharacter, useClipImages, useSpritePlayer } from '../render/SpriteCharacter';
 import { RedeemCodeModal } from './RedeemCodeModal';
 import { InviteModal } from './InviteModal';
 
@@ -52,20 +75,172 @@ interface ProfileModalProps {
   onOpenShop?: (tab: 'skins' | 'accessories') => void;
 }
 
-type WardrobeSlot = 'hat' | 'skin' | 'aura' | 'trail' | 'expression';
-
-const WARDROBE_TABS: { id: WardrobeSlot; label: string; icon: React.FC<{ size: number; color: string }> }[] = [
-  { id: 'hat', label: 'HEAD', icon: Crown },
-  { id: 'skin', label: 'SKIN', icon: Palette },
-  { id: 'aura', label: 'AURA', icon: Wand2 },
-  { id: 'trail', label: 'TRAIL', icon: Wind },
-  { id: 'expression', label: 'FACE', icon: Smile },
+const ACCESSORY_AREAS: { slot: AccessorySlot; label: string; icon: React.FC<{ size: number; color: string }> }[] = [
+  { slot: 'hat', label: 'HEAD', icon: Crown },
+  { slot: 'aura', label: 'AURA', icon: Wand2 },
+  { slot: 'trail', label: 'TRAIL', icon: Wind },
 ];
+
+const STAGE_SIZE = 180;
+const PIP_CLIPS = ['idle', 'hop', 'wave'] as const;
+
+function ProfileStage({
+  skinId,
+  hatAsset,
+  auraAsset,
+  trailAsset,
+}: {
+  skinId: string;
+  hatAsset: number | null;
+  auraAsset: number | null;
+  trailAsset: number | null;
+}) {
+  const isClassic = skinId === 'pip_classic';
+  const pipImages = useClipImages(PIP, PIP_CLIPS);
+  const pip = useSpritePlayer(PIP);
+  const fallbackSkinSource = getSkinImage(skinId) ?? getSkinImage('pip_classic') ?? null;
+  const skinSkia = useImage(fallbackSkinSource);
+  const hatSkia = useImage(hatAsset);
+  const auraSkia = useImage(auraAsset);
+  const trailSkia = useImage(trailAsset);
+
+  const bob = useSharedValue(0);
+  const sqx = useSharedValue(1);
+  const sqy = useSharedValue(1);
+
+  useFrameCallback((info) => {
+    const t = info.timestamp / 1000;
+    bob.set(Math.sin(t * 2.6) * 3.5);
+  });
+
+  useEffect(() => {
+    if (!isClassic) return;
+    const id = setInterval(() => {
+      if (pip.current() === 'idle' && Math.random() < 0.65) {
+        pip.play(Math.random() < 0.5 ? 'wave' : 'hop');
+      }
+    }, 3400);
+    return () => clearInterval(id);
+  }, [isClassic, pip]);
+
+  const pipH = 148;
+  const pipW = (pipH * PIP.frameWidth) / PIP.frameHeight;
+  const pipX = STAGE_SIZE / 2;
+  const pipGround = 162;
+  const pipY = pipGround - pipH * 0.9;
+
+  const charTransform = useDerivedValue(() => [
+    { translateY: bob.get() },
+    { scaleX: sqx.get() },
+    { scaleY: sqy.get() },
+  ]);
+  const shadowTransform = useDerivedValue(() => [
+    { scaleX: sqx.get() * (1 - bob.get() * 0.015) },
+    { scaleY: 1 - bob.get() * 0.015 },
+  ]);
+
+  const handleTap = () => {
+    sqx.set(withSequence(withTiming(1.14, { duration: 70 }), withSpring(1, { damping: 5, stiffness: 320 })));
+    sqy.set(withSequence(withTiming(0.86, { duration: 70 }), withSpring(1, { damping: 5, stiffness: 320 })));
+    if (isClassic) pip.play(Math.random() < 0.5 ? 'wave' : 'hop');
+    sfx.play('pop');
+    if (Math.random() < 0.45) setTimeout(() => sfx.play('boing', 0.55), 240);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const showAnimatedPip = isClassic && !!pipImages[0];
+
+  return (
+    <Pressable style={styles.stageBackdrop} onPress={handleTap}>
+      <Canvas style={styles.stageCanvas}>
+        <Group transform={shadowTransform} origin={vec(pipX, pipGround)}>
+          <Oval
+            x={pipX - pipW * 0.32}
+            y={pipGround - pipH * 0.05}
+            width={pipW * 0.64}
+            height={pipH * 0.07}
+            color="rgba(10,0,28,0.55)"
+          >
+            <BlurMask blur={8} style="normal" />
+          </Oval>
+        </Group>
+
+        {trailSkia && (
+          <SkiaImage
+            image={trailSkia}
+            x={pipX - pipW * 0.5}
+            y={pipY + pipH * 0.66}
+            width={pipW}
+            height={pipH * 0.32}
+            fit="contain"
+            blendMode="plus"
+            opacity={0.88}
+          />
+        )}
+
+        {auraSkia && (
+          <SkiaImage
+            image={auraSkia}
+            x={pipX - pipH * 0.52}
+            y={pipY + pipH * 0.02}
+            width={pipH * 1.04}
+            height={pipH * 1.04}
+            fit="contain"
+            blendMode="plus"
+            opacity={0.88}
+          />
+        )}
+
+        <Group transform={charTransform} origin={vec(pipX, pipGround)}>
+          {showAnimatedPip ? (
+            <SpriteCharacter
+              sheet={PIP}
+              images={pipImages}
+              clip={pip.clip}
+              frame={pip.frame}
+              x={pipX - pipW / 2}
+              y={pipY}
+              height={pipH}
+            />
+          ) : (
+            skinSkia && (
+              <SkiaImage
+                image={skinSkia}
+                x={pipX - 60}
+                y={pipGround - 126}
+                width={120}
+                height={120}
+                fit="contain"
+              />
+            )
+          )}
+
+          {hatSkia && (
+            <SkiaImage
+              image={hatSkia}
+              x={pipX - pipW * 0.29}
+              y={pipY - pipH * 0.04}
+              width={pipW * 0.58}
+              height={pipH * 0.30}
+              fit="contain"
+            />
+          )}
+        </Group>
+      </Canvas>
+    </Pressable>
+  );
+}
 
 export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: ProfileModalProps) {
   const xp = useProfile((s) => s.xp);
   const mode = useProfile((s) => s.mode);
   const collectionCount = useProfile((s) => s.collection.length);
+  const characterName = useProfile((s) => s.characterName);
+  const setCharacterName = useProfile((s) => s.setCharacterName);
+  const musicOn = useAudioSettings((s) => s.musicOn);
+  const sfxOn = useAudioSettings((s) => s.sfxOn);
+  const toggleMusic = useAudioSettings((s) => s.toggleMusic);
+  const toggleSfx = useAudioSettings((s) => s.toggleSfx);
 
   const stardust = useEconomy((s) => s.stardust);
   const crystals = useEconomy((s) => s.crystals);
@@ -79,7 +254,8 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
   const equipAccessory = useInventory((s) => s.equipAccessory);
   const unequipAccessory = useInventory((s) => s.unequipAccessory);
 
-  const [activeSlot, setActiveSlot] = useState<WardrobeSlot>('hat');
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(characterName);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
@@ -87,17 +263,16 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
 
   // Equipped assets for preview
   const currentSkinId = equippedSkins['pip'] ?? 'pip_classic';
-  const skinImg = getSkinImage(currentSkinId) ?? getSkinImage('pip_classic');
-  const hatImg = equippedAccessories.hat ? ACCESSORY_ASSETS[equippedAccessories.hat] : null;
-  const auraImg = equippedAccessories.aura ? ACCESSORY_ASSETS[equippedAccessories.aura] : null;
-  const trailImg = equippedAccessories.trail ? ACCESSORY_ASSETS[equippedAccessories.trail] : null;
-  const exprImg = equippedAccessories.expression ? ACCESSORY_ASSETS[equippedAccessories.expression] : null;
+  const hatAsset = equippedAccessories.hat ? ACCESSORY_ASSETS[equippedAccessories.hat] ?? null : null;
+  const auraAsset = equippedAccessories.aura ? ACCESSORY_ASSETS[equippedAccessories.aura] ?? null : null;
+  const trailAsset = equippedAccessories.trail ? ACCESSORY_ASSETS[equippedAccessories.trail] ?? null : null;
 
-  const currentHatDef = ACCESSORY_CATALOG.find((a) => a.id === equippedAccessories.hat);
-  const currentAuraDef = ACCESSORY_CATALOG.find((a) => a.id === equippedAccessories.aura);
-  const currentTrailDef = ACCESSORY_CATALOG.find((a) => a.id === equippedAccessories.trail);
-  const currentExprDef = ACCESSORY_CATALOG.find((a) => a.id === equippedAccessories.expression);
-  const currentSkinDef = getSkinsForCreature('pip').find((s) => s.id === currentSkinId);
+  const handleSaveName = () => {
+    setCharacterName(nameDraft);
+    setEditingName(false);
+    sfx.play('pop', 0.5);
+    Haptics.selectionAsync();
+  };
 
   const handleEquipSlotAccessory = (slot: AccessorySlot, id: string | null) => {
     if (!id) {
@@ -125,10 +300,16 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
     }
   };
 
-  // Options for active slot
-  const currentSlotAccessories: AccessoryDef[] =
-    activeSlot !== 'skin' ? getAccessoriesBySlot(activeSlot as AccessorySlot) : [];
-  const currentCreatureSkins: SkinDef[] = activeSlot === 'skin' ? getSkinsForCreature('pip') : [];
+  // Owned assets grouped per area (only items the player actually owns)
+  const ownedAreas = ACCESSORY_AREAS.map((area) => ({
+    ...area,
+    items: getAccessoriesBySlot(area.slot).filter((a) => ownedAccessories.includes(a.id)),
+  })).filter((area) => area.items.length > 0);
+
+  const ownedPipSkins: SkinDef[] = getSkinsForCreature('pip').filter(
+    (s) => s.id !== 'pip_classic' && ownedSkins.includes(s.id),
+  );
+  const hasAnyAssets = ownedAreas.length > 0 || ownedPipSkins.length > 0;
 
   return (
     <Modal
@@ -170,265 +351,231 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
           >
             {/* ── 1. Character Showcase Stage ── */}
             <View style={styles.characterStage}>
-              <View style={styles.stageBackdrop}>
-                {/* Aura */}
-                {auraImg && (
-                  <Image source={auraImg} style={styles.stageAura} resizeMode="contain" />
-                )}
-
-                {/* Trail */}
-                {trailImg && (
-                  <Image source={trailImg} style={styles.stageTrail} resizeMode="contain" />
-                )}
-
-                {/* Mascot Body */}
-                {skinImg && (
-                  <Image source={skinImg} style={styles.stageMascot} resizeMode="contain" />
-                )}
-
-                {/* Expression on face */}
-                {exprImg && (
-                  <Image source={exprImg} style={styles.stageExpr} resizeMode="contain" />
-                )}
-
-                {/* Hat on head */}
-                {hatImg && (
-                  <Image source={hatImg} style={styles.stageHat} resizeMode="contain" />
-                )}
-              </View>
+              {visible ? (
+                <ProfileStage
+                  skinId={currentSkinId}
+                  hatAsset={hatAsset}
+                  auraAsset={auraAsset}
+                  trailAsset={trailAsset}
+                />
+              ) : (
+                <View style={styles.stageBackdrop} />
+              )}
 
               <View style={styles.characterInfo}>
-                <Text style={styles.characterName}>PIP • STAR TRAVELER</Text>
-                <View style={styles.activePillsRow}>
-                  <View style={styles.gearPill}>
-                    <Text style={styles.gearPillText}>
-                      👑 {currentHatDef?.name ?? 'No Hat'}
-                    </Text>
+                {editingName ? (
+                  <View style={styles.nameEditRow}>
+                    <TextInput
+                      style={styles.nameInput}
+                      value={nameDraft}
+                      onChangeText={setNameDraft}
+                      placeholder="Character name"
+                      placeholderTextColor="#64748B"
+                      maxLength={18}
+                      autoFocus
+                      returnKeyType="done"
+                      onSubmitEditing={handleSaveName}
+                    />
+                    <Pressable style={styles.nameSaveBtn} onPress={handleSaveName} hitSlop={8}>
+                      <Check size={16} color="#FFFFFF" />
+                    </Pressable>
                   </View>
-                  <View style={styles.gearPill}>
-                    <Text style={styles.gearPillText}>
-                      🎨 {currentSkinDef?.name ?? 'Classic Pip'}
-                    </Text>
-                  </View>
-                  {currentAuraDef && (
-                    <View style={styles.gearPill}>
-                      <Text style={styles.gearPillText}>
-                        🌀 {currentAuraDef.name}
-                      </Text>
-                    </View>
-                  )}
-                  {currentTrailDef && (
-                    <View style={styles.gearPill}>
-                      <Text style={styles.gearPillText}>
-                        ✨ {currentTrailDef.name}
-                      </Text>
-                    </View>
-                  )}
-                  {currentExprDef && (
-                    <View style={styles.gearPill}>
-                      <Text style={styles.gearPillText}>
-                        😎 {currentExprDef.name}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                ) : (
+                  <Pressable
+                    style={styles.nameDisplayBtn}
+                    onPress={() => {
+                      setNameDraft(characterName);
+                      setEditingName(true);
+                      void Haptics.selectionAsync();
+                    }}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.characterName}>{characterName}</Text>
+                    <Pencil size={13} color="#94A3B8" />
+                  </Pressable>
+                )}
               </View>
             </View>
 
-            {/* ── 2. Body Member Customizer Tabs ── */}
+            {/* ── 2. Owned Assets (1 item or none per area) ── */}
             <View style={styles.wardrobeHeader}>
-              <Text style={styles.wardrobeTitle}>✦ BODY MEMBER CUSTOMIZER ✦</Text>
+              <Text style={styles.wardrobeTitle}>✦ MY ASSETS ✦</Text>
               <Text style={styles.wardrobeSub}>
-                Change your mascot gear live. Tap an item to equip it:
+                {hasAnyAssets
+                  ? 'Tap to equip or remove (1 item per area):'
+                  : 'Your closet is empty right now'}
               </Text>
             </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.slotTabScroll}
-              contentContainerStyle={styles.slotTabContent}
-            >
-              {WARDROBE_TABS.map((tab) => {
-                const isSelected = activeSlot === tab.id;
-                return (
+            {!hasAnyAssets ? (
+              <View style={styles.emptyAssetsCard}>
+                <ShoppingBag size={26} color="#38BDF8" />
+                <Text style={styles.emptyAssetsTitle}>No assets yet</Text>
+                <Text style={styles.emptyAssetsSub}>
+                  Buy hats, skins, auras, trails, or faces in the Shop to customize Pip!
+                </Text>
+                {onOpenShop && (
                   <Pressable
-                    key={tab.id}
-                    style={[styles.slotTabBtn, isSelected && styles.slotTabBtnActive]}
+                    style={styles.goToShopBtn}
                     onPress={() => {
-                      sfx.play('whoosh', 0.4);
-                      Haptics.selectionAsync();
-                      setActiveSlot(tab.id);
+                      sfx.play('pop', 0.5);
+                      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      onOpenShop('accessories');
                     }}
                   >
-                    <tab.icon size={14} color={isSelected ? '#FFFFFF' : '#94A3B8'} />
-                    <Text style={[styles.slotTabText, isSelected && styles.slotTabTextActive]}>
-                      {tab.label}
-                    </Text>
+                    <ShoppingBag size={15} color="#0B132B" />
+                    <Text style={styles.goToShopBtnText}>GO TO SHOP</Text>
                   </Pressable>
-                );
-              })}
-            </ScrollView>
+                )}
+              </View>
+            ) : (
+              <View style={styles.ownedAreasWrap}>
+                {ownedAreas.map((area) => {
+                  const AreaIcon = area.icon;
+                  const activeId = equippedAccessories[area.slot];
+                  return (
+                    <View key={area.slot} style={styles.areaBlock}>
+                      <View style={styles.areaLabelRow}>
+                        <AreaIcon size={13} color="#94A3B8" />
+                        <Text style={styles.areaLabelText}>{area.label}</Text>
+                      </View>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.itemCardsScroll}
+                        contentContainerStyle={styles.itemCardsContent}
+                      >
+                        <Pressable
+                          style={[styles.itemCard, !activeId && styles.itemCardEquipped]}
+                          onPress={() => handleEquipSlotAccessory(area.slot, null)}
+                        >
+                          <View style={styles.itemCardThumbWrap}>
+                            <Text style={styles.noneEmoji}>🚫</Text>
+                          </View>
+                          <Text style={styles.itemCardName}>None</Text>
+                          {!activeId ? (
+                            <View style={styles.itemBtnEquipped}>
+                              <Check size={11} color="#FFFFFF" />
+                              <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
+                            </View>
+                          ) : (
+                            <View style={styles.itemBtnEquip}>
+                              <Text style={styles.itemBtnText} numberOfLines={1}>REMOVE</Text>
+                            </View>
+                          )}
+                        </Pressable>
 
-            {/* ── 3. Items Carousel for Active Slot ── */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.itemCardsScroll}
-              contentContainerStyle={styles.itemCardsContent}
-            >
-              {/* Accessory slots: 'hat', 'aura', 'trail', 'expression' */}
-              {activeSlot !== 'skin' && (
-                <>
-                  {/* None / Unequip Option */}
-                  <Pressable
-                    style={[
-                      styles.itemCard,
-                      !equippedAccessories[activeSlot as AccessorySlot] && styles.itemCardEquipped,
-                    ]}
-                    onPress={() => handleEquipSlotAccessory(activeSlot as AccessorySlot, null)}
-                  >
-                    <View style={styles.itemCardThumbWrap}>
-                      <Text style={styles.noneEmoji}>🚫</Text>
+                        {area.items.map((acc: AccessoryDef) => {
+                          const isEquipped = activeId === acc.id;
+                          const itemImg = ACCESSORY_ASSETS[acc.id];
+                          return (
+                            <Pressable
+                              key={acc.id}
+                              style={[styles.itemCard, isEquipped && styles.itemCardEquipped]}
+                              onPress={() =>
+                                handleEquipSlotAccessory(area.slot, isEquipped ? null : acc.id)
+                              }
+                            >
+                              <View style={styles.itemCardThumbWrap}>
+                                {itemImg && (
+                                  <Image source={itemImg} style={styles.itemCardThumb} resizeMode="contain" />
+                                )}
+                              </View>
+                              <Text style={styles.itemCardName} numberOfLines={2}>
+                                {acc.name}
+                              </Text>
+                              {isEquipped ? (
+                                <View style={styles.itemBtnEquipped}>
+                                  <Check size={11} color="#FFFFFF" />
+                                  <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
+                                </View>
+                              ) : (
+                                <View style={styles.itemBtnEquip}>
+                                  <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
+                                </View>
+                              )}
+                            </Pressable>
+                          );
+                        })}
+                      </ScrollView>
                     </View>
-                    <Text style={styles.itemCardName}>None</Text>
-                    {!equippedAccessories[activeSlot as AccessorySlot] ? (
-                      <View style={styles.itemBtnEquipped}>
-                        <Check size={11} color="#FFFFFF" />
-                        <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.itemBtnEquip}>
-                        <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
-                      </View>
-                    )}
-                  </Pressable>
+                  );
+                })}
 
-                  {/* Catalog accessories for this slot */}
-                  {currentSlotAccessories.map((acc) => {
-                    const isEquipped = equippedAccessories[activeSlot as AccessorySlot] === acc.id;
-                    const isOwned = ownedAccessories.includes(acc.id);
-                    const itemImg = ACCESSORY_ASSETS[acc.id];
-
-                    return (
+                {ownedPipSkins.length > 0 && (
+                  <View style={styles.areaBlock}>
+                    <View style={styles.areaLabelRow}>
+                      <Palette size={13} color="#94A3B8" />
+                      <Text style={styles.areaLabelText}>SKIN</Text>
+                    </View>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.itemCardsScroll}
+                      contentContainerStyle={styles.itemCardsContent}
+                    >
                       <Pressable
-                        key={acc.id}
-                        style={[styles.itemCard, isEquipped && styles.itemCardEquipped]}
-                        onPress={() => {
-                          if (isOwned) {
-                            handleEquipSlotAccessory(activeSlot as AccessorySlot, isEquipped ? null : acc.id);
-                          } else if (onOpenShop) {
-                            onOpenShop('accessories');
-                          }
-                        }}
+                        style={[
+                          styles.itemCard,
+                          (!equippedSkins['pip'] || equippedSkins['pip'] === 'pip_classic') && styles.itemCardEquipped,
+                        ]}
+                        onPress={() => handleEquipSkin(null)}
                       >
                         <View style={styles.itemCardThumbWrap}>
-                          {itemImg && (
-                            <Image source={itemImg} style={styles.itemCardThumb} resizeMode="contain" />
-                          )}
+                          <Image
+                            source={getSkinImage('pip_classic')}
+                            style={styles.itemCardThumb}
+                            resizeMode="contain"
+                          />
                         </View>
-                        <Text style={styles.itemCardName} numberOfLines={2}>
-                          {acc.name}
-                        </Text>
-                        {isEquipped ? (
+                        <Text style={styles.itemCardName}>Classic Pip</Text>
+                        {!equippedSkins['pip'] || equippedSkins['pip'] === 'pip_classic' ? (
                           <View style={styles.itemBtnEquipped}>
                             <Check size={11} color="#FFFFFF" />
                             <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
                           </View>
-                        ) : isOwned ? (
+                        ) : (
                           <View style={styles.itemBtnEquip}>
                             <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
                           </View>
-                        ) : (
-                          <View style={styles.itemBtnShop}>
-                            <Lock size={10} color="#FBBF24" />
-                            <Text style={styles.itemBtnShopText} numberOfLines={1}>SHOP</Text>
-                          </View>
                         )}
                       </Pressable>
-                    );
-                  })}
-                </>
-              )}
 
-              {/* Skin Slot */}
-              {activeSlot === 'skin' && (
-                <>
-                  {/* Classic Pip Skin */}
-                  <Pressable
-                    style={[
-                      styles.itemCard,
-                      (!equippedSkins['pip'] || equippedSkins['pip'] === 'pip_classic') && styles.itemCardEquipped,
-                    ]}
-                    onPress={() => handleEquipSkin(null)}
-                  >
-                    <View style={styles.itemCardThumbWrap}>
-                      <Image
-                        source={getSkinImage('pip_classic')}
-                        style={styles.itemCardThumb}
-                        resizeMode="contain"
-                      />
-                    </View>
-                    <Text style={styles.itemCardName}>Classic Pip</Text>
-                    {(!equippedSkins['pip'] || equippedSkins['pip'] === 'pip_classic') ? (
-                      <View style={styles.itemBtnEquipped}>
-                        <Check size={11} color="#FFFFFF" />
-                        <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.itemBtnEquip}>
-                        <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
-                      </View>
-                    )}
-                  </Pressable>
-
-                  {/* Pip Skin variants */}
-                  {currentCreatureSkins.map((skin) => {
-                    const isEquipped = equippedSkins['pip'] === skin.id;
-                    const isOwned = ownedSkins.includes(skin.id);
-                    const skinThumb = getSkinImage(skin.id);
-
-                    return (
-                      <Pressable
-                        key={skin.id}
-                        style={[styles.itemCard, isEquipped && styles.itemCardEquipped]}
-                        onPress={() => {
-                          if (isOwned) {
-                            handleEquipSkin(isEquipped ? null : skin.id);
-                          } else if (onOpenShop) {
-                            onOpenShop('skins');
-                          }
-                        }}
-                      >
-                        <View style={styles.itemCardThumbWrap}>
-                          {skinThumb && (
-                            <Image source={skinThumb} style={styles.itemCardThumb} resizeMode="contain" />
-                          )}
-                        </View>
-                        <Text style={styles.itemCardName} numberOfLines={2}>
-                          {skin.name}
-                        </Text>
-                        {isEquipped ? (
-                          <View style={styles.itemBtnEquipped}>
-                            <Check size={11} color="#FFFFFF" />
-                            <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
-                          </View>
-                        ) : isOwned ? (
-                          <View style={styles.itemBtnEquip}>
-                            <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
-                          </View>
-                        ) : (
-                          <View style={styles.itemBtnShop}>
-                            <Lock size={10} color="#FBBF24" />
-                            <Text style={styles.itemBtnShopText} numberOfLines={1}>SHOP</Text>
-                          </View>
-                        )}
-                      </Pressable>
-                    );
-                  })}
-                </>
-              )}
-            </ScrollView>
+                      {ownedPipSkins.map((skin) => {
+                        const isEquipped = equippedSkins['pip'] === skin.id;
+                        const skinThumb = getSkinImage(skin.id);
+                        return (
+                          <Pressable
+                            key={skin.id}
+                            style={[styles.itemCard, isEquipped && styles.itemCardEquipped]}
+                            onPress={() => handleEquipSkin(isEquipped ? null : skin.id)}
+                          >
+                            <View style={styles.itemCardThumbWrap}>
+                              {skinThumb && (
+                                <Image source={skinThumb} style={styles.itemCardThumb} resizeMode="contain" />
+                              )}
+                            </View>
+                            <Text style={styles.itemCardName} numberOfLines={2}>
+                              {skin.name}
+                            </Text>
+                            {isEquipped ? (
+                              <View style={styles.itemBtnEquipped}>
+                                <Check size={11} color="#FFFFFF" />
+                                <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
+                              </View>
+                            ) : (
+                              <View style={styles.itemBtnEquip}>
+                                <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
+                              </View>
+                            )}
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+            )}
 
             {/* ── 4. Gifts & Rewards ── */}
             <View style={styles.giftsSectionHeader}>
@@ -460,7 +607,48 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
               </Pressable>
             </View>
 
-            {/* ── 5. Stats Overview ── */}
+            {/* ── 5. Sound & Audio ── */}
+            <View style={styles.giftsSectionHeader}>
+              <Text style={styles.giftsSectionTitle}>✦ SOUND & AUDIO ✦</Text>
+            </View>
+            <View style={styles.audioRow}>
+              <Pressable
+                style={[styles.audioBtn, musicOn ? styles.audioBtnOn : styles.audioBtnOff]}
+                onPress={() => {
+                  toggleMusic();
+                  const next = useAudioSettings.getState().musicOn;
+                  applyMusicMute(!next);
+                  if (next) sfx.play('sparkle', 0.4);
+                  void Haptics.selectionAsync();
+                }}
+              >
+                <Music size={16} color={musicOn ? '#38BDF8' : '#64748B'} />
+                <Text style={[styles.audioBtnText, !musicOn && styles.audioBtnTextOff]}>
+                  {musicOn ? 'Music: ON' : 'Music: OFF'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.audioBtn, sfxOn ? styles.audioBtnOn : styles.audioBtnOff]}
+                onPress={() => {
+                  const wasOn = sfxOn;
+                  toggleSfx();
+                  if (!wasOn) sfx.play('pop', 0.5);
+                  void Haptics.selectionAsync();
+                }}
+              >
+                {sfxOn ? (
+                  <Volume2 size={16} color="#8CFFC1" />
+                ) : (
+                  <VolumeX size={16} color="#64748B" />
+                )}
+                <Text style={[styles.audioBtnText, !sfxOn && styles.audioBtnTextOff]}>
+                  {sfxOn ? 'Effects: ON' : 'Effects: OFF'}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* ── 6. Stats Overview ── */}
             <View style={styles.statsGrid}>
               <View style={styles.statBox}>
                 <Sparkles size={16} color="#FBBF24" />
@@ -607,44 +795,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
-  stageMascot: {
-    width: 120,
-    height: 120,
-    alignSelf: 'center',
-    zIndex: 5,
-  },
-  stageHat: {
-    position: 'absolute',
-    top: 8,
-    width: 84,
-    height: 52,
-    alignSelf: 'center',
-    zIndex: 10,
-  },
-  stageExpr: {
-    position: 'absolute',
-    top: 68,
-    width: 64,
-    height: 32,
-    alignSelf: 'center',
-    zIndex: 8,
-  },
-  stageAura: {
-    position: 'absolute',
+  stageCanvas: {
     width: 180,
     height: 180,
-    alignSelf: 'center',
-    opacity: 0.88,
-    zIndex: 1,
-  },
-  stageTrail: {
-    position: 'absolute',
-    bottom: 8,
-    width: 140,
-    height: 46,
-    alignSelf: 'center',
-    opacity: 0.88,
-    zIndex: 2,
   },
   characterInfo: {
     alignItems: 'center',
@@ -653,29 +806,45 @@ const styles = StyleSheet.create({
   },
   characterName: {
     color: '#F8FAFC',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
-  activePillsRow: {
+  nameDisplayBtn: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    justifyContent: 'center',
-    marginTop: 8,
+    alignItems: 'center',
+    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  gearPill: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    paddingHorizontal: 9,
-    paddingVertical: 3.5,
+  nameEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  nameInput: {
+    minWidth: 140,
+    maxWidth: 200,
+    height: 36,
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    borderWidth: 1.5,
+    borderColor: '#38BDF8',
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  gearPillText: {
-    color: '#FDE047',
-    fontSize: 11,
+    paddingHorizontal: 10,
+    color: '#F8FAFC',
+    fontSize: 14,
     fontWeight: '800',
+    textAlign: 'center',
+  },
+  nameSaveBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Wardrobe Body Customizer Header
@@ -697,43 +866,68 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Slot Navigation Tabs
-  slotTabScroll: {
-    maxHeight: 46,
-    marginBottom: 12,
-  },
-  slotTabContent: {
-    gap: 8,
+  // Empty & Owned Asset Areas
+  emptyAssetsCard: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+    padding: 18,
     alignItems: 'center',
+    gap: 8,
+    marginBottom: 18,
   },
-  slotTabBtn: {
+  emptyAssetsTitle: {
+    color: '#F8FAFC',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  emptyAssetsSub: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 17,
+  },
+  goToShopBtn: {
+    marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: '#38BDF8',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  goToShopBtnText: {
+    color: '#0B132B',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+  ownedAreasWrap: {
+    gap: 6,
+    marginBottom: 8,
+  },
+  areaBlock: {
+    marginBottom: 4,
+  },
+  areaLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1E293B',
-    borderWidth: 1.2,
-    borderColor: '#334155',
+    marginBottom: 6,
   },
-  slotTabBtnActive: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#60A5FA',
-  },
-  slotTabText: {
-    color: '#94A3B8',
+  areaLabelText: {
+    color: '#CBD5E1',
     fontSize: 11,
     fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  slotTabTextActive: {
-    color: '#FFFFFF',
+    letterSpacing: 0.8,
   },
 
   // Item Cards Carousel
   itemCardsScroll: {
-    marginBottom: 18,
+    marginBottom: 10,
   },
   itemCardsContent: {
     gap: 10,
@@ -934,5 +1128,38 @@ const styles = StyleSheet.create({
     color: '#38BDF8',
     fontSize: 12,
     fontWeight: '800',
+  },
+  audioRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+    width: '100%',
+  },
+  audioBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 8,
+  },
+  audioBtnOn: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+  },
+  audioBtnOff: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  audioBtnText: {
+    color: '#F8FAFC',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  audioBtnTextOff: {
+    color: '#94A3B8',
   },
 });

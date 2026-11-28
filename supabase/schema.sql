@@ -285,8 +285,8 @@ drop policy if exists "reward_config read all" on public.reward_config;
 create policy "reward_config read all" on public.reward_config for select using (true);
 
 insert into public.reward_config (key, asset_id, amount) values
-  ('referral_referrer', 'crystals', 50),
-  ('referral_referee', 'crystals', 50)
+  ('referral_referrer', 'crystals', 500),
+  ('referral_referee', 'crystals', 500)
 on conflict (key) do nothing;
 
 -- 8.9 Server Grants Ledger (Single reward reconciliation path for coupons and referrals)

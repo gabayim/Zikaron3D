@@ -44,7 +44,7 @@ export function FriendGiftBubble() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       sfx.play('chime');
       setTimeout(() => sfx.play('sparkle'), 200);
-      setFeedback('Gift claimed! +50 Crystals');
+      setFeedback('Gift claimed! +500 Crystals');
       setTimeout(() => {
         void dismissPastePrompt();
       }, 1800);
@@ -84,7 +84,7 @@ export function FriendGiftBubble() {
         <View style={styles.textCol}>
           <Text style={styles.title}>Got a link from a friend?</Text>
           <Text style={styles.subtitle}>
-            {feedback ?? 'Paste to claim your 50 Crystal welcome gift!'}
+            {feedback ?? 'Paste to claim your 500 Crystal welcome gift!'}
           </Text>
         </View>
 

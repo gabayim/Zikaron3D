@@ -17,7 +17,7 @@ interface AudioSettingsState {
 }
 
 export const useAudioSettings = create<AudioSettingsState>((set, get) => ({
-  musicOn: kv?.getBoolean('musicOn') ?? true,
+  musicOn: kv?.getBoolean('musicOn') ?? false,
   sfxOn: kv?.getBoolean('sfxOn') ?? true,
   reduceMotion: kv?.getBoolean('reduceMotion') ?? false,
   setMusicOn: (musicOn) => {

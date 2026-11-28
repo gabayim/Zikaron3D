@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useModeCycle } from '../ui/useModeCycle';
 import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Gem, Sparkles } from 'lucide-react-native';
+import { Gem, Map, Sparkles } from 'lucide-react-native';
 import { useEconomy } from '../store/economy';
 import { useInventory } from '../store/inventory';
 import { ACCESSORY_ASSETS } from '../data/shopAssets';
@@ -27,9 +26,10 @@ import {
   PaintStyle,
   type SkImage,
 } from '@shopify/react-native-skia';
-import {
+import Animated, {
   SensorType,
   useAnimatedSensor,
+  useAnimatedStyle,
   useDerivedValue,
   useFrameCallback,
   useSharedValue,
@@ -40,7 +40,7 @@ import {
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { GestureDetector, useExclusiveGestures, useLongPressGesture, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
+import { GestureDetector, useExclusiveGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { PIP, getCharacter } from '../render/sprites';
 import { SpriteCharacter, useClipImages, useSpritePlayer } from '../render/SpriteCharacter';
@@ -52,10 +52,29 @@ import { useProfile, type GameId } from '../store/profile';
 import { levelForXp, levelProgress } from '../store/progression';
 import { WORLDS, type WorldDef, type WorldId } from '../worlds';
 
-/** Character shown standing in each world's portal (same order as WORLDS). */
-const FEATURED = ['fuzz', 'frost', 'zap', 'coral', 'moss', 'bolt', 'luna'];
+/** Character shown standing in each world's portal. */
+const FEATURED_BY_WORLD: Record<WorldId, string> = {
+  meadow: 'fuzz',
+  crystal: 'frost',
+  deep_sea: 'coral',
+  candy: 'zap',
+  grove: 'moss',
+  circuit: 'bolt',
+  summit: 'luna',
+};
+const FEATURED = WORLDS.map((w) => FEATURED_BY_WORLD[w.id]);
 const ACCENTS = WORLDS.map((w) => w.accent);
 const MUSIC_SOURCES = WORLDS.map((w) => w.music);
+const GAME_LABEL: Record<GameId, string> = {
+  burrows: 'CRITTER BURROWS',
+  prisms: 'PRISM CHORUS',
+  shells: 'SHELL SHUFFLE',
+  stars: 'STAR CATCHER',
+  vines: 'VINE FLOW',
+  beats: 'BEAT CIRCUIT',
+  peaks: 'ECHO PEAKS',
+};
+
 const MASCOT_CLIPS = ['idle', 'hop', 'wave', 'celebrate'] as const;
 const FEATURED_CLIPS = ['idle'] as const;
 const SPRING = { damping: 17, stiffness: 150, mass: 0.9 };
@@ -249,30 +268,28 @@ function Portal({ index, world, still, featuredId, geo, pos, reveal, warp, time,
 interface HubProps {
   onEnter: (world: WorldId) => void;
   onDaily: () => void;
-  onCollection: () => void;
-  onSettings: () => void;
-  onLeaderboard: () => void;
+  onCollection?: () => void;
+  onSettings?: () => void;
+  onLeaderboard?: () => void;
   onShop: () => void;
   onSeasonPass: () => void;
   onLevelSelect?: (game: GameId) => void;
   onProfile?: () => void;
+  onInvite?: () => void;
 }
 
 export default function Hub({
   onEnter,
   onDaily,
-  onCollection,
-  onSettings,
-  onLeaderboard,
   onShop,
   onSeasonPass,
   onLevelSelect,
   onProfile,
+  onInvite,
 }: HubProps) {
   const { width: W, height: H } = useWindowDimensions();
   const [skipBoot] = useState(() => hasBooted);
   const xp = useProfile((state) => state.xp);
-  const collectionSize = useProfile((state) => state.collection.length);
   const dailyComplete = useProfile((state) => state.dailyCompleted.length > 0);
   const xpRing = levelProgress(xp);
   const level = levelForXp(xp);
@@ -289,7 +306,6 @@ export default function Hub({
     lockedRef.current = lockedFlags;
   });
   const celebrated = useProfile((state) => state.celebratedWorlds);
-  const requestCycle = useModeCycle();
 
   // ---- layout -------------------------------------------------------------
   const geo = useMemo<Geo>(() => {
@@ -300,13 +316,10 @@ export default function Hub({
   const hud = useMemo(
     () => ({
       avatar: { x: 52, y: 112 },
-      pass: { x: W - 232, y: 112 },
-      cup: { x: W - 184, y: 112 },
-      shop: { x: W - 136, y: 112 },
-      star: { x: W - 88, y: 112 },
-      gear: { x: W - 40, y: 112 },
-      levels: { x: W * 0.73 - 62, y: H * 0.865, r: 24 },
-      play: { x: W * 0.73, y: H * 0.865, r: 40 },
+      qr: { x: W - 144, y: 112 },
+      pass: { x: W - 92, y: 112 },
+      shop: { x: W - 40, y: 112 },
+      play: { x: W * 0.8, y: H * 0.865, r: 38 },
       dotsY: H * 0.7,
       pipX: W * 0.22,
       pipGround: H * 0.95,
@@ -334,7 +347,6 @@ export default function Hub({
   const hatImg = useImage(equippedAccessories.hat ? ACCESSORY_ASSETS[equippedAccessories.hat] : null);
   const auraImg = useImage(equippedAccessories.aura ? ACCESSORY_ASSETS[equippedAccessories.aura] : null);
   const trailImg = useImage(equippedAccessories.trail ? ACCESSORY_ASSETS[equippedAccessories.trail] : null);
-  const exprImg = useImage(equippedAccessories.expression ? ACCESSORY_ASSETS[equippedAccessories.expression] : null);
 
   // ---- state --------------------------------------------------------------
   const [focus, setFocus] = useState(0);
@@ -576,59 +588,26 @@ export default function Hub({
       }
       const near = (p: { x: number; y: number }, r: number) => Math.hypot(x - p.x, y - p.y) < r;
 
-      // HUD: avatar ring is daily beacon; pass is season pass; cup is leaderboard; shop is cosmetics; star is collection; gear is mode.
-      if (
-        near(hud.avatar, 34) ||
-        near(hud.pass, 24) ||
-        near(hud.cup, 24) ||
-        near(hud.shop, 24) ||
-        near(hud.star, 24) ||
-        near(hud.gear, 24)
-      ) {
+      // HUD: avatar ring opens profile/daily; qr opens friend invite; pass is season pass; shop is cosmetics/worlds/currency.
+      if (near(hud.avatar, 34) || near(hud.qr, 24) || near(hud.pass, 24) || near(hud.shop, 24)) {
         const onAvatar = near(hud.avatar, 34);
+        const onQr = near(hud.qr, 26);
         const onPass = near(hud.pass, 26);
-        const onCup = near(hud.cup, 26);
-        const onShopHit = near(hud.shop, 26);
-        const onStar = near(hud.star, 26);
-        const p = onAvatar
-          ? hud.avatar
-          : onPass
-          ? hud.pass
-          : onCup
-          ? hud.cup
-          : onShopHit
-          ? hud.shop
-          : onStar
-          ? hud.star
-          : hud.gear;
+        const p = onAvatar ? hud.avatar : onQr ? hud.qr : onPass ? hud.pass : hud.shop;
         emit({ x: p.x, y: p.y, kind: ParticleKind.Ring, count: 2 });
         emit({ x: p.x, y: p.y, kind: ParticleKind.Sparkle, count: 10 });
         sfx.play('sparkle', 0.5);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        if (onPass) {
+        if (onQr) {
+          onInvite?.();
+        } else if (onPass) {
           onSeasonPass();
-        } else if (onCup) {
-          onLeaderboard();
-        } else if (onShopHit) {
-          onShop();
-        } else if (onStar) {
-          onCollection();
         } else if (onAvatar) {
           if (onProfile) onProfile();
           else onDaily();
         } else {
-          requestCycle();
+          onShop();
         }
-        return;
-      }
-
-      // Level select button -> open 30-level map for current world's game
-      if (onLevelSelect && near(hud.levels, 28)) {
-        emit({ x: hud.levels.x, y: hud.levels.y, kind: ParticleKind.Ring, count: 1 });
-        emit({ x: hud.levels.x, y: hud.levels.y, kind: ParticleKind.Sparkle, count: 8 });
-        sfx.play('whoosh', 0.6);
-        Haptics.selectionAsync();
-        onLevelSelect((WORLDS[focusRef.current] ?? WORLDS[0]).game);
         return;
       }
 
@@ -663,7 +642,7 @@ export default function Hub({
       emit({ x, y, kind: ParticleKind.Sparkle, count: 8 });
       sfx.play('sparkle', 0.35);
     },
-    [hud, geo, emit, enter, goTo, onCollection, onDaily, onLeaderboard, onShop, onSeasonPass, onLevelSelect, onProfile, pip, squash, skipIntro, playPulse, pipW, pipY, requestCycle],
+    [hud, geo, emit, enter, goTo, onDaily, onShop, onSeasonPass, onProfile, onInvite, pip, squash, skipIntro, playPulse, pipW, pipY],
   );
 
   const pan = usePanGesture({
@@ -691,14 +670,7 @@ export default function Hub({
     },
   });
   const tap = useTapGesture({ runOnJS: true, maxDuration: 400, onActivate: (e) => onTap(e.x, e.y) });
-  const gearHold = useLongPressGesture({
-    runOnJS: true,
-    minDuration: 480,
-    onActivate: (e) => {
-      if (Math.hypot(e.x - hud.gear.x, e.y - hud.gear.y) < 34) onSettings();
-    },
-  });
-  const gesture = useExclusiveGestures(pan, gearHold, tap);
+  const gesture = useExclusiveGestures(pan, tap);
 
   // ---- derived render values ----------------------------------------------
   const atmosphereUniforms = useDerivedValue(() => ({ res: [W, H], time: time.get() }));
@@ -758,21 +730,17 @@ export default function Hub({
       c.drawArc(oval, -90, 360 * xpRing, false, ring);
       drawIcon(c, 'avatar', av.x, av.y + 1, 15, '#FFFFFF', a * 0.9);
 
-      // Collection + settings.
+      // QR share + season pass + shop.
       const btn = Skia.Paint();
       btn.setAntiAlias(true);
       btn.setColor(Skia.Color('#1A0F3D'));
       btn.setAlphaf(0.6 * a);
+      c.drawCircle(hud.qr.x, hud.qr.y, 22, btn);
       c.drawCircle(hud.pass.x, hud.pass.y, 22, btn);
-      c.drawCircle(hud.cup.x, hud.cup.y, 22, btn);
       c.drawCircle(hud.shop.x, hud.shop.y, 22, btn);
-      c.drawCircle(hud.star.x, hud.star.y, 24, btn);
-      c.drawCircle(hud.gear.x, hud.gear.y, 24, btn);
+      drawIcon(c, 'qr', hud.qr.x, hud.qr.y, 11, '#FBBF24', a * 0.95);
       drawIcon(c, 'pass', hud.pass.x, hud.pass.y, 11, '#E879F9', a * 0.95);
-      drawIcon(c, 'cup', hud.cup.x, hud.cup.y, 11, '#FFD36E', a * 0.95);
       drawIcon(c, 'bag', hud.shop.x, hud.shop.y, 11, '#38BDF8', a * 0.95);
-      drawIcon(c, 'star', hud.star.x, hud.star.y, 13, collectionSize >= 9 ? '#8CFFC1' : '#FFD36E', a);
-      drawIcon(c, 'gear', hud.gear.x, hud.gear.y, 12, '#FFFFFF', a * 0.9);
 
       // Carousel dots.
       const dot = Skia.Paint();
@@ -780,16 +748,11 @@ export default function Hub({
       for (let i = 0; i < WORLDS.length; i++) {
         const f = Math.max(0, 1 - Math.abs(pos.get() - i));
         const w = 8 + f * 22;
-        const x = W / 2 + (i - 1) * 30;
+        const x = W / 2 + (i - (WORLDS.length - 1) / 2) * 26;
         dot.setColor(Skia.Color(f > 0.5 ? ACCENTS[i] : '#FFFFFF'));
         dot.setAlphaf((0.3 + 0.7 * f) * a);
         c.drawRRect(Skia.RRectXY(Skia.XYWHRect(x - w / 2, hud.dotsY - 4, w, 8), 4, 4), dot);
       }
-
-      // Levels button.
-      const lb = hud.levels;
-      c.drawCircle(lb.x, lb.y, lb.r, btn);
-      drawIcon(c, 'levels', lb.x, lb.y, 11, '#FFFFFF', a * 0.92);
 
       // Play button.
       const pb = hud.play;
@@ -864,6 +827,13 @@ export default function Hub({
     return Math.max(boot, flashPulse.get());
   });
   const cover = useDerivedValue(() => 1 - reveal.get());
+  const worldLabelStyle = useAnimatedStyle(() => {
+    const a = Math.max(0, Math.min(1, (reveal.get() - 0.65) / 0.35)) * (1 - warp.get());
+    return { opacity: a };
+  });
+  const focusedWorld = WORLDS[focus] ?? WORLDS[0];
+  const focusedWorldTitle = `WORLD ${focus + 1} • ${focusedWorld.id.replace('_', ' ').toUpperCase()}`;
+  const focusedGameTitle = GAME_LABEL[focusedWorld.game];
 
   return (
     <View style={styles.root}>
@@ -979,18 +949,6 @@ export default function Hub({
               <Group transform={pipTransform} origin={vec(hud.pipX, hud.pipGround)}>
                 <SpriteCharacter sheet={PIP} images={pipImages} clip={pip.clip} frame={pip.frame} x={hud.pipX - pipW / 2} y={pipY} height={hud.pipH} />
 
-                {/* Equipped Expression on Pip's face */}
-                {exprImg && (
-                  <Image
-                    image={exprImg}
-                    x={hud.pipX - pipW * 0.22}
-                    y={pipY + hud.pipH * 0.31}
-                    width={pipW * 0.44}
-                    height={hud.pipH * 0.18}
-                    fit="contain"
-                  />
-                )}
-
                 {/* Equipped Hat / Crown perched on Pip's head */}
                 {hatImg && (
                   <Image
@@ -1019,6 +977,45 @@ export default function Hub({
           <Rect x={0} y={0} width={W} height={H} color="white" opacity={bootFlash} blendMode="plus" />
         </Canvas>
       </GestureDetector>
+
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          hubStyles.worldBadgeWrap,
+          { top: hud.dotsY + 14 },
+          worldLabelStyle,
+        ]}
+      >
+        <View style={[hubStyles.worldBadge, { borderColor: focusedWorld.accent }]}>
+          <Text style={hubStyles.worldBadgeTitle}>{focusedWorldTitle}</Text>
+          <Text style={[hubStyles.worldBadgeSub, { color: focusedWorld.accent }]}>{focusedGameTitle}</Text>
+        </View>
+      </Animated.View>
+
+      {onLevelSelect && (
+        <Animated.View
+          pointerEvents="box-none"
+          style={[
+            hubStyles.levelsBtnWrap,
+            { top: hud.play.y - 22 },
+            worldLabelStyle,
+          ]}
+        >
+          <Pressable
+            style={[hubStyles.levelsBtn, { borderColor: focusedWorld.accent }]}
+            onPress={() => {
+              emit({ x: W * 0.5, y: hud.play.y, kind: ParticleKind.Ring, count: 1 });
+              emit({ x: W * 0.5, y: hud.play.y, kind: ParticleKind.Sparkle, count: 8 });
+              sfx.play('whoosh', 0.6);
+              Haptics.selectionAsync();
+              onLevelSelect(focusedWorld.game);
+            }}
+          >
+            <Map size={16} color={focusedWorld.accent} />
+            <Text style={hubStyles.levelsBtnText}>LEVELS</Text>
+          </Pressable>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -1099,5 +1096,54 @@ const hubStyles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  worldBadgeWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  worldBadge: {
+    backgroundColor: 'rgba(15, 10, 40, 0.75)',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
+    alignItems: 'center',
+  },
+  worldBadgeTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+  },
+  worldBadgeSub: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    marginTop: 1,
+  },
+  levelsBtnWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  levelsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 22,
+    backgroundColor: 'rgba(26, 15, 61, 0.85)',
+    borderWidth: 1.5,
+  },
+  levelsBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.8,
   },
 });

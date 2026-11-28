@@ -30,7 +30,7 @@ const MOCK_LEAGUE: Omit<BoardRow, 'rank' | 'mine'>[] = [
   { score: 1780, glyph: 1, skinId: 'bloop_crystal', accessoryId: 'hat_flowercrown', prestige: 1 },
   { score: 1420, glyph: 5, skinId: 'grumble_obsidian', accessoryId: 'aura_icecrystals', prestige: 0 },
   { score: 1100, glyph: 2, skinId: 'fuzz_velvet', accessoryId: 'aura_hearts', prestige: 0 },
-  { score: 850, glyph: 3, skinId: 'nutty_bronze', accessoryId: 'expr_sunglasses', prestige: 0 },
+  { score: 850, glyph: 3, skinId: 'nutty_bronze', accessoryId: 'aura_fireflies', prestige: 0 },
   { score: 620, glyph: 1, skinId: 'bloop_lime', accessoryId: undefined, prestige: 0 },
 ];
 

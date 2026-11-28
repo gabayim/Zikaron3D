@@ -15,8 +15,8 @@ import { useEconomy } from '../store/economy';
 import {
   BEAT_LEVELS,
   BURROWS_LEVELS,
-  ORB_LEVELS,
   PEAK_LEVELS,
+  PRISM_LEVELS,
   SHELL_LEVELS,
   STAR_LEVELS,
   VINE_LEVELS,
@@ -32,7 +32,7 @@ interface LevelSelectProps {
 
 const GAME_TITLES: Record<GameId, string> = {
   burrows: 'CRITTER BURROWS',
-  orbs: 'ORB MERGE',
+  prisms: 'PRISM CHORUS',
   stars: 'STAR CATCHER',
   shells: 'SHELL SHUFFLE',
   vines: 'VINE FLOW',
@@ -42,7 +42,7 @@ const GAME_TITLES: Record<GameId, string> = {
 
 const GAME_COLORS: Record<GameId, string> = {
   burrows: '#10B981',
-  orbs: '#06B6D4',
+  prisms: '#7FE8FF',
   stars: '#F59E0B',
   shells: '#FF7F9F',
   vines: '#7FBF5F',
@@ -52,7 +52,7 @@ const GAME_COLORS: Record<GameId, string> = {
 
 const GAME_LEVELS = {
   burrows: BURROWS_LEVELS,
-  orbs: ORB_LEVELS,
+  prisms: PRISM_LEVELS,
   stars: STAR_LEVELS,
   shells: SHELL_LEVELS,
   vines: VINE_LEVELS,
@@ -70,8 +70,8 @@ export default function LevelSelect({
   const cleared = useProfile((s) =>
     game === 'burrows'
       ? s.burrowsLevel
-      : game === 'orbs'
-        ? s.orbLevel
+      : game === 'prisms'
+        ? s.prismsLevel
         : game === 'stars'
           ? s.starLevel
           : game === 'shells'

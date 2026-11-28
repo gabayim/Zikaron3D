@@ -10,7 +10,7 @@
  *  - 0 TypeScript errors, 0 ESLint warnings.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -69,11 +69,11 @@ import {
 export type Tab = 'skins' | 'accessories' | 'stardust' | 'crystals' | 'worlds';
 
 const TABS: { id: Tab; icon: React.FC<{ size: number; color: string }>; label: string; activeColor: string }[] = [
-  { id: 'skins',       icon: Palette,  label: 'SKINS',    activeColor: '#38BDF8' },
   { id: 'accessories', icon: Crown,    label: 'GEAR',     activeColor: '#F59E0B' },
   { id: 'stardust',    icon: Sparkles, label: 'STARDUST', activeColor: '#FBBF24' },
   { id: 'crystals',    icon: Gem,      label: 'GEMS',     activeColor: '#EC4899' },
   { id: 'worlds',      icon: Globe,    label: 'WORLDS',   activeColor: '#10B981' },
+  { id: 'skins',       icon: Palette,  label: 'SKINS',    activeColor: '#38BDF8' },
 ];
 
 export interface StardustPack {
@@ -242,7 +242,7 @@ export interface ShopProps {
 }
 
 export default function Shop({ onBack, initialTab }: ShopProps) {
-  const [tab, setTab] = useState<Tab>(initialTab ?? 'skins');
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'accessories');
   const [selectedCreature, setSelectedCreature] = useState<CreatureId>('pip');
   const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
   const [needCrystalsAlert, setNeedCrystalsAlert] = useState(false);
@@ -275,10 +275,27 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
   const unlockedWorlds = useProfile((s) => s.unlockedWorlds);
   const unlockWorld    = useProfile((s) => s.unlockWorld);
 
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    },
+    [],
+  );
+
   const handleTabPress = useCallback((t: Tab) => {
     sfx.play('whoosh', 0.4);
     Haptics.selectionAsync();
     setTab(t);
+  }, []);
+
+  const redirectInsufficient = useCallback((target: 'stardust' | 'crystals') => {
+    sfx.play('sad', 0.5);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    redirectTimer.current = setTimeout(() => {
+      setTab(target);
+    }, 220);
   }, []);
 
   const handleBuyStardustPack = useCallback(
@@ -324,8 +341,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           sfx.play('chime', 0.8);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          redirectInsufficient('stardust');
         }
       } else if (skin.priceCrystals != null) {
         const ok = spendCrystals(skin.priceCrystals);
@@ -335,12 +351,11 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           sfx.play('chime', 0.8);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          redirectInsufficient('crystals');
         }
       }
     },
-    [ownedSkins, equippedSkins, spendStardust, spendCrystals, addSkin, equipSkin, unequipSkin],
+    [ownedSkins, equippedSkins, spendStardust, spendCrystals, addSkin, equipSkin, unequipSkin, redirectInsufficient],
   );
 
   // ── Accessory buy/equip ─────────────────────────────────────────────────
@@ -369,8 +384,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           sfx.play('chime', 0.8);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          redirectInsufficient('stardust');
         }
       } else if (acc.priceCrystals != null) {
         const ok = spendCrystals(acc.priceCrystals);
@@ -380,12 +394,11 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           sfx.play('chime', 0.8);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          redirectInsufficient('crystals');
         }
       }
     },
-    [ownedAccessories, equippedAccessories, spendStardust, spendCrystals, addAccessory, equipAccessory, unequipAccessory],
+    [ownedAccessories, equippedAccessories, spendStardust, spendCrystals, addAccessory, equipAccessory, unequipAccessory, redirectInsufficient],
   );
 
   // ── Real money purchases ──
@@ -437,8 +450,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           sfx.play('sparkle', 0.8);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          redirectInsufficient('stardust');
         }
       } else if (currency === 'crystals' && world.priceCrystals != null) {
         const ok = spendCrystals(world.priceCrystals);
@@ -448,12 +460,11 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           sfx.play('sparkle', 0.8);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else {
-          sfx.play('sad', 0.5);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          redirectInsufficient('crystals');
         }
       }
     },
-    [spendStardust, spendCrystals, unlockWorld],
+    [spendStardust, spendCrystals, unlockWorld, redirectInsufficient],
   );
 
   const currentSkins       = useMemo(() => getSkinsForCreature(selectedCreature), [selectedCreature]);
@@ -690,10 +701,10 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
               style={styles.slotScrollView}
               contentContainerStyle={styles.slotContent}
             >
-              {(['hat', 'trail', 'aura', 'expression'] as AccessorySlot[]).map((slot) => {
+              {(['hat', 'trail', 'aura'] as AccessorySlot[]).map((slot) => {
                 const isSelected = selectedSlot === slot;
-                const emoji = slot === 'hat' ? '🎩' : slot === 'trail' ? '✨' : slot === 'aura' ? '🌀' : '😎';
-                const label = slot === 'expression' ? 'EXPRESSION' : slot.toUpperCase();
+                const emoji = slot === 'hat' ? '🎩' : slot === 'trail' ? '✨' : '🌀';
+                const label = slot.toUpperCase();
                 return (
                   <Pressable
                     key={slot}

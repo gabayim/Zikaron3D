@@ -63,66 +63,66 @@ export function getBurrowsLevel(level: number): BurrowsLevelConfig {
   return BURROWS_LEVELS[index];
 }
 
-// ─── ORB MERGE ───────────────────────────────────────────────
+// ─── PRISM CHORUS ────────────────────────────────────────────
 
-export type OrbMechanic =
-  | 'dropLimit'
-  | 'frozen'
-  | 'narrowBowl'
-  | 'bomb'
-  | 'dualTarget'
-  | 'tripleTarget'
-  | 'speed'
-  | 'rainbow';
+export type PrismMechanic =
+  | 'double'
+  | 'grow'
+  | 'chord'
+  | 'mirror'
+  | 'ghost'
+  | 'rotate'
+  | 'swap'
+  | 'tempo';
 
-export interface OrbLevelConfig {
+export interface PrismLevelConfig {
   level: number;
-  targetTier: number;
-  targetCount: number;
-  maxDrops: number | null;
-  bowlWidthPercent: number;
-  mechanics: OrbMechanic[];
-  frozenCount: number;
+  crystals: number;
+  waves: number;
+  startLength: number;
+  cueStepMs: number;
+  echoTimePerStepMs: number | null;
+  mechanics: PrismMechanic[];
   stardustReward: number;
   firstClearBonus: number;
 }
 
-export const ORB_LEVELS: OrbLevelConfig[] = [
-  { level: 1, targetTier: 1, targetCount: 1, maxDrops: null, bowlWidthPercent: 100, mechanics: [], frozenCount: 0, stardustReward: 5, firstClearBonus: 15 },
-  { level: 2, targetTier: 2, targetCount: 1, maxDrops: null, bowlWidthPercent: 100, mechanics: [], frozenCount: 0, stardustReward: 6, firstClearBonus: 18 },
-  { level: 3, targetTier: 3, targetCount: 1, maxDrops: null, bowlWidthPercent: 100, mechanics: [], frozenCount: 0, stardustReward: 7, firstClearBonus: 21 },
-  { level: 4, targetTier: 4, targetCount: 1, maxDrops: 30, bowlWidthPercent: 100, mechanics: ['dropLimit'], frozenCount: 0, stardustReward: 10, firstClearBonus: 30 },
-  { level: 5, targetTier: 5, targetCount: 1, maxDrops: 35, bowlWidthPercent: 100, mechanics: ['dropLimit'], frozenCount: 0, stardustReward: 12, firstClearBonus: 36 },
-  { level: 6, targetTier: 5, targetCount: 1, maxDrops: 25, bowlWidthPercent: 100, mechanics: ['dropLimit'], frozenCount: 0, stardustReward: 15, firstClearBonus: 45 },
-  { level: 7, targetTier: 6, targetCount: 1, maxDrops: 40, bowlWidthPercent: 100, mechanics: ['dropLimit'], frozenCount: 0, stardustReward: 18, firstClearBonus: 54 },
-  { level: 8, targetTier: 6, targetCount: 1, maxDrops: 30, bowlWidthPercent: 100, mechanics: ['dropLimit', 'frozen'], frozenCount: 1, stardustReward: 20, firstClearBonus: 60 },
-  { level: 9, targetTier: 7, targetCount: 1, maxDrops: 45, bowlWidthPercent: 100, mechanics: ['dropLimit'], frozenCount: 0, stardustReward: 22, firstClearBonus: 66 },
-  { level: 10, targetTier: 7, targetCount: 1, maxDrops: 35, bowlWidthPercent: 100, mechanics: ['dropLimit', 'frozen'], frozenCount: 2, stardustReward: 25, firstClearBonus: 75 },
-  { level: 11, targetTier: 7, targetCount: 1, maxDrops: 30, bowlWidthPercent: 90, mechanics: ['dropLimit', 'narrowBowl'], frozenCount: 0, stardustReward: 28, firstClearBonus: 84 },
-  { level: 12, targetTier: 8, targetCount: 1, maxDrops: 50, bowlWidthPercent: 100, mechanics: ['dropLimit'], frozenCount: 0, stardustReward: 35, firstClearBonus: 105 },
-  { level: 13, targetTier: 8, targetCount: 1, maxDrops: 40, bowlWidthPercent: 100, mechanics: ['dropLimit', 'frozen'], frozenCount: 2, stardustReward: 38, firstClearBonus: 114 },
-  { level: 14, targetTier: 8, targetCount: 1, maxDrops: 35, bowlWidthPercent: 90, mechanics: ['dropLimit', 'narrowBowl', 'frozen'], frozenCount: 1, stardustReward: 40, firstClearBonus: 120 },
-  { level: 15, targetTier: 8, targetCount: 1, maxDrops: 30, bowlWidthPercent: 90, mechanics: ['dropLimit', 'narrowBowl', 'bomb'], frozenCount: 0, stardustReward: 45, firstClearBonus: 135 },
-  { level: 16, targetTier: 5, targetCount: 2, maxDrops: 40, bowlWidthPercent: 100, mechanics: ['dropLimit', 'dualTarget'], frozenCount: 0, stardustReward: 48, firstClearBonus: 144 },
-  { level: 17, targetTier: 6, targetCount: 2, maxDrops: 45, bowlWidthPercent: 100, mechanics: ['dropLimit', 'dualTarget'], frozenCount: 0, stardustReward: 50, firstClearBonus: 150 },
-  { level: 18, targetTier: 7, targetCount: 2, maxDrops: 50, bowlWidthPercent: 90, mechanics: ['dropLimit', 'dualTarget', 'narrowBowl'], frozenCount: 0, stardustReward: 55, firstClearBonus: 165 },
-  { level: 19, targetTier: 8, targetCount: 2, maxDrops: 60, bowlWidthPercent: 100, mechanics: ['dropLimit', 'dualTarget'], frozenCount: 0, stardustReward: 60, firstClearBonus: 180 },
-  { level: 20, targetTier: 8, targetCount: 1, maxDrops: 45, bowlWidthPercent: 80, mechanics: ['dropLimit', 'narrowBowl'], frozenCount: 0, stardustReward: 65, firstClearBonus: 195 },
-  { level: 21, targetTier: 6, targetCount: 1, maxDrops: 20, bowlWidthPercent: 100, mechanics: ['dropLimit', 'speed'], frozenCount: 0, stardustReward: 55, firstClearBonus: 165 },
-  { level: 22, targetTier: 7, targetCount: 1, maxDrops: 25, bowlWidthPercent: 100, mechanics: ['dropLimit', 'speed', 'frozen', 'bomb'], frozenCount: 2, stardustReward: 60, firstClearBonus: 180 },
-  { level: 23, targetTier: 8, targetCount: 1, maxDrops: 30, bowlWidthPercent: 85, mechanics: ['dropLimit', 'narrowBowl', 'rainbow'], frozenCount: 0, stardustReward: 65, firstClearBonus: 195 },
-  { level: 24, targetTier: 8, targetCount: 2, maxDrops: 50, bowlWidthPercent: 80, mechanics: ['dropLimit', 'dualTarget', 'narrowBowl', 'speed'], frozenCount: 0, stardustReward: 70, firstClearBonus: 210 },
-  { level: 25, targetTier: 8, targetCount: 1, maxDrops: 25, bowlWidthPercent: 90, mechanics: ['dropLimit'], frozenCount: 0, stardustReward: 75, firstClearBonus: 225 },
-  { level: 26, targetTier: 5, targetCount: 3, maxDrops: 40, bowlWidthPercent: 100, mechanics: ['dropLimit', 'tripleTarget', 'bomb'], frozenCount: 0, stardustReward: 78, firstClearBonus: 234 },
-  { level: 27, targetTier: 7, targetCount: 2, maxDrops: 35, bowlWidthPercent: 80, mechanics: ['dropLimit', 'dualTarget', 'narrowBowl', 'speed', 'frozen'], frozenCount: 2, stardustReward: 80, firstClearBonus: 240 },
-  { level: 28, targetTier: 8, targetCount: 2, maxDrops: 40, bowlWidthPercent: 75, mechanics: ['dropLimit', 'dualTarget', 'narrowBowl'], frozenCount: 0, stardustReward: 85, firstClearBonus: 255 },
-  { level: 29, targetTier: 8, targetCount: 3, maxDrops: 70, bowlWidthPercent: 90, mechanics: ['dropLimit', 'tripleTarget', 'bomb', 'frozen', 'speed'], frozenCount: 2, stardustReward: 90, firstClearBonus: 270 },
-  { level: 30, targetTier: 8, targetCount: 1, maxDrops: 50, bowlWidthPercent: 70, mechanics: ['dropLimit', 'narrowBowl', 'speed'], frozenCount: 0, stardustReward: 100, firstClearBonus: 300 },
+export const PRISM_LEVELS: PrismLevelConfig[] = [
+  { level: 1, crystals: 3, waves: 2, startLength: 2, cueStepMs: 650, echoTimePerStepMs: null, mechanics: ['grow'], stardustReward: 5, firstClearBonus: 15 },
+  { level: 2, crystals: 3, waves: 3, startLength: 2, cueStepMs: 620, echoTimePerStepMs: null, mechanics: ['grow'], stardustReward: 6, firstClearBonus: 18 },
+  { level: 3, crystals: 4, waves: 3, startLength: 3, cueStepMs: 590, echoTimePerStepMs: null, mechanics: ['grow'], stardustReward: 7, firstClearBonus: 21 },
+  { level: 4, crystals: 4, waves: 3, startLength: 3, cueStepMs: 560, echoTimePerStepMs: 2600, mechanics: ['grow', 'double'], stardustReward: 10, firstClearBonus: 30 },
+  { level: 5, crystals: 4, waves: 4, startLength: 3, cueStepMs: 540, echoTimePerStepMs: 2500, mechanics: ['grow', 'double'], stardustReward: 12, firstClearBonus: 36 },
+  { level: 6, crystals: 5, waves: 3, startLength: 3, cueStepMs: 520, echoTimePerStepMs: 2400, mechanics: ['grow'], stardustReward: 15, firstClearBonus: 45 },
+  { level: 7, crystals: 5, waves: 4, startLength: 3, cueStepMs: 500, echoTimePerStepMs: 2300, mechanics: ['grow', 'double'], stardustReward: 18, firstClearBonus: 54 },
+  { level: 8, crystals: 5, waves: 3, startLength: 3, cueStepMs: 500, echoTimePerStepMs: 2300, mechanics: ['grow', 'chord'], stardustReward: 20, firstClearBonus: 60 },
+  { level: 9, crystals: 5, waves: 4, startLength: 4, cueStepMs: 480, echoTimePerStepMs: 2200, mechanics: ['grow', 'chord', 'double'], stardustReward: 22, firstClearBonus: 66 },
+  { level: 10, crystals: 6, waves: 4, startLength: 3, cueStepMs: 470, echoTimePerStepMs: 2150, mechanics: ['grow'], stardustReward: 25, firstClearBonus: 75 },
+  { level: 11, crystals: 6, waves: 4, startLength: 4, cueStepMs: 460, echoTimePerStepMs: 2100, mechanics: ['grow', 'chord'], stardustReward: 28, firstClearBonus: 84 },
+  { level: 12, crystals: 5, waves: 4, startLength: 3, cueStepMs: 470, echoTimePerStepMs: 2200, mechanics: ['grow', 'mirror'], stardustReward: 35, firstClearBonus: 105 },
+  { level: 13, crystals: 6, waves: 4, startLength: 4, cueStepMs: 450, echoTimePerStepMs: 2100, mechanics: ['grow', 'mirror', 'double'], stardustReward: 38, firstClearBonus: 114 },
+  { level: 14, crystals: 6, waves: 4, startLength: 4, cueStepMs: 440, echoTimePerStepMs: 2000, mechanics: ['grow', 'ghost'], stardustReward: 40, firstClearBonus: 120 },
+  { level: 15, crystals: 6, waves: 4, startLength: 4, cueStepMs: 430, echoTimePerStepMs: 1950, mechanics: ['grow', 'ghost', 'chord'], stardustReward: 45, firstClearBonus: 135 },
+  { level: 16, crystals: 6, waves: 4, startLength: 4, cueStepMs: 440, echoTimePerStepMs: 2050, mechanics: ['grow', 'rotate'], stardustReward: 48, firstClearBonus: 144 },
+  { level: 17, crystals: 6, waves: 4, startLength: 4, cueStepMs: 420, echoTimePerStepMs: 1950, mechanics: ['grow', 'rotate', 'mirror'], stardustReward: 50, firstClearBonus: 150 },
+  { level: 18, crystals: 7, waves: 4, startLength: 4, cueStepMs: 410, echoTimePerStepMs: 1900, mechanics: ['grow', 'double'], stardustReward: 55, firstClearBonus: 165 },
+  { level: 19, crystals: 7, waves: 4, startLength: 4, cueStepMs: 400, echoTimePerStepMs: 1850, mechanics: ['grow', 'chord', 'rotate'], stardustReward: 60, firstClearBonus: 180 },
+  { level: 20, crystals: 6, waves: 4, startLength: 4, cueStepMs: 410, echoTimePerStepMs: 1900, mechanics: ['grow', 'swap'], stardustReward: 65, firstClearBonus: 195 },
+  { level: 21, crystals: 7, waves: 4, startLength: 4, cueStepMs: 390, echoTimePerStepMs: 1800, mechanics: ['grow', 'swap', 'double'], stardustReward: 55, firstClearBonus: 165 },
+  { level: 22, crystals: 7, waves: 5, startLength: 4, cueStepMs: 390, echoTimePerStepMs: 1750, mechanics: ['grow', 'tempo'], stardustReward: 60, firstClearBonus: 180 },
+  { level: 23, crystals: 7, waves: 5, startLength: 4, cueStepMs: 380, echoTimePerStepMs: 1700, mechanics: ['grow', 'tempo', 'chord'], stardustReward: 65, firstClearBonus: 195 },
+  { level: 24, crystals: 7, waves: 5, startLength: 5, cueStepMs: 370, echoTimePerStepMs: 1650, mechanics: ['grow', 'mirror', 'rotate'], stardustReward: 70, firstClearBonus: 210 },
+  { level: 25, crystals: 7, waves: 5, startLength: 5, cueStepMs: 360, echoTimePerStepMs: 1600, mechanics: ['grow', 'swap', 'ghost'], stardustReward: 75, firstClearBonus: 225 },
+  { level: 26, crystals: 7, waves: 5, startLength: 5, cueStepMs: 350, echoTimePerStepMs: 1550, mechanics: ['grow', 'chord', 'mirror', 'tempo'], stardustReward: 78, firstClearBonus: 234 },
+  { level: 27, crystals: 7, waves: 5, startLength: 5, cueStepMs: 340, echoTimePerStepMs: 1500, mechanics: ['grow', 'rotate', 'swap', 'double'], stardustReward: 80, firstClearBonus: 240 },
+  { level: 28, crystals: 7, waves: 5, startLength: 5, cueStepMs: 330, echoTimePerStepMs: 1450, mechanics: ['grow', 'mirror', 'ghost', 'chord'], stardustReward: 85, firstClearBonus: 255 },
+  { level: 29, crystals: 7, waves: 5, startLength: 5, cueStepMs: 320, echoTimePerStepMs: 1400, mechanics: ['grow', 'rotate', 'swap', 'tempo', 'chord'], stardustReward: 90, firstClearBonus: 270 },
+  { level: 30, crystals: 7, waves: 5, startLength: 6, cueStepMs: 300, echoTimePerStepMs: 1350, mechanics: ['grow', 'double', 'chord', 'mirror', 'ghost', 'rotate', 'swap', 'tempo'], stardustReward: 100, firstClearBonus: 300 },
 ];
 
-export function getOrbLevel(level: number): OrbLevelConfig {
+export function getPrismLevel(level: number): PrismLevelConfig {
   const index = Math.max(1, Math.min(30, level)) - 1;
-  return ORB_LEVELS[index];
+  return PRISM_LEVELS[index];
 }
 
 // ─── STAR CATCHER ────────────────────────────────────────────
