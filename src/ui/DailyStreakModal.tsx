@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Check, Flame, Gem, Gift, Shield, Sparkles } from 'lucide-react-native';
 import { sfx } from '../fx/sound';
+import { getStreakCopy } from './i18n/dailyStreak';
 import { STREAK_REWARDS, useDailyLogin } from '../store/dailyLogin';
 
 export function DailyStreakModal() {
@@ -11,12 +12,11 @@ export function DailyStreakModal() {
   const currentReward = useDailyLogin((s) => s.currentReward);
   const claimReward = useDailyLogin((s) => s.claimReward);
   const dismissModal = useDailyLogin((s) => s.dismissModal);
+  const { strings, rtl } = getStreakCopy();
 
   const visible = modalVisible && currentReward != null;
 
   const handleClaim = () => {
-    // Feedback is best-effort: a failing audio or haptics call must never stop
-    // the claim from running, otherwise the modal stays up and looks dead.
     try {
       sfx.play('chime', 0.9);
     } catch {
@@ -26,9 +26,6 @@ export function DailyStreakModal() {
     claimReward();
   };
 
-  // Keep the native Modal mounted and toggle `visible`. Unmounting it in the
-  // same update that hides it can skip iOS's dismissal path and leave the
-  // modal window on screen, swallowing every touch.
   return (
     <Modal
       visible={visible}
@@ -41,15 +38,17 @@ export function DailyStreakModal() {
           <View style={styles.card}>
             {/* Header */}
             <View style={styles.header}>
-              <View style={styles.fireRow}>
+              <View style={[styles.fireRow, rtl && styles.rowReverse]}>
                 <Flame size={24} color="#F97316" />
-                <Text style={styles.streakTitle}>DAY {streak} STREAK!</Text>
+                <Text style={[styles.streakTitle, rtl && styles.rtlText]}>
+                  {strings.streakTitle(streak)}
+                </Text>
               </View>
-              <Text style={styles.subtitle}>Log in daily to earn rare rewards</Text>
+              <Text style={[styles.subtitle, rtl && styles.rtlText]}>{strings.subtitle}</Text>
             </View>
 
             {/* 7-Day Track */}
-            <View style={styles.track}>
+            <View style={[styles.track, rtl && styles.rowReverse]}>
               {STREAK_REWARDS.map((r) => {
                 const isPast = r.day < streak;
                 const isToday = r.day === streak;
@@ -62,7 +61,14 @@ export function DailyStreakModal() {
                       isPast && styles.dayNodePast,
                     ]}
                   >
-                    <Text style={styles.dayLabel}>D{r.day}</Text>
+                    <Text
+                      style={[styles.dayLabel, rtl && styles.dayLabelRtl]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.6}
+                    >
+                      {strings.dayLabel(r.day)}
+                    </Text>
                     <View style={styles.iconContainer}>
                       {isPast ? (
                         <Check size={16} color="#22C55E" />
@@ -88,26 +94,32 @@ export function DailyStreakModal() {
 
             {/* Today's Reward Spotlight */}
             <View style={styles.spotlight}>
-              <Text style={styles.spotlightTitle}>TODAY&apos;S REWARD</Text>
-              <View style={styles.rewardsRow}>
+              <Text style={[styles.spotlightTitle, rtl && styles.rtlText]}>
+                {strings.todaysReward}
+              </Text>
+              <View style={[styles.rewardsRow, rtl && styles.rowReverse]}>
                 {currentReward.stardust > 0 && (
-                  <View style={styles.rewardPill}>
+                  <View style={[styles.rewardPill, rtl && styles.rowReverse]}>
                     <Sparkles size={16} color="#FBBF24" />
-                    <Text style={styles.pillText}>+{currentReward.stardust} Stardust</Text>
+                    <Text style={[styles.pillText, rtl && styles.rtlText]}>
+                      {strings.stardust(currentReward.stardust)}
+                    </Text>
                   </View>
                 )}
                 {currentReward.crystals > 0 && (
-                  <View style={[styles.rewardPill, styles.crystalPill]}>
+                  <View style={[styles.rewardPill, styles.crystalPill, rtl && styles.rowReverse]}>
                     <Gem size={16} color="#38BDF8" />
-                    <Text style={[styles.pillText, styles.crystalText]}>
-                      +{currentReward.crystals} Crystals
+                    <Text style={[styles.pillText, styles.crystalText, rtl && styles.rtlText]}>
+                      {strings.crystals(currentReward.crystals)}
                     </Text>
                   </View>
                 )}
                 {currentReward.shields > 0 && (
-                  <View style={[styles.rewardPill, styles.shieldPill]}>
+                  <View style={[styles.rewardPill, styles.shieldPill, rtl && styles.rowReverse]}>
                     <Shield size={16} color="#F59E0B" />
-                    <Text style={[styles.pillText, styles.shieldText]}>+1 Shield</Text>
+                    <Text style={[styles.pillText, styles.shieldText, rtl && styles.rtlText]}>
+                      {strings.shield(currentReward.shields)}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -115,14 +127,16 @@ export function DailyStreakModal() {
 
             {/* Claim Button */}
             <Pressable
-              style={styles.claimButton}
+              style={[styles.claimButton, rtl && styles.rowReverse]}
               onPress={handleClaim}
               accessibilityRole="button"
-              accessibilityLabel="Claim daily reward"
+              accessibilityLabel={strings.claimReward}
               testID="daily-streak-claim"
             >
               <Gift size={20} color="#0F172A" />
-              <Text style={styles.claimButtonText}>CLAIM REWARD</Text>
+              <Text style={[styles.claimButtonText, rtl && styles.rtlText]}>
+                {strings.claimReward}
+              </Text>
             </Pressable>
           </View>
         )}
@@ -132,6 +146,14 @@ export function DailyStreakModal() {
 }
 
 const styles = StyleSheet.create({
+  /** Explicit mirroring: the app is natively LTR, so rows flip per component. */
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  /** Hebrew runs right-to-left; centered nodes keep their alignment. */
+  rtlText: {
+    writingDirection: 'rtl',
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(5, 1, 15, 0.85)',
@@ -199,6 +221,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#64748B',
     marginBottom: 6,
+  },
+  /** "יום 1" is wider than "D1"; give the node a little more room in Hebrew. */
+  dayLabelRtl: {
+    fontSize: 9,
+    paddingHorizontal: 1,
   },
   iconContainer: {
     height: 22,
