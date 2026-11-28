@@ -11,6 +11,7 @@ import Animated, {
 import { Star } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { sfx } from '../fx/sound';
+import { getSplashCopy } from './i18n/splash';
 
 interface LevelSplashProps {
   level: number;
@@ -25,6 +26,7 @@ export function LevelSplash({
   worldName,
   triggerKey,
 }: LevelSplashProps) {
+  const { strings, rtl } = getSplashCopy();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.3);
   const translateY = useSharedValue(30);
@@ -39,20 +41,27 @@ export function LevelSplash({
       // ignore
     }
 
-    // Spring In -> Hold -> Glide Out
-    translateY.value = withSequence(
-      withSpring(0, { damping: 12, stiffness: 220 }),
-      withDelay(1400, withTiming(-24, { duration: 380 })),
+    // Spring In -> Hold -> Glide Out. Shared values are written from JS here,
+    // so use .set()/.get() rather than the worklet-only .value accessor.
+    translateY.set(
+      withSequence(
+        withSpring(0, { damping: 12, stiffness: 220 }),
+        withDelay(1400, withTiming(-24, { duration: 380 })),
+      ),
     );
 
-    scale.value = withSequence(
-      withSpring(1, { damping: 11, stiffness: 220 }),
-      withDelay(1400, withTiming(1.12, { duration: 380 })),
+    scale.set(
+      withSequence(
+        withSpring(1, { damping: 11, stiffness: 220 }),
+        withDelay(1400, withTiming(1.12, { duration: 380 })),
+      ),
     );
 
-    opacity.value = withSequence(
-      withTiming(1, { duration: 200 }),
-      withDelay(1400, withTiming(0, { duration: 380 })),
+    opacity.set(
+      withSequence(
+        withTiming(1, { duration: 200 }),
+        withDelay(1400, withTiming(0, { duration: 380 })),
+      ),
     );
   }, [triggerKey, level, opacity, scale, translateY]);
 
@@ -70,17 +79,21 @@ export function LevelSplash({
         {/* Decorative Top Star Badge */}
         <View style={styles.badgeRow}>
           <Star size={16} color="#FBBF24" fill="#FBBF24" />
-          <Text style={styles.levelTag}>STAGE READY</Text>
+          <Text style={[styles.levelTag, rtl && styles.rtlCentered]}>
+            {strings.stageReady}
+          </Text>
           <Star size={16} color="#FBBF24" fill="#FBBF24" />
         </View>
 
         {/* Big Bold Level Display */}
-        <Text style={styles.levelNumber}>LEVEL {level}</Text>
+        <Text style={[styles.levelNumber, rtl && styles.rtlCentered]}>
+          {strings.level(level)}
+        </Text>
 
         {/* World / Game Subtitle */}
         {(gameTitle || worldName) && (
           <View style={styles.subtitlePill}>
-            <Text style={styles.subtitleText}>
+            <Text style={[styles.subtitleText, rtl && styles.rtlCentered]}>
               {[gameTitle, worldName].filter(Boolean).join(' • ').toUpperCase()}
             </Text>
           </View>
@@ -98,6 +111,10 @@ export function LevelSplash({
 }
 
 const styles = StyleSheet.create({
+  /** RTL: keep the centered card copy centered while setting paragraph direction. */
+  rtlCentered: {
+    writingDirection: 'rtl',
+  },
   overlay: {
     position: 'absolute',
     top: 0,
