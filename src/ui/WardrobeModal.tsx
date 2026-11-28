@@ -15,6 +15,8 @@ import {
 } from '../data/shopCatalog';
 import { sfx } from '../fx/sound';
 import { CAST_COLOR } from '../render/castColors';
+import { localizeCatalogName, getRarityLabel, localizeCreatureName } from './i18n/catalog';
+import { getWardrobeCopy } from './i18n/wardrobe';
 import { CreatureId } from '../store/profile';
 import { useInventory } from '../store/inventory';
 
@@ -34,6 +36,7 @@ export function WardrobeModal({
   onOpenShop,
 }: WardrobeModalProps) {
   const [tab, setTab] = useState<Tab>('skins');
+  const { strings, rtl, locale } = getWardrobeCopy();
 
   const ownedSkins = useInventory((s) => s.ownedSkins);
   const ownedAccessories = useInventory((s) => s.ownedAccessories);
@@ -74,16 +77,16 @@ export function WardrobeModal({
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
+          <View style={[styles.header, rtl && styles.rowReverse]}>
+            <View style={[styles.headerLeft, rtl && styles.rowReverse]}>
               <View
                 style={[
                   styles.creatureDot,
                   { backgroundColor: CAST_COLOR[creatureId] },
                 ]}
               />
-              <Text style={styles.title}>
-                {creatureId.toUpperCase()} WARDROBE
+              <Text style={[styles.title, rtl && styles.rtlText]}>
+                {strings.title(localizeCreatureName(creatureId, locale))}
               </Text>
             </View>
             <Pressable
@@ -96,9 +99,9 @@ export function WardrobeModal({
           </View>
 
           {/* Tab Selector */}
-          <View style={styles.tabBar}>
+          <View style={[styles.tabBar, rtl && styles.rowReverse]}>
             <Pressable
-              style={[styles.tab, tab === 'skins' && styles.tabActive]}
+              style={[styles.tab, rtl && styles.rowReverse, tab === 'skins' && styles.tabActive]}
               onPress={() => setTab('skins')}
             >
               <Sparkles
@@ -108,15 +111,16 @@ export function WardrobeModal({
               <Text
                 style={[
                   styles.tabText,
+                  rtl && styles.rtlCentered,
                   tab === 'skins' && styles.tabTextActive,
                 ]}
               >
-                Skins
+                {strings.tabs.skins}
               </Text>
             </Pressable>
 
             <Pressable
-              style={[styles.tab, tab === 'hat' && styles.tabActive]}
+              style={[styles.tab, rtl && styles.rowReverse, tab === 'hat' && styles.tabActive]}
               onPress={() => setTab('hat')}
             >
               <Crown
@@ -126,15 +130,16 @@ export function WardrobeModal({
               <Text
                 style={[
                   styles.tabText,
+                  rtl && styles.rtlCentered,
                   tab === 'hat' && styles.tabTextActive,
                 ]}
               >
-                Hats
+                {strings.tabs.hat}
               </Text>
             </Pressable>
 
             <Pressable
-              style={[styles.tab, tab === 'aura' && styles.tabActive]}
+              style={[styles.tab, rtl && styles.rowReverse, tab === 'aura' && styles.tabActive]}
               onPress={() => setTab('aura')}
             >
               <Wand2
@@ -144,15 +149,16 @@ export function WardrobeModal({
               <Text
                 style={[
                   styles.tabText,
+                  rtl && styles.rtlCentered,
                   tab === 'aura' && styles.tabTextActive,
                 ]}
               >
-                Auras
+                {strings.tabs.aura}
               </Text>
             </Pressable>
 
             <Pressable
-              style={[styles.tab, tab === 'trail' && styles.tabActive]}
+              style={[styles.tab, rtl && styles.rowReverse, tab === 'trail' && styles.tabActive]}
               onPress={() => setTab('trail')}
             >
               <Wind
@@ -162,10 +168,11 @@ export function WardrobeModal({
               <Text
                 style={[
                   styles.tabText,
+                  rtl && styles.rtlCentered,
                   tab === 'trail' && styles.tabTextActive,
                 ]}
               >
-                Trails
+                {strings.tabs.trail}
               </Text>
             </Pressable>
           </View>
@@ -186,7 +193,7 @@ export function WardrobeModal({
                   ]}
                   onPress={() => handleEquipSkin(null)}
                 >
-                  <View style={styles.itemRow}>
+                  <View style={[styles.itemRow, rtl && styles.rowReverse]}>
                     <View
                       style={[
                         styles.paletteCircle,
@@ -194,17 +201,19 @@ export function WardrobeModal({
                       ]}
                     />
                     <View style={styles.itemInfo}>
-                      <Text style={styles.itemName}>Classic</Text>
-                      <Text style={styles.itemSub}>Original Palette</Text>
+                      <Text style={[styles.itemName, rtl && styles.rtlText]}>{strings.classic}</Text>
+                      <Text style={[styles.itemSub, rtl && styles.rtlText]}>
+                        {strings.originalPalette}
+                      </Text>
                     </View>
                   </View>
                   {!currentSkinId ? (
-                    <View style={styles.equippedBadge}>
+                    <View style={[styles.equippedBadge, rtl && styles.rowReverse]}>
                       <Check size={14} color="#22C55E" />
-                      <Text style={styles.equippedText}>EQUIPPED</Text>
+                      <Text style={[styles.equippedText, rtl && styles.rtlCentered]}>{strings.equipped}</Text>
                     </View>
                   ) : (
-                    <Text style={styles.equipActionText}>EQUIP</Text>
+                    <Text style={[styles.equipActionText, rtl && styles.rtlCentered]}>{strings.equip}</Text>
                   )}
                 </Pressable>
 
@@ -230,7 +239,7 @@ export function WardrobeModal({
                         }
                       }}
                     >
-                      <View style={styles.itemRow}>
+                      <View style={[styles.itemRow, rtl && styles.rowReverse]}>
                         <View
                           style={[
                             styles.paletteCircle,
@@ -242,30 +251,33 @@ export function WardrobeModal({
                           ]}
                         />
                         <View style={styles.itemInfo}>
-                          <Text style={styles.itemName}>{skin.name}</Text>
+                          <Text style={[styles.itemName, rtl && styles.rtlText]}>
+                            {localizeCatalogName(skin.name, locale)}
+                          </Text>
                           <Text
                             style={[
                               styles.itemSub,
+                              rtl && styles.rtlText,
                               skin.rarity === 'epic' && { color: '#F59E0B' },
                               skin.rarity === 'rare' && { color: '#38BDF8' },
                             ]}
                           >
-                            {skin.rarity.toUpperCase()}
+                            {getRarityLabel(skin.rarity, locale)}
                           </Text>
                         </View>
                       </View>
 
                       {isEquipped ? (
-                        <View style={styles.equippedBadge}>
+                        <View style={[styles.equippedBadge, rtl && styles.rowReverse]}>
                           <Check size={14} color="#22C55E" />
-                          <Text style={styles.equippedText}>EQUIPPED</Text>
+                          <Text style={[styles.equippedText, rtl && styles.rtlCentered]}>{strings.equipped}</Text>
                         </View>
                       ) : isOwned ? (
-                        <Text style={styles.equipActionText}>EQUIP</Text>
+                        <Text style={[styles.equipActionText, rtl && styles.rtlCentered]}>{strings.equip}</Text>
                       ) : (
-                        <View style={styles.lockedBadge}>
+                        <View style={[styles.lockedBadge, rtl && styles.rowReverse]}>
                           <Lock size={12} color="#94A3B8" />
-                          <Text style={styles.lockedText}>SHOP</Text>
+                          <Text style={[styles.lockedText, rtl && styles.rtlCentered]}>{strings.shop}</Text>
                         </View>
                       )}
                     </Pressable>
@@ -284,20 +296,22 @@ export function WardrobeModal({
                   ]}
                   onPress={() => handleEquipAccessory(tab, null)}
                 >
-                  <View style={styles.itemRow}>
+                  <View style={[styles.itemRow, rtl && styles.rowReverse]}>
                     <View style={styles.paletteCircleEmpty} />
                     <View style={styles.itemInfo}>
-                      <Text style={styles.itemName}>None</Text>
-                      <Text style={styles.itemSub}>No {tab} equipped</Text>
+                      <Text style={[styles.itemName, rtl && styles.rtlText]}>{strings.none}</Text>
+                      <Text style={[styles.itemSub, rtl && styles.rtlText]}>
+                        {strings.emptySlot(tab)}
+                      </Text>
                     </View>
                   </View>
                   {!equippedAccessories[tab] ? (
-                    <View style={styles.equippedBadge}>
+                    <View style={[styles.equippedBadge, rtl && styles.rowReverse]}>
                       <Check size={14} color="#22C55E" />
-                      <Text style={styles.equippedText}>EQUIPPED</Text>
+                      <Text style={[styles.equippedText, rtl && styles.rtlCentered]}>{strings.equipped}</Text>
                     </View>
                   ) : (
-                    <Text style={styles.equipActionText}>EQUIP</Text>
+                    <Text style={[styles.equipActionText, rtl && styles.rtlCentered]}>{strings.equip}</Text>
                   )}
                 </Pressable>
 
@@ -323,7 +337,7 @@ export function WardrobeModal({
                         }
                       }}
                     >
-                      <View style={styles.itemRow}>
+                      <View style={[styles.itemRow, rtl && styles.rowReverse]}>
                         <View
                           style={[
                             styles.paletteCircle,
@@ -335,30 +349,33 @@ export function WardrobeModal({
                           ]}
                         />
                         <View style={styles.itemInfo}>
-                          <Text style={styles.itemName}>{acc.name}</Text>
+                          <Text style={[styles.itemName, rtl && styles.rtlText]}>
+                            {localizeCatalogName(acc.name, locale)}
+                          </Text>
                           <Text
                             style={[
                               styles.itemSub,
+                              rtl && styles.rtlText,
                               acc.rarity === 'epic' && { color: '#F59E0B' },
                               acc.rarity === 'rare' && { color: '#38BDF8' },
                             ]}
                           >
-                            {acc.rarity.toUpperCase()}
+                            {getRarityLabel(acc.rarity, locale)}
                           </Text>
                         </View>
                       </View>
 
                       {isEquipped ? (
-                        <View style={styles.equippedBadge}>
+                        <View style={[styles.equippedBadge, rtl && styles.rowReverse]}>
                           <Check size={14} color="#22C55E" />
-                          <Text style={styles.equippedText}>EQUIPPED</Text>
+                          <Text style={[styles.equippedText, rtl && styles.rtlCentered]}>{strings.equipped}</Text>
                         </View>
                       ) : isOwned ? (
-                        <Text style={styles.equipActionText}>EQUIP</Text>
+                        <Text style={[styles.equipActionText, rtl && styles.rtlCentered]}>{strings.equip}</Text>
                       ) : (
-                        <View style={styles.lockedBadge}>
+                        <View style={[styles.lockedBadge, rtl && styles.rowReverse]}>
                           <Lock size={12} color="#94A3B8" />
-                          <Text style={styles.lockedText}>SHOP</Text>
+                          <Text style={[styles.lockedText, rtl && styles.rtlCentered]}>{strings.shop}</Text>
                         </View>
                       )}
                     </Pressable>
@@ -374,6 +391,19 @@ export function WardrobeModal({
 }
 
 const styles = StyleSheet.create({
+  /** RTL: swap the visual order of icon/label rows. */
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  /** RTL: right-align a text block that is left-aligned in English. */
+  rtlText: {
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
+  /** RTL: keep centered text centered, only fix the bidi paragraph direction. */
+  rtlCentered: {
+    writingDirection: 'rtl',
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(5, 1, 15, 0.75)',

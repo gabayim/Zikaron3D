@@ -16,6 +16,8 @@ import { Check, Gem, Gift, Shield, Sparkles, X } from 'lucide-react-native';
 import { ACCESSORY_ASSETS, SKIN_ASSETS } from '../data/shopAssets';
 import { ACCESSORY_CATALOG, SKIN_CATALOG } from '../data/shopCatalog';
 import { sfx } from '../fx/sound';
+import { localizeCatalogName } from './i18n/catalog';
+import { getRedeemCopy, getRedeemError, MIN_CODE_LENGTH } from './i18n/redeem';
 import { redeemCoupon, type GrantAssetType, type RedeemResult } from '../services/grants';
 import { useInventory } from '../store/inventory';
 
@@ -24,19 +26,8 @@ interface RedeemCodeModalProps {
   onClose: () => void;
 }
 
-const ERROR_MESSAGES: Record<string, string> = {
-  throttled: 'Too many attempts! Please try again in an hour.',
-  not_found: 'Invalid code. Check for typos and try again.',
-  inactive: 'This coupon code is no longer active.',
-  not_started: 'This coupon code is not valid yet.',
-  expired: 'This coupon code has expired.',
-  used_up: 'This coupon has reached its maximum redemptions.',
-  already_redeemed: 'You have already redeemed this coupon!',
-  not_signed_in: 'Connecting to cloud account... Please retry in a moment.',
-  invalid_code: 'Please enter a valid coupon code (6-16 characters).',
-};
-
 export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
+  const { strings, rtl, locale } = getRedeemCopy();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -62,8 +53,8 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
 
   const handleRedeem = async () => {
     const trimmed = code.trim().toUpperCase();
-    if (trimmed.length < 6) {
-      setErrorMsg('Code must be at least 6 characters.');
+    if (trimmed.length < MIN_CODE_LENGTH) {
+      setErrorMsg(strings.minLength(MIN_CODE_LENGTH));
       return;
     }
 
@@ -79,23 +70,23 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
       sfx.play('chime');
       setTimeout(() => sfx.play('sparkle'), 200);
 
-      let title = `${result.amount ?? 1}x Item`;
+      let title = strings.item(result.amount ?? 1);
       let image: number | undefined;
 
       if (result.asset_type === 'skin') {
         const found = SKIN_CATALOG.find((s) => s.id === result.asset_id);
-        title = found ? found.name : 'Exclusive Skin';
+        title = found ? localizeCatalogName(found.name, locale) : strings.exclusiveSkin;
         image = SKIN_ASSETS[result.asset_id];
       } else if (result.asset_type === 'accessory') {
         const found = ACCESSORY_CATALOG.find((a) => a.id === result.asset_id);
-        title = found ? found.name : 'Exclusive Accessory';
+        title = found ? localizeCatalogName(found.name, locale) : strings.exclusiveAccessory;
         image = ACCESSORY_ASSETS[result.asset_id];
       } else if (result.asset_type === 'crystals') {
-        title = `${result.amount ?? 50} Crystals`;
+        title = strings.crystals(result.amount ?? 50);
       } else if (result.asset_type === 'stardust') {
-        title = `${result.amount ?? 100} Stardust`;
+        title = strings.stardust(result.amount ?? 100);
       } else if (result.asset_type === 'shields') {
-        title = `${result.amount ?? 1} Shield`;
+        title = strings.shield(result.amount ?? 1);
       }
 
       setSuccessReward({
@@ -107,8 +98,7 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
       });
     } else {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      const msg = (result.reason && ERROR_MESSAGES[result.reason]) || 'Failed to redeem. Please try again.';
-      setErrorMsg(msg);
+      setErrorMsg(getRedeemError(strings, result.reason));
     }
   };
 
@@ -138,7 +128,11 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
       >
         <Pressable style={styles.backdrop} onPress={handleClose} />
         <View style={styles.card}>
-          <Pressable style={styles.closeBtn} onPress={handleClose} hitSlop={12}>
+          <Pressable
+            style={[styles.closeBtn, rtl ? styles.closeBtnRtl : styles.closeBtnLtr]}
+            onPress={handleClose}
+            hitSlop={12}
+          >
             <X size={20} color="#94A3B8" />
           </Pressable>
 
@@ -155,28 +149,35 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
                   <Shield size={56} color="#38BDF8" />
                 )}
               </View>
-              <Text style={styles.rewardTitle}>Reward Unlocked!</Text>
-              <Text style={styles.rewardSubtitle}>{successReward.title}</Text>
+              <Text style={[styles.rewardTitle, rtl && styles.rtlCentered]}>
+                {strings.rewardUnlocked}
+              </Text>
+              <Text style={[styles.rewardSubtitle, rtl && styles.rtlCentered]}>
+                {successReward.title}
+              </Text>
 
               {(successReward.asset_type === 'skin' || successReward.asset_type === 'accessory') && (
-                <Pressable style={styles.equipBtn} onPress={handleEquipShortcut}>
+                <Pressable
+                  style={[styles.equipBtn, rtl && styles.rowReverse]}
+                  onPress={handleEquipShortcut}
+                >
                   <Check size={18} color="#0B132B" />
-                  <Text style={styles.equipBtnText}>Equip Now</Text>
+                  <Text style={styles.equipBtnText}>{strings.equipNow}</Text>
                 </Pressable>
               )}
 
               <Pressable style={styles.doneBtn} onPress={handleClose}>
-                <Text style={styles.doneBtnText}>Awesome!</Text>
+                <Text style={styles.doneBtnText}>{strings.done}</Text>
               </Pressable>
             </View>
           ) : (
             <View style={styles.formContainer}>
-              <View style={styles.headerRow}>
+              <View style={[styles.headerRow, rtl && styles.rowReverse]}>
                 <Gift size={24} color="#FBBF24" />
-                <Text style={styles.title}>Redeem Code</Text>
+                <Text style={[styles.title, rtl && styles.rtlText]}>{strings.title}</Text>
               </View>
-              <Text style={styles.subtitle}>
-                Enter a promotional code to unlock exclusive skins, accessories, or currencies.
+              <Text style={[styles.subtitle, rtl && styles.rtlCentered]}>
+                {strings.subtitle}
               </Text>
 
               <TextInput
@@ -186,7 +187,7 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
                   setCode(val.toUpperCase());
                   if (errorMsg) setErrorMsg(null);
                 }}
-                placeholder="ENTER CODE"
+                placeholder={strings.placeholder}
                 placeholderTextColor="#64748B"
                 autoCapitalize="characters"
                 autoCorrect={false}
@@ -195,7 +196,9 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
                 onSubmitEditing={handleRedeem}
               />
 
-              {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+              {errorMsg ? (
+                <Text style={[styles.errorText, rtl && styles.rtlCentered]}>{errorMsg}</Text>
+              ) : null}
 
               <Pressable
                 style={[styles.redeemBtn, loading && styles.btnDisabled]}
@@ -205,7 +208,7 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
                 {loading ? (
                   <ActivityIndicator color="#0B132B" size="small" />
                 ) : (
-                  <Text style={styles.redeemBtnText}>Redeem Reward</Text>
+                  <Text style={styles.redeemBtnText}>{strings.submit}</Text>
                 )}
               </Pressable>
             </View>
@@ -217,6 +220,19 @@ export function RedeemCodeModal({ visible, onClose }: RedeemCodeModalProps) {
 }
 
 const styles = StyleSheet.create({
+  /** RTL: swap the visual order of icon/label rows. */
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  /** RTL: right-align a text block that is left-aligned in English. */
+  rtlText: {
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
+  /** RTL: keep centered text centered, only fix the bidi paragraph direction. */
+  rtlCentered: {
+    writingDirection: 'rtl',
+  },
   overlay: {
     flex: 1,
     justifyContent: 'center',
@@ -244,9 +260,14 @@ const styles = StyleSheet.create({
   closeBtn: {
     position: 'absolute',
     top: 16,
-    right: 16,
     zIndex: 10,
     padding: 4,
+  },
+  closeBtnLtr: {
+    right: 16,
+  },
+  closeBtnRtl: {
+    left: 16,
   },
   formContainer: {
     alignItems: 'center',

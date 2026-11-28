@@ -65,19 +65,24 @@ import {
   restorePurchases,
   type ProductId,
 } from '../services/monetization';
+import { getShopCopy, type ShopTab, type StardustPackId } from '../ui/i18n/shop';
+import { getCommonCopy } from '../ui/i18n/common';
+import { localizeCatalogName, localizeCreatureName } from '../ui/i18n/catalog';
+import { localizeWorldName } from '../ui/i18n/worlds';
+import { rtlTextStyle } from '../ui/i18n/text';
 
-export type Tab = 'skins' | 'accessories' | 'stardust' | 'crystals' | 'worlds';
+export type Tab = ShopTab;
 
-const TABS: { id: Tab; icon: React.FC<{ size: number; color: string }>; label: string; activeColor: string }[] = [
-  { id: 'accessories', icon: Crown,    label: 'GEAR',     activeColor: '#F59E0B' },
-  { id: 'stardust',    icon: Sparkles, label: 'STARDUST', activeColor: '#FBBF24' },
-  { id: 'crystals',    icon: Gem,      label: 'GEMS',     activeColor: '#EC4899' },
-  { id: 'worlds',      icon: Globe,    label: 'WORLDS',   activeColor: '#10B981' },
-  { id: 'skins',       icon: Palette,  label: 'SKINS',    activeColor: '#38BDF8' },
+const TABS: { id: Tab; icon: React.FC<{ size: number; color: string }>; activeColor: string }[] = [
+  { id: 'accessories', icon: Crown,    activeColor: '#F59E0B' },
+  { id: 'stardust',    icon: Sparkles, activeColor: '#FBBF24' },
+  { id: 'crystals',    icon: Gem,      activeColor: '#EC4899' },
+  { id: 'worlds',      icon: Globe,    activeColor: '#10B981' },
+  { id: 'skins',       icon: Palette,  activeColor: '#38BDF8' },
 ];
 
 export interface StardustPack {
-  id: string;
+  id: StardustPackId;
   title: string;
   subtitle: string;
   stardust: number;
@@ -131,11 +136,11 @@ const STARDUST_PACKS: StardustPack[] = [
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = (SCREEN_W - 44) / 2;
 
-const RARITY_THEME: Record<Rarity, { border: string; bg: string; badgeBg: string; text: string; label: string }> = {
-  common:    { border: '#334155', bg: '#1E293B', badgeBg: '#475569', text: '#E2E8F0', label: 'COMMON' },
-  rare:      { border: '#0284C7', bg: '#0F2642', badgeBg: '#0369A1', text: '#38BDF8', label: 'RARE' },
-  epic:      { border: '#9333EA', bg: '#271247', badgeBg: '#7E22CE', text: '#C084FC', label: 'EPIC' },
-  legendary: { border: '#D97706', bg: '#362007', badgeBg: '#B45309', text: '#FBBF24', label: 'LEGEND' },
+const RARITY_THEME: Record<Rarity, { border: string; bg: string; badgeBg: string; text: string }> = {
+  common:    { border: '#334155', bg: '#1E293B', badgeBg: '#475569', text: '#E2E8F0' },
+  rare:      { border: '#0284C7', bg: '#0F2642', badgeBg: '#0369A1', text: '#38BDF8' },
+  epic:      { border: '#9333EA', bg: '#271247', badgeBg: '#7E22CE', text: '#C084FC' },
+  legendary: { border: '#D97706', bg: '#362007', badgeBg: '#B45309', text: '#FBBF24' },
 };
 
 // ---------------------------------------------------------------------------
@@ -202,18 +207,19 @@ function ActionPill({
   priceStardust: number | null;
   priceCrystals: number | null;
 }) {
+  const copy = getShopCopy();
   if (isEquipped) {
     return (
       <View style={styles.pillEquipped}>
         <Check size={14} color="#FFFFFF" strokeWidth={3} />
-        <Text style={styles.pillEquippedText}>EQUIPPED</Text>
+        <Text style={styles.pillEquippedText}>{copy.strings.equipped}</Text>
       </View>
     );
   }
   if (isOwned) {
     return (
       <View style={styles.pillOwned}>
-        <Text style={styles.pillOwnedText}>EQUIP</Text>
+        <Text style={styles.pillOwnedText}>{copy.strings.equip}</Text>
       </View>
     );
   }
@@ -242,6 +248,11 @@ export interface ShopProps {
 }
 
 export default function Shop({ onBack, initialTab }: ShopProps) {
+  // Locale is fixed for the app session, so the dictionaries stay referentially
+  // stable across renders and can safely be callback dependencies.
+  const copy = useMemo(() => getShopCopy(), []);
+  const common = useMemo(() => getCommonCopy(), []);
+  const rtlStyle = useMemo(() => rtlTextStyle(copy.rtl), [copy.rtl]);
   const [tab, setTab] = useState<Tab>(initialTab ?? 'accessories');
   const [selectedCreature, setSelectedCreature] = useState<CreatureId>('pip');
   const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
@@ -487,7 +498,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           {/* Card Top Row: Rarity Tag */}
           <View style={styles.cardHeaderRow}>
             <View style={[styles.cardRarityBadge, { backgroundColor: theme.badgeBg }]}>
-              <Text style={styles.cardRarityText}>{theme.label}</Text>
+              <Text style={styles.cardRarityText}>{copy.strings.rarity[item.rarity]}</Text>
             </View>
           </View>
 
@@ -502,7 +513,9 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
 
           {/* Item Name Container with fixed 2-line height */}
           <View style={styles.itemNameContainer}>
-            <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+            <Text style={[styles.itemName, rtlStyle]} numberOfLines={2}>
+              {localizeCatalogName(item.name, copy.locale)}
+            </Text>
           </View>
 
           <ActionPill
@@ -514,7 +527,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         </TactileCard>
       );
     },
-    [ownedSkins, equippedSkins, handleSkinAction],
+    [ownedSkins, equippedSkins, handleSkinAction, copy, rtlStyle],
   );
 
   // ── Accessory Card Renderer ─────────────────────────────────────────────
@@ -534,7 +547,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           {/* Card Top Row: Rarity Tag */}
           <View style={styles.cardHeaderRow}>
             <View style={[styles.cardRarityBadge, { backgroundColor: theme.badgeBg }]}>
-              <Text style={styles.cardRarityText}>{theme.label}</Text>
+              <Text style={styles.cardRarityText}>{copy.strings.rarity[item.rarity]}</Text>
             </View>
           </View>
 
@@ -549,7 +562,9 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
 
           {/* Item Name Container with fixed 2-line height */}
           <View style={styles.itemNameContainer}>
-            <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+            <Text style={[styles.itemName, rtlStyle]} numberOfLines={2}>
+              {localizeCatalogName(item.name, copy.locale)}
+            </Text>
           </View>
 
           <ActionPill
@@ -561,7 +576,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         </TactileCard>
       );
     },
-    [ownedAccessories, equippedAccessories, handleAccessoryAction],
+    [ownedAccessories, equippedAccessories, handleAccessoryAction, copy, rtlStyle],
   );
 
   return (
@@ -592,13 +607,11 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
 
         {/* Title Row (Full Width - Zero Text Collision) */}
         <View style={styles.titleRow}>
-          <Text style={styles.shopTitle} numberOfLines={1}>✦ ARCADE SHOP ✦</Text>
-          <Text style={styles.shopSubtitle} numberOfLines={1}>
-            {tab === 'skins' ? 'Upgrade critters with stylized toy outfits' :
-             tab === 'accessories' ? 'Equip rare 3D animated gear, auras & trails' :
-             tab === 'stardust' ? 'Convert Crystals into magical Stardust bundles' :
-             tab === 'worlds' ? 'Unlock portals to vibrant new dimensions' :
-             'Get crystal bundles & streak shields'}
+          <Text style={[styles.shopTitle, rtlStyle]} numberOfLines={1}>
+            {copy.strings.title}
+          </Text>
+          <Text style={[styles.shopSubtitle, rtlStyle]} numberOfLines={1}>
+            {copy.strings.subtitles[tab]}
           </Text>
         </View>
       </View>
@@ -630,7 +643,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
                   style={[styles.tabButtonText, isActive && styles.tabButtonTextActive]}
                   numberOfLines={1}
                 >
-                  {t.label}
+                  {copy.strings.tabs[t.id]}
                 </Text>
               </Pressable>
             );
@@ -672,7 +685,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
                         isSelected && styles.filterChipTextActive,
                       ]}
                     >
-                      {c.toUpperCase()}
+                      {localizeCreatureName(c, copy.locale)}
                     </Text>
                   </Pressable>
                 );
@@ -704,7 +717,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
               {(['hat', 'trail', 'aura'] as AccessorySlot[]).map((slot) => {
                 const isSelected = selectedSlot === slot;
                 const emoji = slot === 'hat' ? '🎩' : slot === 'trail' ? '✨' : '🌀';
-                const label = slot.toUpperCase();
+                const label = copy.strings.slots[slot];
                 return (
                   <Pressable
                     key={slot}
@@ -745,12 +758,12 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         {tab === 'worlds' && (
           <ScrollView contentContainerStyle={styles.worldsContainer}>
             <Text style={styles.worldsSectionSubtitle}>
-              Unlock portals directly with Stardust or Crystals to explore new dimensions!
+              {copy.strings.worldsSubtitle}
             </Text>
 
             {WORLDS.map((w) => {
               const isUnlocked = unlockedWorlds.includes(w.id);
-              const displayName = w.id.replace('_', ' ').toUpperCase();
+              const displayName = localizeWorldName(w.id, copy.locale);
               return (
                 <View
                   key={w.id}
@@ -766,18 +779,18 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
                       <Text style={styles.worldLockIcon}>🔒</Text>
                       <Text style={styles.worldLockText}>
                         {w.priceStardust != null
-                          ? `UNLOCK FOR ★ ${w.priceStardust.toLocaleString()} STARDUST`
-                          : `UNLOCK FOR 💎 ${w.priceCrystals} CRYSTALS`}
+                          ? copy.strings.unlockForStardust(w.priceStardust.toLocaleString())
+                          : copy.strings.unlockForCrystals(w.priceCrystals ?? 0)}
                       </Text>
                     </View>
                   )}
 
                   <View style={styles.worldCardBody}>
                     <View style={styles.worldHeaderRow}>
-                      <Text style={styles.worldTitleText}>{displayName}</Text>
+                      <Text style={[styles.worldTitleText, rtlStyle]}>{displayName}</Text>
                       {isUnlocked ? (
                         <View style={[styles.worldPill, { backgroundColor: w.accent }]}>
-                          <Text style={styles.worldPillText}>✓ UNLOCKED</Text>
+                          <Text style={styles.worldPillText}>{copy.strings.unlocked}</Text>
                         </View>
                       ) : (
                         <View style={styles.worldUnlockActions}>
@@ -804,10 +817,12 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
                     </View>
 
                     <View style={styles.worldResidentRow}>
-                      <Text style={styles.worldResidentLabel}>RESIDENTS:</Text>
+                      <Text style={styles.worldResidentLabel}>{copy.strings.residents}</Text>
                       {w.residents.map((r) => (
                         <View key={r} style={styles.residentBadge}>
-                          <Text style={styles.residentBadgeText}>{r.toUpperCase()}</Text>
+                          <Text style={styles.residentBadgeText}>
+                            {localizeCreatureName(r as CreatureId, copy.locale)}
+                          </Text>
                         </View>
                       ))}
                     </View>
@@ -821,7 +836,9 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         {/* ── STARDUST TAB ── */}
         {tab === 'stardust' && (
           <ScrollView contentContainerStyle={styles.packsContainer}>
-            {STARDUST_PACKS.map((p) => (
+            {STARDUST_PACKS.map((p) => {
+              const packCopy = copy.strings.stardustPacks[p.id];
+              return (
               <Pressable
                 key={p.id}
                 style={[
@@ -832,7 +849,7 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
               >
                 {p.tag && (
                   <View style={[styles.packTopBanner, { backgroundColor: p.tagColor ?? '#FBBF24' }]}>
-                    <Text style={styles.packTopBannerText}>{p.tag}</Text>
+                    <Text style={styles.packTopBannerText}>{packCopy?.tag ?? p.tag}</Text>
                   </View>
                 )}
                 <View style={styles.packMainRow}>
@@ -842,8 +859,12 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
                     resizeMode="contain"
                   />
                   <View style={styles.packInfo}>
-                    <Text style={styles.packTitle}>{p.title}</Text>
-                    <Text style={styles.packSubtitle}>{p.subtitle}</Text>
+                    <Text style={[styles.packTitle, rtlStyle]}>
+                      {packCopy?.title ?? p.title}
+                    </Text>
+                    <Text style={[styles.packSubtitle, rtlStyle]}>
+                      {packCopy?.subtitle ?? p.subtitle}
+                    </Text>
                     <View style={[styles.packPriceButton, { backgroundColor: '#FBBF24' }]}>
                       <Gem size={13} color="#0B0620" />
                       <Text style={[styles.packPriceText, { color: '#0B0620' }]}>
@@ -853,7 +874,8 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
                   </View>
                 </View>
               </Pressable>
-            ))}
+              );
+            })}
           </ScrollView>
         )}
 
@@ -868,17 +890,17 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
             >
               <View style={styles.packTopBanner}>
                 <Text style={styles.packTopBannerText}>
-                  {starterOwned ? '✓ STARTER PACK UNLOCKED' : '⭐ STARTER PACK — ONE-TIME SPECIAL'}
+                  {starterOwned ? copy.strings.starter.ownedBanner : copy.strings.starter.banner}
                 </Text>
               </View>
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_starter')} style={styles.packIconLarge} resizeMode="contain" />
                 <View style={styles.packInfo}>
-                  <Text style={styles.packTitle}>500 Crystals + 3 Rare Skins</Text>
-                  <Text style={styles.packSubtitle}>Chrome Pip, Crystal Bloop & Velvet Fuzz</Text>
+                  <Text style={[styles.packTitle, rtlStyle]}>{copy.strings.starter.title}</Text>
+                  <Text style={[styles.packSubtitle, rtlStyle]}>{copy.strings.starter.subtitle}</Text>
                   <View style={[styles.packPriceButton, starterOwned && { backgroundColor: '#10B981' }]}>
                     <Text style={styles.packPriceText}>
-                      {starterOwned ? 'OWNED' : (prices.starter_pack ?? '$2.99')}
+                      {starterOwned ? copy.strings.owned : (prices.starter_pack ?? '$2.99')}
                     </Text>
                   </View>
                 </View>
@@ -891,13 +913,13 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
               onPress={() => handleBuy('crystals_1200')}
             >
               <View style={[styles.packTopBanner, { backgroundColor: '#F59E0B' }]}>
-                <Text style={styles.packTopBannerText}>🔥 BEST VALUE (+20% BONUS)</Text>
+                <Text style={styles.packTopBannerText}>{copy.strings.vault.banner}</Text>
               </View>
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_vault')} style={styles.packIconLarge} resizeMode="contain" />
                 <View style={styles.packInfo}>
-                  <Text style={styles.packTitle}>1,200 Crystals</Text>
-                  <Text style={styles.packSubtitle}>Vault of radiant astral gems</Text>
+                  <Text style={[styles.packTitle, rtlStyle]}>{copy.strings.vault.title}</Text>
+                  <Text style={[styles.packSubtitle, rtlStyle]}>{copy.strings.vault.subtitle}</Text>
                   <View style={[styles.packPriceButton, { backgroundColor: '#F59E0B' }]}>
                     <Text style={styles.packPriceText}>{prices.crystals_1200 ?? '$7.99'}</Text>
                   </View>
@@ -913,8 +935,8 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_chest')} style={styles.packIcon} resizeMode="contain" />
                 <View style={styles.packInfo}>
-                  <Text style={styles.packTitle}>500 Crystals</Text>
-                  <Text style={styles.packSubtitle}>Chest overflowing with cosmic crystals</Text>
+                  <Text style={[styles.packTitle, rtlStyle]}>{copy.strings.chest.title}</Text>
+                  <Text style={[styles.packSubtitle, rtlStyle]}>{copy.strings.chest.subtitle}</Text>
                   <View style={styles.packPriceButton}>
                     <Text style={styles.packPriceText}>{prices.crystals_500 ?? '$3.99'}</Text>
                   </View>
@@ -930,8 +952,8 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_pouch')} style={styles.packIcon} resizeMode="contain" />
                 <View style={styles.packInfo}>
-                  <Text style={styles.packTitle}>100 Crystals</Text>
-                  <Text style={styles.packSubtitle}>Pouch of sparkling blue gems</Text>
+                  <Text style={[styles.packTitle, rtlStyle]}>{copy.strings.pouch.title}</Text>
+                  <Text style={[styles.packSubtitle, rtlStyle]}>{copy.strings.pouch.subtitle}</Text>
                   <View style={styles.packPriceButton}>
                     <Text style={styles.packPriceText}>{prices.crystals_100 ?? '$0.99'}</Text>
                   </View>
@@ -947,8 +969,8 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
               <View style={styles.packMainRow}>
                 <Image source={getPackImage('pack_shield')} style={styles.packIcon} resizeMode="contain" />
                 <View style={styles.packInfo}>
-                  <Text style={styles.packTitle}>10 Streak Shields</Text>
-                  <Text style={styles.packSubtitle}>Protects your arcade combo streaks from breaking</Text>
+                  <Text style={[styles.packTitle, rtlStyle]}>{copy.strings.shields.title}</Text>
+                  <Text style={[styles.packSubtitle, rtlStyle]}>{copy.strings.shields.subtitle}</Text>
                   <View style={[styles.packPriceButton, { backgroundColor: '#3B82F6' }]}>
                     <Text style={styles.packPriceText}>{prices.shield_pack_10 ?? '$0.99'}</Text>
                   </View>
@@ -958,21 +980,21 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
 
             {/* Restore Purchases Button */}
             <Pressable style={styles.restoreBtn} onPress={handleRestore}>
-              <Text style={styles.restoreBtnText}>RESTORE PURCHASES</Text>
+              <Text style={styles.restoreBtnText}>{copy.strings.restore}</Text>
             </Pressable>
 
             {/* Legal Links Footer */}
             <View style={styles.legalRow}>
               <Pressable onPress={() => handleOpenLegal(PRIVACY_URL)} hitSlop={8}>
-                <Text style={styles.legalLinkText}>Privacy Policy</Text>
+                <Text style={styles.legalLinkText}>{copy.strings.privacyPolicy}</Text>
               </Pressable>
               <Text style={styles.legalDot}>•</Text>
               <Pressable onPress={() => handleOpenLegal(TERMS_URL)} hitSlop={8}>
-                <Text style={styles.legalLinkText}>Terms of Use</Text>
+                <Text style={styles.legalLinkText}>{copy.strings.termsOfUse}</Text>
               </Pressable>
               <Text style={styles.legalDot}>•</Text>
               <Pressable onPress={() => handleOpenLegal(SUPPORT_URL)} hitSlop={8}>
-                <Text style={styles.legalLinkText}>Support</Text>
+                <Text style={styles.legalLinkText}>{copy.strings.support}</Text>
               </Pressable>
             </View>
           </ScrollView>
@@ -989,9 +1011,9 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
         <View style={styles.needGemsBackdrop}>
           <View style={styles.needGemsBox}>
             <Text style={styles.needGemsEmoji}>💎</Text>
-            <Text style={styles.needGemsTitle}>MORE GEMS NEEDED</Text>
-            <Text style={styles.needGemsSubtitle}>
-              You do not have enough crystals to buy this Stardust bundle. Would you like to check the Gems shop?
+            <Text style={styles.needGemsTitle}>{copy.strings.needGems.title}</Text>
+            <Text style={[styles.needGemsSubtitle, rtlStyle]}>
+              {copy.strings.needGems.body}
             </Text>
             <View style={styles.needGemsActions}>
               <Pressable
@@ -1002,13 +1024,13 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
                 }}
               >
                 <Gem size={16} color="#FFFFFF" />
-                <Text style={styles.needGemsConfirmText}>GET GEMS</Text>
+                <Text style={styles.needGemsConfirmText}>{copy.strings.needGems.confirm}</Text>
               </Pressable>
               <Pressable
                 style={styles.needGemsCancelBtn}
                 onPress={() => setNeedCrystalsAlert(false)}
               >
-                <Text style={styles.needGemsCancelText}>CANCEL</Text>
+                <Text style={styles.needGemsCancelText}>{copy.strings.needGems.cancel}</Text>
               </Pressable>
             </View>
           </View>
@@ -1025,18 +1047,16 @@ export default function Shop({ onBack, initialTab }: ShopProps) {
           <View style={styles.needGemsBox}>
             <Text style={styles.needGemsEmoji}>🛒</Text>
             <Text style={styles.needGemsTitle}>
-              {storeIssue === 'unavailable' ? 'STORE UNAVAILABLE' : storeIssue === 'restore' ? 'RESTORE FAILED' : 'PURCHASE FAILED'}
+              {storeIssue
+                ? common.strings.storeIssue[storeIssue].title.toUpperCase()
+                : ''}
             </Text>
-            <Text style={styles.needGemsSubtitle}>
-              {storeIssue === 'unavailable'
-                ? 'This item could not be loaded from the App Store right now. Please check your connection and try again later.'
-                : storeIssue === 'restore'
-                  ? 'We could not reach the App Store to restore your purchases. Please try again later.'
-                  : 'The App Store could not complete this purchase. Please try again.'}
+            <Text style={[styles.needGemsSubtitle, rtlStyle]}>
+              {storeIssue ? common.strings.storeIssue[storeIssue].body : ''}
             </Text>
             <View style={styles.needGemsActions}>
               <Pressable style={styles.needGemsConfirmBtn} onPress={() => setStoreIssue(null)}>
-                <Text style={styles.needGemsConfirmText}>OK</Text>
+                <Text style={styles.needGemsConfirmText}>{copy.strings.ok}</Text>
               </Pressable>
             </View>
           </View>

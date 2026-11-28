@@ -31,6 +31,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import {
   Check,
+  ChevronLeft,
   ChevronRight,
   Crown,
   Flame,
@@ -65,6 +66,13 @@ import {
 import { ACCESSORY_ASSETS, getSkinImage } from '../data/shopAssets';
 import { PIP } from '../render/sprites';
 import { SpriteCharacter, useClipImages, useSpritePlayer } from '../render/SpriteCharacter';
+import { localizeCatalogName } from './i18n/catalog';
+import {
+  COLLECTION_TOTAL,
+  DAILY_CHALLENGE_STARDUST,
+  DAILY_CHALLENGE_XP,
+  getProfileCopy,
+} from './i18n/profile';
 import { RedeemCodeModal } from './RedeemCodeModal';
 import { InviteModal } from './InviteModal';
 
@@ -75,10 +83,10 @@ interface ProfileModalProps {
   onOpenShop?: (tab: 'skins' | 'accessories') => void;
 }
 
-const ACCESSORY_AREAS: { slot: AccessorySlot; label: string; icon: React.FC<{ size: number; color: string }> }[] = [
-  { slot: 'hat', label: 'HEAD', icon: Crown },
-  { slot: 'aura', label: 'AURA', icon: Wand2 },
-  { slot: 'trail', label: 'TRAIL', icon: Wind },
+const ACCESSORY_AREAS: { slot: AccessorySlot; icon: React.FC<{ size: number; color: string }> }[] = [
+  { slot: 'hat', icon: Crown },
+  { slot: 'aura', icon: Wand2 },
+  { slot: 'trail', icon: Wind },
 ];
 
 const STAGE_SIZE = 180;
@@ -241,6 +249,7 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
   const sfxOn = useAudioSettings((s) => s.sfxOn);
   const toggleMusic = useAudioSettings((s) => s.toggleMusic);
   const toggleSfx = useAudioSettings((s) => s.toggleSfx);
+  const { strings, rtl, locale } = getProfileCopy();
 
   const stardust = useEconomy((s) => s.stardust);
   const crystals = useEconomy((s) => s.crystals);
@@ -324,12 +333,12 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
       >
         <View style={styles.card}>
           {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.titleRow}>
+          <View style={[styles.header, rtl && styles.rowReverse]}>
+            <View style={[styles.titleRow, rtl && styles.rowReverse]}>
               <View style={styles.levelBadge}>
-                <Text style={styles.levelBadgeText}>LVL {level}</Text>
+                <Text style={styles.levelBadgeText}>{strings.levelBadge(level)}</Text>
               </View>
-              <Text style={styles.title}>PLAYER PROFILE</Text>
+              <Text style={[styles.title, rtl && styles.rtlText]}>{strings.title}</Text>
             </View>
             <Pressable
               style={styles.closeBtn}
@@ -364,12 +373,12 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
 
               <View style={styles.characterInfo}>
                 {editingName ? (
-                  <View style={styles.nameEditRow}>
+                  <View style={[styles.nameEditRow, rtl && styles.rowReverse]}>
                     <TextInput
-                      style={styles.nameInput}
+                      style={[styles.nameInput, rtl && styles.rtlCentered]}
                       value={nameDraft}
                       onChangeText={setNameDraft}
-                      placeholder="Character name"
+                      placeholder={strings.namePlaceholder}
                       placeholderTextColor="#64748B"
                       maxLength={18}
                       autoFocus
@@ -382,7 +391,7 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                   </View>
                 ) : (
                   <Pressable
-                    style={styles.nameDisplayBtn}
+                    style={[styles.nameDisplayBtn, rtl && styles.rowReverse]}
                     onPress={() => {
                       setNameDraft(characterName);
                       setEditingName(true);
@@ -390,7 +399,7 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                     }}
                     hitSlop={8}
                   >
-                    <Text style={styles.characterName}>{characterName}</Text>
+                    <Text style={[styles.characterName, rtl && styles.rtlCentered]}>{characterName}</Text>
                     <Pencil size={13} color="#94A3B8" />
                   </Pressable>
                 )}
@@ -399,24 +408,26 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
 
             {/* ── 2. Owned Assets (1 item or none per area) ── */}
             <View style={styles.wardrobeHeader}>
-              <Text style={styles.wardrobeTitle}>✦ MY ASSETS ✦</Text>
-              <Text style={styles.wardrobeSub}>
-                {hasAnyAssets
-                  ? 'Tap to equip or remove (1 item per area):'
-                  : 'Your closet is empty right now'}
+              <Text style={[styles.wardrobeTitle, rtl && styles.rtlCentered]}>
+                {strings.myAssetsTitle}
+              </Text>
+              <Text style={[styles.wardrobeSub, rtl && styles.rtlCentered]}>
+                {hasAnyAssets ? strings.myAssetsSubtitle : strings.emptyAssetsTitle}
               </Text>
             </View>
 
             {!hasAnyAssets ? (
               <View style={styles.emptyAssetsCard}>
                 <ShoppingBag size={26} color="#38BDF8" />
-                <Text style={styles.emptyAssetsTitle}>No assets yet</Text>
-                <Text style={styles.emptyAssetsSub}>
-                  Buy hats, skins, auras, trails, or faces in the Shop to customize Pip!
+                <Text style={[styles.emptyAssetsTitle, rtl && styles.rtlCentered]}>
+                  {strings.emptyAssetsTitle}
+                </Text>
+                <Text style={[styles.emptyAssetsSub, rtl && styles.rtlCentered]}>
+                  {strings.emptyAssetsSub}
                 </Text>
                 {onOpenShop && (
                   <Pressable
-                    style={styles.goToShopBtn}
+                    style={[styles.goToShopBtn, rtl && styles.rowReverse]}
                     onPress={() => {
                       sfx.play('pop', 0.5);
                       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -424,7 +435,7 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                     }}
                   >
                     <ShoppingBag size={15} color="#0B132B" />
-                    <Text style={styles.goToShopBtnText}>GO TO SHOP</Text>
+                    <Text style={styles.goToShopBtnText}>{strings.goToShop}</Text>
                   </Pressable>
                 )}
               </View>
@@ -435,9 +446,11 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                   const activeId = equippedAccessories[area.slot];
                   return (
                     <View key={area.slot} style={styles.areaBlock}>
-                      <View style={styles.areaLabelRow}>
+                      <View style={[styles.areaLabelRow, rtl && styles.rowReverse]}>
                         <AreaIcon size={13} color="#94A3B8" />
-                        <Text style={styles.areaLabelText}>{area.label}</Text>
+                        <Text style={[styles.areaLabelText, rtl && styles.rtlText]}>
+                          {strings.slots[area.slot]}
+                        </Text>
                       </View>
                       <ScrollView
                         horizontal
@@ -452,15 +465,21 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                           <View style={styles.itemCardThumbWrap}>
                             <Text style={styles.noneEmoji}>🚫</Text>
                           </View>
-                          <Text style={styles.itemCardName}>None</Text>
+                          <Text style={[styles.itemCardName, rtl && styles.rtlCentered]}>
+                            {strings.none}
+                          </Text>
                           {!activeId ? (
-                            <View style={styles.itemBtnEquipped}>
+                            <View style={[styles.itemBtnEquipped, rtl && styles.rowReverse]}>
                               <Check size={11} color="#FFFFFF" />
-                              <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
+                              <Text style={[styles.itemBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                                {strings.equipped}
+                              </Text>
                             </View>
                           ) : (
                             <View style={styles.itemBtnEquip}>
-                              <Text style={styles.itemBtnText} numberOfLines={1}>REMOVE</Text>
+                              <Text style={[styles.itemBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                                {strings.remove}
+                              </Text>
                             </View>
                           )}
                         </Pressable>
@@ -481,17 +500,24 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                                   <Image source={itemImg} style={styles.itemCardThumb} resizeMode="contain" />
                                 )}
                               </View>
-                              <Text style={styles.itemCardName} numberOfLines={2}>
-                                {acc.name}
+                              <Text
+                                style={[styles.itemCardName, rtl && styles.rtlCentered]}
+                                numberOfLines={2}
+                              >
+                                {localizeCatalogName(acc.name, locale)}
                               </Text>
                               {isEquipped ? (
-                                <View style={styles.itemBtnEquipped}>
+                                <View style={[styles.itemBtnEquipped, rtl && styles.rowReverse]}>
                                   <Check size={11} color="#FFFFFF" />
-                                  <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
+                                  <Text style={[styles.itemBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                                    {strings.equipped}
+                                  </Text>
                                 </View>
                               ) : (
                                 <View style={styles.itemBtnEquip}>
-                                  <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
+                                  <Text style={[styles.itemBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                                    {strings.equip}
+                                  </Text>
                                 </View>
                               )}
                             </Pressable>
@@ -504,9 +530,11 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
 
                 {ownedPipSkins.length > 0 && (
                   <View style={styles.areaBlock}>
-                    <View style={styles.areaLabelRow}>
+                    <View style={[styles.areaLabelRow, rtl && styles.rowReverse]}>
                       <Palette size={13} color="#94A3B8" />
-                      <Text style={styles.areaLabelText}>SKIN</Text>
+                      <Text style={[styles.areaLabelText, rtl && styles.rtlText]}>
+                        {strings.slots.skin}
+                      </Text>
                     </View>
                     <ScrollView
                       horizontal
@@ -528,15 +556,21 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                             resizeMode="contain"
                           />
                         </View>
-                        <Text style={styles.itemCardName}>Classic Pip</Text>
+                        <Text style={[styles.itemCardName, rtl && styles.rtlCentered]}>
+                          {strings.classicSkin}
+                        </Text>
                         {!equippedSkins['pip'] || equippedSkins['pip'] === 'pip_classic' ? (
-                          <View style={styles.itemBtnEquipped}>
+                          <View style={[styles.itemBtnEquipped, rtl && styles.rowReverse]}>
                             <Check size={11} color="#FFFFFF" />
-                            <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
+                            <Text style={[styles.itemBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                              {strings.equipped}
+                            </Text>
                           </View>
                         ) : (
                           <View style={styles.itemBtnEquip}>
-                            <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
+                            <Text style={[styles.itemBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                              {strings.equip}
+                            </Text>
                           </View>
                         )}
                       </Pressable>
@@ -555,17 +589,24 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                                 <Image source={skinThumb} style={styles.itemCardThumb} resizeMode="contain" />
                               )}
                             </View>
-                            <Text style={styles.itemCardName} numberOfLines={2}>
-                              {skin.name}
+                            <Text
+                              style={[styles.itemCardName, rtl && styles.rtlCentered]}
+                              numberOfLines={2}
+                            >
+                              {localizeCatalogName(skin.name, locale)}
                             </Text>
                             {isEquipped ? (
-                              <View style={styles.itemBtnEquipped}>
+                              <View style={[styles.itemBtnEquipped, rtl && styles.rowReverse]}>
                                 <Check size={11} color="#FFFFFF" />
-                                <Text style={styles.itemBtnText} numberOfLines={1}>EQUIPPED</Text>
+                                <Text style={[styles.itemBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                                  {strings.equipped}
+                                </Text>
                               </View>
                             ) : (
                               <View style={styles.itemBtnEquip}>
-                                <Text style={styles.itemBtnText} numberOfLines={1}>EQUIP</Text>
+                                <Text style={[styles.itemBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                                  {strings.equip}
+                                </Text>
                               </View>
                             )}
                           </Pressable>
@@ -579,11 +620,13 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
 
             {/* ── 4. Gifts & Rewards ── */}
             <View style={styles.giftsSectionHeader}>
-              <Text style={styles.giftsSectionTitle}>✦ GIFTS & REWARDS ✦</Text>
+              <Text style={[styles.giftsSectionTitle, rtl && styles.rtlCentered]}>
+                {strings.giftsTitle}
+              </Text>
             </View>
-            <View style={styles.giftsSection}>
+            <View style={[styles.giftsSection, rtl && styles.rowReverse]}>
               <Pressable
-                style={styles.giftBtn}
+                style={[styles.giftBtn, rtl && styles.rowReverse]}
                 onPress={() => {
                   sfx.play('pop');
                   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -591,11 +634,13 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                 }}
               >
                 <Gift size={16} color="#FBBF24" />
-                <Text style={styles.giftBtnText} numberOfLines={1}>Redeem Code</Text>
+                <Text style={[styles.giftBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                  {strings.redeemCode}
+                </Text>
               </Pressable>
 
               <Pressable
-                style={styles.inviteBtn}
+                style={[styles.inviteBtn, rtl && styles.rowReverse]}
                 onPress={() => {
                   sfx.play('pop');
                   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -603,17 +648,19 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                 }}
               >
                 <QrCode size={16} color="#38BDF8" />
-                <Text style={styles.inviteBtnText} numberOfLines={1}>Invite Friends</Text>
+                <Text style={[styles.inviteBtnText, rtl && styles.rtlCentered]} numberOfLines={1}>
+                  {strings.inviteFriends}
+                </Text>
               </Pressable>
             </View>
 
             {/* ── 5. Sound & Audio ── */}
             <View style={styles.giftsSectionHeader}>
-              <Text style={styles.giftsSectionTitle}>✦ SOUND & AUDIO ✦</Text>
+              <Text style={[styles.giftsSectionTitle, rtl && styles.rtlCentered]}>{strings.soundTitle}</Text>
             </View>
-            <View style={styles.audioRow}>
+            <View style={[styles.audioRow, rtl && styles.rowReverse]}>
               <Pressable
-                style={[styles.audioBtn, musicOn ? styles.audioBtnOn : styles.audioBtnOff]}
+                style={[styles.audioBtn, rtl && styles.rowReverse, musicOn ? styles.audioBtnOn : styles.audioBtnOff]}
                 onPress={() => {
                   toggleMusic();
                   const next = useAudioSettings.getState().musicOn;
@@ -623,13 +670,13 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                 }}
               >
                 <Music size={16} color={musicOn ? '#38BDF8' : '#64748B'} />
-                <Text style={[styles.audioBtnText, !musicOn && styles.audioBtnTextOff]}>
-                  {musicOn ? 'Music: ON' : 'Music: OFF'}
+                <Text style={[styles.audioBtnText, !musicOn && styles.audioBtnTextOff, rtl && styles.rtlCentered]}>
+                  {musicOn ? strings.musicOn : strings.musicOff}
                 </Text>
               </Pressable>
 
               <Pressable
-                style={[styles.audioBtn, sfxOn ? styles.audioBtnOn : styles.audioBtnOff]}
+                style={[styles.audioBtn, rtl && styles.rowReverse, sfxOn ? styles.audioBtnOn : styles.audioBtnOff]}
                 onPress={() => {
                   const wasOn = sfxOn;
                   toggleSfx();
@@ -642,8 +689,8 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                 ) : (
                   <VolumeX size={16} color="#64748B" />
                 )}
-                <Text style={[styles.audioBtnText, !sfxOn && styles.audioBtnTextOff]}>
-                  {sfxOn ? 'Effects: ON' : 'Effects: OFF'}
+                <Text style={[styles.audioBtnText, !sfxOn && styles.audioBtnTextOff, rtl && styles.rtlCentered]}>
+                  {sfxOn ? strings.sfxOn : strings.sfxOff}
                 </Text>
               </Pressable>
             </View>
@@ -653,32 +700,32 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
               <View style={styles.statBox}>
                 <Sparkles size={16} color="#FBBF24" />
                 <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{stardust.toLocaleString()}</Text>
-                <Text style={styles.statLabel}>STARDUST</Text>
+                <Text style={[styles.statLabel, rtl && styles.rtlCentered]}>{strings.stats.stardust}</Text>
               </View>
 
               <View style={styles.statBox}>
                 <Gem size={16} color="#38BDF8" />
                 <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{crystals.toLocaleString()}</Text>
-                <Text style={styles.statLabel}>CRYSTALS</Text>
+                <Text style={[styles.statLabel, rtl && styles.rtlCentered]}>{strings.stats.crystals}</Text>
               </View>
 
               <View style={styles.statBox}>
                 <Flame size={16} color="#F97316" />
-                <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{collectionCount} / 15</Text>
-                <Text style={styles.statLabel}>CRITTERS</Text>
+                <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{collectionCount} / {COLLECTION_TOTAL}</Text>
+                <Text style={[styles.statLabel, rtl && styles.rtlCentered]}>{strings.stats.critters}</Text>
               </View>
 
               <View style={styles.statBox}>
                 <Trophy size={16} color="#A78BFA" />
-                <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{mode}</Text>
-                <Text style={styles.statLabel}>MODE</Text>
+                <Text style={styles.statVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{strings.modes[mode]}</Text>
+                <Text style={[styles.statLabel, rtl && styles.rtlCentered]}>{strings.stats.mode}</Text>
               </View>
             </View>
 
             {/* ── 5. Daily Challenge Action ── */}
             {onStartDaily && (
               <Pressable
-                style={styles.dailyBanner}
+                style={[styles.dailyBanner, rtl && styles.rowReverse]}
                 onPress={() => {
                   sfx.play('whoosh', 0.5);
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -686,14 +733,22 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
                   onStartDaily();
                 }}
               >
-                <View style={styles.dailyLeft}>
+                <View style={[styles.dailyLeft, rtl && styles.rowReverse]}>
                   <Sparkles size={20} color="#FFD36E" />
                   <View>
-                    <Text style={styles.dailyTitle}>DAILY CHALLENGE</Text>
-                    <Text style={styles.dailySub}>Earn +80 XP & +25 Stardust</Text>
+                    <Text style={[styles.dailyTitle, rtl && styles.rtlText]}>
+                      {strings.dailyChallenge}
+                    </Text>
+                    <Text style={[styles.dailySub, rtl && styles.rtlText]}>
+                      {strings.dailyReward(DAILY_CHALLENGE_XP, DAILY_CHALLENGE_STARDUST)}
+                    </Text>
                   </View>
                 </View>
-                <ChevronRight size={18} color="#FFD36E" />
+                {rtl ? (
+                  <ChevronLeft size={18} color="#FFD36E" />
+                ) : (
+                  <ChevronRight size={18} color="#FFD36E" />
+                )}
               </Pressable>
             )}
 
@@ -714,6 +769,19 @@ export function ProfileModal({ visible, onClose, onStartDaily, onOpenShop }: Pro
 }
 
 const styles = StyleSheet.create({
+  /** RTL: swap the visual order of icon/label rows. */
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  /** RTL: right-align a text block that is left-aligned in English. */
+  rtlText: {
+    writingDirection: 'rtl',
+    textAlign: 'right',
+  },
+  /** RTL: keep centered text centered, only fix the bidi paragraph direction. */
+  rtlCentered: {
+    writingDirection: 'rtl',
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(5, 1, 15, 0.88)',

@@ -10,6 +10,8 @@ import { useAudioSettings } from '../store/audioSettings';
 import { useProfile } from '../store/profile';
 import { deleteAccount, signOut, useAuth } from '../services/supabase';
 import { openLegal, PRIVACY_URL, TERMS_URL, SUPPORT_URL } from '../legal';
+import { getCommonCopy } from '../ui/i18n/common';
+import { getSettingsCopy } from '../ui/i18n/settings';
 
 const ROWS = [0.22, 0.32, 0.42, 0.54, 0.64, 0.77, 0.88];
 
@@ -92,6 +94,8 @@ function drawRestoreButton(c: SkCanvas, cx: number, cy: number) {
 
 export default function Settings({ onBack }: { onBack: () => void }) {
   const { width: W, height: H } = useWindowDimensions();
+  const common = useMemo(() => getCommonCopy(), []);
+  const settings = useMemo(() => getSettingsCopy(), []);
   const musicOn = useAudioSettings((s) => s.musicOn);
   const sfxOn = useAudioSettings((s) => s.sfxOn);
   const reduceMotion = useAudioSettings((s) => s.reduceMotion);
@@ -106,10 +110,10 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       } else {
         sfx.play('sad', 0.45);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        Alert.alert('Restore failed', 'We could not reach the App Store to restore your purchases. Please try again later.');
+        Alert.alert(common.strings.restoreFailed.title, common.strings.restoreFailed.body);
       }
     });
-  }, []);
+  }, [common]);
 
   const doBuyShields = useCallback(() => {
     void buyShieldPack().then((r) => {
@@ -120,20 +124,18 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         sfx.play('sad', 0.4);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         Alert.alert(
-          r === 'unavailable' ? 'Store unavailable' : 'Purchase failed',
-          r === 'unavailable'
-            ? 'This item could not be loaded from the App Store right now. Please check your connection and try again later.'
-            : 'The App Store could not complete this purchase. Please try again.',
+          common.strings.storeIssue[r].title,
+          common.strings.storeIssue[r].body,
         );
       }
     });
-  }, []);
+  }, [common]);
 
   const doDelete = useCallback(() => {
-    Alert.alert('Delete cloud account?', 'Removes your online profile and leaderboard entry. Progress on this device stays.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(settings.strings.deleteTitle, settings.strings.deleteBody, [
+      { text: settings.strings.cancel, style: 'cancel' },
       {
-        text: 'Delete',
+        text: settings.strings.delete,
         style: 'destructive',
         onPress: () => {
           void deleteAccount().then((ok) => {
@@ -143,7 +145,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         },
       },
     ]);
-  }, []);
+  }, [settings]);
 
   const picture = useMemo(() => {
     const rec = Skia.PictureRecorder();
@@ -227,15 +229,15 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       </GestureDetector>
       <View style={styles.legalFooter} pointerEvents="box-none">
         <Pressable onPress={() => void openLegal(PRIVACY_URL)} hitSlop={8}>
-          <Text style={styles.legalText}>Privacy</Text>
+          <Text style={styles.legalText}>{common.strings.privacy}</Text>
         </Pressable>
         <Text style={styles.legalDot}>•</Text>
         <Pressable onPress={() => void openLegal(TERMS_URL)} hitSlop={8}>
-          <Text style={styles.legalText}>Terms</Text>
+          <Text style={styles.legalText}>{common.strings.terms}</Text>
         </Pressable>
         <Text style={styles.legalDot}>•</Text>
         <Pressable onPress={() => void openLegal(SUPPORT_URL)} hitSlop={8}>
-          <Text style={styles.legalText}>Support</Text>
+          <Text style={styles.legalText}>{common.strings.support}</Text>
         </Pressable>
       </View>
     </View>

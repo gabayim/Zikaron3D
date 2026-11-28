@@ -51,6 +51,9 @@ import { sfx, useCrossfadeMusic } from '../fx/sound';
 import { useProfile, type GameId } from '../store/profile';
 import { levelForXp, levelProgress } from '../store/progression';
 import { WORLDS, type WorldDef, type WorldId } from '../worlds';
+import { getHubCopy } from '../ui/i18n/hub';
+import { localizeWorldName } from '../ui/i18n/worlds';
+import { rtlTextStyle } from '../ui/i18n/text';
 
 /** Character shown standing in each world's portal. */
 const FEATURED_BY_WORLD: Record<WorldId, string> = {
@@ -288,6 +291,8 @@ export default function Hub({
   onInvite,
 }: HubProps) {
   const { width: W, height: H } = useWindowDimensions();
+  const copy = getHubCopy();
+  const rtlStyle = rtlTextStyle(copy.rtl);
   const [skipBoot] = useState(() => hasBooted);
   const xp = useProfile((state) => state.xp);
   const dailyComplete = useProfile((state) => state.dailyCompleted.length > 0);
@@ -508,7 +513,7 @@ export default function Hub({
       if (finished) scheduleOnRN(onEnter, world);
     })));
     flashPulse.set(withDelay(800, withTiming(1, { duration: 280 })));
-  }, [pip, emit, warp, flashPulse, onEnter, W, geo.cy, squash]);
+  }, [pip, emit, warp, flashPulse, onEnter, W, geo.cy, squash, setUnlockTarget]);
 
   const handleConfirmUnlock = useCallback(
     (currency: 'stardust' | 'crystals') => {
@@ -548,7 +553,7 @@ export default function Hub({
       };
       doUnlock();
     },
-    [unlockTarget, spendStardust, spendCrystals, unlockWorld, markWorldCelebrated, emit, W, geo.cy],
+    [unlockTarget, spendStardust, spendCrystals, unlockWorld, markWorldCelebrated, emit, W, geo.cy, setUnlockTarget],
   );
 
   // A newly unlocked world: glide to its portal and celebrate once.
@@ -847,11 +852,11 @@ export default function Hub({
         <View style={hubStyles.modalBackdrop}>
           <View style={hubStyles.modalBox}>
             <Text style={hubStyles.modalEmoji}>🌍</Text>
-            <Text style={hubStyles.modalTitle}>
-              UNLOCK {unlockTarget?.id.replace('_', ' ').toUpperCase()}?
+            <Text style={[hubStyles.modalTitle, rtlStyle]}>
+              {copy.strings.unlockTitle(localizeWorldName(unlockTarget?.id ?? '', copy.locale))}
             </Text>
-            <Text style={hubStyles.modalSubtitle}>
-              Unlock this portal now to play new games and meet exclusive critters!
+            <Text style={[hubStyles.modalSubtitle, rtlStyle]}>
+              {copy.strings.unlockBody}
             </Text>
 
             <View style={hubStyles.modalActions}>
@@ -862,7 +867,7 @@ export default function Hub({
                 >
                   <Sparkles size={16} color="#FFFFFF" />
                   <Text style={hubStyles.modalBtnText}>
-                    ★ {unlockTarget.priceStardust.toLocaleString()} STARDUST
+                    {copy.strings.stardustCost(unlockTarget.priceStardust.toLocaleString())}
                   </Text>
                 </Pressable>
               )}
@@ -873,7 +878,7 @@ export default function Hub({
                 >
                   <Gem size={16} color="#FFFFFF" />
                   <Text style={hubStyles.modalBtnText}>
-                    💎 {unlockTarget.priceCrystals} CRYSTALS
+                    {copy.strings.crystalsCost(unlockTarget.priceCrystals)}
                   </Text>
                 </Pressable>
               )}
@@ -881,7 +886,7 @@ export default function Hub({
                 style={hubStyles.cancelBtn}
                 onPress={() => setUnlockTarget(null)}
               >
-                <Text style={hubStyles.cancelBtnText}>CANCEL</Text>
+                <Text style={hubStyles.cancelBtnText}>{copy.strings.cancel}</Text>
               </Pressable>
             </View>
           </View>
