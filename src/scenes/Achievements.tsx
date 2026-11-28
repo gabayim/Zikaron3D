@@ -24,25 +24,33 @@ import {
   type AchievementDef,
 } from '../store/achievements';
 import { CurrencyBar } from '../ui/CurrencyBar';
+import {
+  getAchievementsCopy,
+  localizeAchievement,
+  type AchievementCategoryKey,
+} from '../ui/i18n/achievements';
+import { rtlTextStyle } from '../ui/i18n/text';
 
 interface AchievementsProps {
   onBack: () => void;
 }
 
-const CATEGORIES: { id: 'all' | AchievementCategory; label: string }[] = [
-  { id: 'all', label: 'ALL' },
-  { id: 'burrows', label: 'BURROWS' },
-  { id: 'orbs', label: 'ORBS' },
-  { id: 'stars', label: 'STARS' },
-  { id: 'shells', label: 'SHELLS' },
-  { id: 'vines', label: 'VINES' },
-  { id: 'beats', label: 'BEATS' },
-  { id: 'peaks', label: 'PEAKS' },
-  { id: 'general', label: 'GENERAL' },
+const CATEGORIES: AchievementCategoryKey[] = [
+  'all',
+  'burrows',
+  'orbs',
+  'stars',
+  'shells',
+  'vines',
+  'beats',
+  'peaks',
+  'general',
 ];
 
 export default function Achievements({ onBack }: AchievementsProps) {
   const [activeCategory, setActiveCategory] = useState<'all' | AchievementCategory>('all');
+  const copy = getAchievementsCopy();
+  const rtlStyle = rtlTextStyle(copy.rtl);
 
   const metrics = useAchievements((s) => s.metrics);
   const claimed = useAchievements((s) => s.claimed);
@@ -78,9 +86,9 @@ export default function Achievements({ onBack }: AchievementsProps) {
         </Pressable>
 
         <View style={styles.titleContainer}>
-          <Text style={styles.headerTitle}>ACHIEVEMENTS</Text>
-          <Text style={styles.subtitle}>
-            {claimed.length} / {ACHIEVEMENTS.length} COMPLETED
+          <Text style={[styles.headerTitle, rtlStyle]}>{copy.strings.title}</Text>
+          <Text style={[styles.subtitle, rtlStyle]}>
+            {copy.strings.completed(claimed.length, ACHIEVEMENTS.length)}
           </Text>
         </View>
 
@@ -91,24 +99,24 @@ export default function Achievements({ onBack }: AchievementsProps) {
       <View style={styles.chipRow}>
         {CATEGORIES.map((cat) => (
           <Pressable
-            key={cat.id}
+            key={cat}
             style={[
               styles.chip,
-              activeCategory === cat.id && styles.chipActive,
+              activeCategory === cat && styles.chipActive,
             ]}
             onPress={() => {
               sfx.play('chime', 0.3);
               Haptics.selectionAsync();
-              setActiveCategory(cat.id);
+              setActiveCategory(cat);
             }}
           >
             <Text
               style={[
                 styles.chipText,
-                activeCategory === cat.id && styles.chipTextActive,
+                activeCategory === cat && styles.chipTextActive,
               ]}
             >
-              {cat.label}
+              {copy.strings.categories[cat]}
             </Text>
           </Pressable>
         ))}
@@ -124,6 +132,7 @@ export default function Achievements({ onBack }: AchievementsProps) {
           const isUnlocked = current >= item.target;
           const isClaimed = claimed.includes(item.id);
           const progressPct = Math.min(1, current / item.target);
+          const text = localizeAchievement(item.id, item.name, item.description, copy.locale);
 
           return (
             <View
@@ -152,8 +161,8 @@ export default function Achievements({ onBack }: AchievementsProps) {
 
               {/* Middle details */}
               <View style={styles.details}>
-                <Text style={styles.achievementName}>{item.name}</Text>
-                <Text style={styles.achievementDesc}>{item.description}</Text>
+                <Text style={[styles.achievementName, rtlStyle]}>{text.name}</Text>
+                <Text style={[styles.achievementDesc, rtlStyle]}>{text.description}</Text>
 
                 {/* Progress bar */}
                 <View style={styles.barContainer}>
@@ -180,7 +189,7 @@ export default function Achievements({ onBack }: AchievementsProps) {
                     ) : item.rewardType === 'accessory' ? (
                       <>
                         <Crown size={12} color="#F59E0B" />
-                        <Text style={styles.accessoryText}>EXCLUSIVE</Text>
+                        <Text style={styles.accessoryText}>{copy.strings.exclusive}</Text>
                       </>
                     ) : (
                       <>
@@ -203,7 +212,7 @@ export default function Achievements({ onBack }: AchievementsProps) {
                     style={styles.claimButton}
                     onPress={() => handleClaim(item)}
                   >
-                    <Text style={styles.claimButtonText}>CLAIM</Text>
+                    <Text style={styles.claimButtonText}>{copy.strings.claim}</Text>
                   </Pressable>
                 ) : (
                   <View style={styles.lockBadge}>

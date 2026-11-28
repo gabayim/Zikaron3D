@@ -22,6 +22,14 @@ import {
   VINE_LEVELS,
 } from '../engine/levelTables';
 import { CurrencyBar } from '../ui/CurrencyBar';
+import {
+  getLevelSelectCopy,
+  getMechanicLabel,
+  SKIP_COST_CRYSTALS,
+  SKIP_COST_STARDUST,
+  SKIP_XP_REWARD,
+} from '../ui/i18n/levelSelect';
+import { rtlTextStyle } from '../ui/i18n/text';
 
 interface LevelSelectProps {
   game: GameId;
@@ -29,16 +37,6 @@ interface LevelSelectProps {
   onBack: () => void;
   onOpenShop?: (tab: 'stardust' | 'crystals') => void;
 }
-
-const GAME_TITLES: Record<GameId, string> = {
-  burrows: 'CRITTER BURROWS',
-  orbs: 'ORB MERGE',
-  stars: 'STAR CATCHER',
-  shells: 'SHELL SHUFFLE',
-  vines: 'VINE FLOW',
-  beats: 'BEAT CIRCUIT',
-  peaks: 'ECHO PEAKS',
-};
 
 const GAME_COLORS: Record<GameId, string> = {
   burrows: '#10B981',
@@ -66,6 +64,8 @@ export default function LevelSelect({
   onBack,
   onOpenShop,
 }: LevelSelectProps) {
+  const copy = getLevelSelectCopy();
+  const rtlStyle = rtlTextStyle(copy.rtl);
   // Progress from profile
   const cleared = useProfile((s) =>
     game === 'burrows'
@@ -109,10 +109,13 @@ export default function LevelSelect({
   const handleConfirmSkip = useCallback(
     (currency: 'stardust' | 'crystals') => {
       if (!skipTargetLevel) return;
-      const ok = currency === 'stardust' ? spendStardust(150) : spendCrystals(10);
+      const ok =
+        currency === 'stardust'
+          ? spendStardust(SKIP_COST_STARDUST)
+          : spendCrystals(SKIP_COST_CRYSTALS);
       if (ok) {
         setGameLevel(game, skipTargetLevel - 1);
-        useProfile.getState().awardXp(50);
+        useProfile.getState().awardXp(SKIP_XP_REWARD);
         sfx.play('chime', 0.9);
         sfx.play('sparkle', 0.8);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -144,10 +147,10 @@ export default function LevelSelect({
         </Pressable>
 
         <View style={styles.titleContainer}>
-          <Text style={[styles.gameTitle, { color: accentColor }]}>
-            {GAME_TITLES[game]}
+          <Text style={[styles.gameTitle, { color: accentColor }, rtlStyle]}>
+            {copy.strings.gameTitles[game]}
           </Text>
-          <Text style={styles.subtitle}>CHOOSE LEVEL (1–30)</Text>
+          <Text style={[styles.subtitle, rtlStyle]}>{copy.strings.chooseLevel}</Text>
         </View>
 
         <CurrencyBar
@@ -170,7 +173,10 @@ export default function LevelSelect({
 
           const mechanics =
             'mechanics' in item ? (item.mechanics as string[]) : [];
-          const primaryBadge = mechanics[0] ? mechanics[0].toUpperCase() : null;
+          const primaryMechanic = mechanics[0];
+          const primaryBadge = primaryMechanic
+            ? getMechanicLabel(primaryMechanic, copy.locale)
+            : null;
 
           return (
             <Pressable
@@ -249,8 +255,10 @@ export default function LevelSelect({
       {maxUnlockedLevel < 30 && (
         <View style={styles.skipBar}>
           <View style={styles.skipBarInfo}>
-            <Text style={styles.skipBarTitle}>NEXT LEVEL: {maxUnlockedLevel + 1}</Text>
-            <Text style={styles.skipBarSubtitle}>Skip ahead using Stardust or Crystals</Text>
+            <Text style={[styles.skipBarTitle, rtlStyle]}>
+              {copy.strings.nextLevel(maxUnlockedLevel + 1)}
+            </Text>
+            <Text style={[styles.skipBarSubtitle, rtlStyle]}>{copy.strings.skipSubtitle}</Text>
           </View>
           <Pressable
             style={[styles.skipButton, { backgroundColor: accentColor }]}
@@ -261,7 +269,7 @@ export default function LevelSelect({
             }}
           >
             <Zap size={15} color="#0B0620" />
-            <Text style={styles.skipButtonText}>SKIP LVL</Text>
+            <Text style={styles.skipButtonText}>{copy.strings.skipLvl}</Text>
           </Pressable>
         </View>
       )}
@@ -276,11 +284,11 @@ export default function LevelSelect({
         <View style={styles.modalBackdrop}>
           <View style={styles.modalBox}>
             <Text style={styles.modalEmoji}>⚡</Text>
-            <Text style={styles.modalTitle}>
-              SKIP TO LEVEL {skipTargetLevel}?
+            <Text style={[styles.modalTitle, rtlStyle]}>
+              {copy.strings.skipToLevel(skipTargetLevel ?? 0)}
             </Text>
-            <Text style={styles.modalSubtitle}>
-              Instantly unlock Level {skipTargetLevel} and earn +50 XP!
+            <Text style={[styles.modalSubtitle, rtlStyle]}>
+              {copy.strings.skipBody(skipTargetLevel ?? 0)}
             </Text>
 
             <View style={styles.modalActions}>
@@ -289,7 +297,9 @@ export default function LevelSelect({
                 onPress={() => handleConfirmSkip('stardust')}
               >
                 <Sparkles size={16} color="#FFFFFF" />
-                <Text style={styles.modalBtnText}>★ 150 STARDUST</Text>
+                <Text style={styles.modalBtnText}>
+                  {copy.strings.stardustCost(SKIP_COST_STARDUST)}
+                </Text>
               </Pressable>
 
               <Pressable
@@ -297,14 +307,16 @@ export default function LevelSelect({
                 onPress={() => handleConfirmSkip('crystals')}
               >
                 <Gem size={16} color="#FFFFFF" />
-                <Text style={styles.modalBtnText}>💎 10 CRYSTALS</Text>
+                <Text style={styles.modalBtnText}>
+                  {copy.strings.crystalsCost(SKIP_COST_CRYSTALS)}
+                </Text>
               </Pressable>
 
               <Pressable
                 style={styles.cancelBtn}
                 onPress={() => setSkipTargetLevel(null)}
               >
-                <Text style={styles.cancelBtnText}>CANCEL</Text>
+                <Text style={styles.cancelBtnText}>{copy.strings.cancel}</Text>
               </Pressable>
             </View>
           </View>
