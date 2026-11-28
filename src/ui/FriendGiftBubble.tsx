@@ -11,6 +11,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Gift, Sparkles, X } from 'lucide-react-native';
 import { sfx } from '../fx/sound';
+import { GIFT_CRYSTALS, getGiftCopy } from './i18n/gift';
 import {
   claimReferral,
   dismissPastePrompt,
@@ -22,13 +23,14 @@ export function FriendGiftBubble() {
   const pendingPaste = useReferral((s) => s.pendingPaste);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const { strings, rtl } = getGiftCopy();
 
   if (!pendingPaste) return null;
 
   const handleProcessCode = async (rawText: string) => {
     const code = extractReferralCode(rawText);
     if (!code) {
-      setFeedback('No gift code found in clipboard');
+      setFeedback(strings.noCodeFound);
       setTimeout(() => setFeedback(null), 2500);
       return;
     }
@@ -44,7 +46,7 @@ export function FriendGiftBubble() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       sfx.play('chime');
       setTimeout(() => sfx.play('sparkle'), 200);
-      setFeedback('Gift claimed! +50 Crystals');
+      setFeedback(strings.giftClaimed(GIFT_CRYSTALS));
       setTimeout(() => {
         void dismissPastePrompt();
       }, 1800);
@@ -52,8 +54,8 @@ export function FriendGiftBubble() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setFeedback(
         res.reason === 'already_referred'
-          ? 'Already claimed a referral!'
-          : 'Could not claim this code.',
+          ? strings.alreadyClaimed
+          : strings.claimFailed,
       );
       setTimeout(() => setFeedback(null), 2500);
     }
@@ -64,7 +66,7 @@ export function FriendGiftBubble() {
       const text = await Clipboard.getStringAsync();
       await handleProcessCode(text);
     } catch {
-      setFeedback('Clipboard access denied');
+      setFeedback(strings.clipboardDenied);
       setTimeout(() => setFeedback(null), 2000);
     }
   };
@@ -76,23 +78,24 @@ export function FriendGiftBubble() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.bubble}>
+      <View style={[styles.bubble, rtl && styles.rowReverse]}>
         <View style={styles.iconCircle}>
           <Gift size={20} color="#FBBF24" />
         </View>
 
         <View style={styles.textCol}>
-          <Text style={styles.title}>Got a link from a friend?</Text>
-          <Text style={styles.subtitle}>
-            {feedback ?? 'Paste to claim your 50 Crystal welcome gift!'}
+          <Text style={[styles.title, rtl && styles.rtlText]}>{strings.title}</Text>
+          <Text style={[styles.subtitle, rtl && styles.rtlText]}>
+            {feedback ?? strings.subtitle}
           </Text>
         </View>
 
         {loading ? (
           <ActivityIndicator color="#FBBF24" size="small" style={styles.loader} />
         ) : (
-          <View style={styles.btnRow}>
+          <View style={[styles.btnRow, rtl && styles.rowReverse]}>
             {Platform.OS === 'ios' && Clipboard.ClipboardPasteButton ? (
+              // The native paste button is localized by iOS itself.
               <Clipboard.ClipboardPasteButton
                 style={styles.iosPasteBtn}
                 displayMode="iconAndLabel"
@@ -105,7 +108,7 @@ export function FriendGiftBubble() {
             ) : (
               <Pressable style={styles.pasteBtn} onPress={handleManualPaste}>
                 <Sparkles size={14} color="#0B132B" />
-                <Text style={styles.pasteBtnText}>Paste</Text>
+                <Text style={[styles.pasteBtnText, rtl && styles.rtlText]}>{strings.paste}</Text>
               </Pressable>
             )}
 
@@ -156,6 +159,13 @@ const styles = StyleSheet.create({
   },
   textCol: {
     flex: 1,
+  },
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  rtlText: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   title: {
     color: '#F8FAFC',
